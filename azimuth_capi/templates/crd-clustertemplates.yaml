@@ -1,0 +1,40 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clustertemplates.{{ settings.api_group }}
+spec:
+  group: {{ settings.api_group }}
+  scope: Cluster
+  names:
+    plural: clustertemplates
+    kind: ClusterTemplate
+  versions:
+    - name: v1alpha1
+      deprecated: false
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          {{ models.v1alpha1.ClusterTemplate.schema() | toyaml | indent(10) }}
+      additionalPrinterColumns:
+        - name: Label
+          type: string
+          jsonPath: .spec.label
+        - name: Kubernetes Version
+          type: string
+          jsonPath: .spec.values.kubernetesVersion
+        - name: Cloud Provider
+          type: string
+          jsonPath: .spec.cloudProvider
+        - name: Target Cloud
+          type: string
+          jsonPath: .spec.targetCloud
+        - name: Chart Version
+          type: string
+          jsonPath: .spec.chartVersion
+        - name: Deprecated
+          type: boolean
+          jsonPath: .spec.deprecated
+        - name: Created
+          type: date
+          jsonPath: .metadata.creationTimestamp
