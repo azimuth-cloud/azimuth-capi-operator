@@ -18,6 +18,22 @@ from .template import default_loader
 logger = logging.getLogger(__name__)
 
 
+@kopf.on.startup()
+def apply_settings(**kwargs):
+    """
+    Apply kopf settings.
+    """
+    kopf_settings = kwargs["settings"]
+    kopf_settings.persistence.finalizer = f"{settings.annotation_prefix}/finalizer"
+    kopf_settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(
+        prefix = settings.annotation_prefix
+    )
+    kopf_settings.persistence.diffbase_storage = kopf.AnnotationsDiffBaseStorage(
+        prefix = settings.annotation_prefix,
+        key = "last-handled-configuration",
+    )
+
+
 # Load the CRDs and create easykube resource specs for them
 cluster_template_crd = default_loader.load("crd-clustertemplates.yaml")
 cluster_crd = default_loader.load("crd-clusters.yaml")
@@ -106,8 +122,8 @@ async def on_cluster_create(client, name, namespace, spec, **kwargs):
     chart = Chart(
         # The repository is a configuration item
         repository = settings.capi_helm_repo,
-        # The name is derived from the template provider
-        name = "{}-cluster".format(template.spec.cloud_provider),
+        # The chart name and version come from the template spec
+        name = template.spec.chart_name,
         # The version comes from the template spec
         version = template.spec.chart_version
     )
@@ -190,22 +206,24 @@ async def on_cluster_resume(client, name, namespace, body, status, **kwargs):
     labels = { "capi.stackhpc.com/cluster": name }
     builder.remove_unknown_nodes([
         machine
-        async for machine in capi.Machine(client).list(labels = labels)
-    ])
-    builder.remove_unknown_node_groups([
-        md
-        async for md in capi.MachineDeployment(client).list(labels = labels)
+        async for machine in capi.Machine(client).list(
+            labels = labels,
+            namespace = namespace
+        )
     ])
     try:
-        _ = await k8s.Job(client).list(labels = labels).__anext__()
+        jobs = k8s.Job(client).list(labels = labels, namespace = namespace)
+        _ = await jobs.__anext__()
     except StopAsyncIteration:
         builder.addons_job_absent()
     try:
-        _ = await capi.KubeadmControlPlane(client).list(labels = labels).__anext__()
+        kcps = capi.KubeadmControlPlane(client).list(labels = labels, namespace = namespace)
+        _ = await kcps.__anext__()
     except StopAsyncIteration:
         builder.control_plane_absent()
     try:
-        _ = await capi.Cluster(client).list(labels = labels).__anext__()
+        clusters = capi.Cluster(client).list(labels = labels, namespace = namespace)
+        _ = await clusters.__anext__()
     except StopAsyncIteration:
         builder.cluster_absent()
     await AzimuthClusterStatus(client).replace(
@@ -285,17 +303,6 @@ async def on_capi_controlplane_event(builder, type, body, **kwargs):
         builder.control_plane_deleted(body)
     else:
         builder.control_plane_updated(body)
-
-
-@on_managed_object_event(capi.MachineDeployment.api_version, capi.MachineDeployment.name)
-async def on_capi_machine_deployment_event(builder, type, body, **kwargs):
-    """
-    Executes on events for CAPI machine deployments with an associated Azimuth cluster.
-    """
-    if type == "DELETED":
-        builder.machine_deployment_deleted(body)
-    else:
-        builder.machine_deployment_updated(body)
 
 
 @on_managed_object_event(capi.Machine.api_version, capi.Machine.name)

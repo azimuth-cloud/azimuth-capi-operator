@@ -31,24 +31,16 @@ spec:
         - name: Phase
           type: string
           jsonPath: .status.phase
-        - name: Networking
-          type: string
-          jsonPath: .status.networking.phase
-          priority: 1
         - name: Control Plane
           type: string
-          jsonPath: .status.controlPlane.phase
+          jsonPath: .status.controlPlanePhase
           priority: 1
-        - name: Worker Count
+        - name: Node Count
           type: integer
-          jsonPath: .status.workers.count
-        - name: Workers
-          type: string
-          jsonPath: .status.workers.phase
-          priority: 1
+          jsonPath: .status.nodeCount
         - name: Addons
           type: string
-          jsonPath: .status.addons.phase
+          jsonPath: .status.addonsPhase
           priority: 1
         - name: Age
           type: date

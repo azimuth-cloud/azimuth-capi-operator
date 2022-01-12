@@ -20,5 +20,8 @@ class Configuration(BaseConfiguration):
     #: The repository containing the CAPI Helm charts
     capi_helm_repo: str = "https://stackhpc.github.io/capi-helm-charts"
 
+    #: The prefix to use for operator annotations
+    annotation_prefix: str = "azimuth.stackhpc.com"
+
 
 settings = Configuration()

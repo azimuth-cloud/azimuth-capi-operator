@@ -40,21 +40,20 @@ class ClusterTemplateSpec(BaseModel):
         ...,
         description = "The human-readable name of the template."
     )
-    cloud_provider: t.Literal["openstack"] = Field(
-        "openstack",
-        description = "The name of the cloud provider for which this template applies."
-    )
-    target_cloud: t.Optional[str] = Field(
-        None,
+    description: constr(min_length = 1) = Field(
+        ...,
         description = (
-            "The name of the target cloud for the template. "
-            "If not given, the template is assumed to apply for all clouds with "
-            "the specified provider."
+            "Brief description of the capabilities of clusters deployed "
+            "using the template."
         )
+    )
+    chart_name: constr(min_length = 1) = Field(
+        "openstack-cluster",
+        description = "The name of the CAPI Helm chart to use."
     )
     chart_version: constr(min_length = 1) = Field(
         ...,
-        description = "The version of the CAPI Helm charts to use."
+        description = "The version of the specified CAPI Helm chart to use."
     )
     values: ClusterTemplateValues = Field(
         ...,
