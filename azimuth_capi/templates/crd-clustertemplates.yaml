@@ -22,13 +22,10 @@ spec:
           jsonPath: .spec.label
         - name: Kubernetes Version
           type: string
-          jsonPath: .spec.values.kubernetesVersion
-        - name: Cloud Provider
+          jsonPath: .spec.values.global.kubernetesVersion
+        - name: Chart
           type: string
-          jsonPath: .spec.cloudProvider
-        - name: Target Cloud
-          type: string
-          jsonPath: .spec.targetCloud
+          jsonPath: .spec.chartName
         - name: Chart Version
           type: string
           jsonPath: .spec.chartVersion

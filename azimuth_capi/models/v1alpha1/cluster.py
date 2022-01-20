@@ -129,7 +129,6 @@ class NodePhase(str, Enum):
     """
     PENDING      = "Pending"
     PROVISIONING = "Provisioning"
-    PROVISIONED  = "Provisioned"
     READY        = "Ready"
     DELETING     = "Deleting"
     DELETED      = "Deleted"
@@ -138,15 +137,16 @@ class NodePhase(str, Enum):
     UNKNOWN      = "Unknown"
 
 
-class AddonsPhase(str, Enum):
+class AddonPhase(str, Enum):
     """
-    The phase of the addons for the cluster.
+    The phase of an addon in the cluster.
     """
-    PENDING   = "Pending"
-    DEPLOYING = "Deploying"
-    DEPLOYED  = "Deployed"
-    FAILED    = "Failed"
-    UNKNOWN   = "Unknown"
+    PENDING      = "Pending"
+    INSTALLING   = "Installing"
+    INSTALLED    = "Installed"
+    UNINSTALLING = "Uninstalling"
+    FAILED       = "Failed"
+    UNKNOWN      = "Unknown"
 
 
 class NodeRole(str, Enum):
@@ -187,6 +187,16 @@ class NodeStatus(BaseModel):
     )
 
 
+class AddonStatus(BaseModel):
+    """
+    The status of an addon in the cluster.
+    """
+    phase: AddonPhase = Field(
+        AddonPhase.UNKNOWN.value,
+        description = "The phase of the addon."
+    )
+
+
 class ClusterStatus(BaseModel):
     """
     The status of the cluster.
@@ -214,10 +224,6 @@ class ClusterStatus(BaseModel):
         ControlPlanePhase.UNKNOWN.value,
         description = "The phase of the control plane."
     )
-    addons_phase: AddonsPhase = Field(
-        AddonsPhase.UNKNOWN.value,
-        description = "The phase of the addons."
-    )
     node_count: int = Field(
         0,
         description = "The number of nodes in the cluster."
@@ -225,6 +231,14 @@ class ClusterStatus(BaseModel):
     nodes: Dict[str, NodeStatus] = Field(
         default_factory = dict,
         description = "The status of the nodes in cluster, indexed by node name."
+    )
+    addon_count: int = Field(
+        0,
+        description = "The number of addons for the cluster."
+    )
+    addons: Dict[str, AddonStatus] = Field(
+        default_factory = dict,
+        description = "The status of the addons for the cluster, indexed by addon name."
     )
 
 

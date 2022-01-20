@@ -5,9 +5,9 @@ from pydantic import Extra, Field, constr
 from ..util import BaseModel
 
 
-class ClusterTemplateValues(BaseModel):
+class ClusterTemplateGlobalValues(BaseModel):
     """
-    The values to use when deploying the Helm chart.
+    The global values used when deploying the Helm chart.
     """
     class Config:
         extra = Extra.allow
@@ -15,6 +15,22 @@ class ClusterTemplateValues(BaseModel):
     kubernetes_version: constr(min_length = 1) = Field(
         ...,
         description = "The Kubernetes version that will be deployed."
+    )
+
+
+class ClusterTemplateValues(BaseModel):
+    """
+    The values to use when deploying the Helm chart.
+    """
+    class Config:
+        fields = {
+            "global_": "global",
+        }
+        extra = Extra.allow
+
+    global_: ClusterTemplateGlobalValues = Field(
+        ...,
+        description = "The global values for the deployment."
     )
     machine_image: constr(min_length = 1) = Field(
         ...,

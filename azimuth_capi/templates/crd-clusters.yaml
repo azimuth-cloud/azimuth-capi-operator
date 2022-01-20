@@ -38,9 +38,9 @@ spec:
         - name: Node Count
           type: integer
           jsonPath: .status.nodeCount
-        - name: Addons
-          type: string
-          jsonPath: .status.addonsPhase
+        - name: Addon Count
+          type: integer
+          jsonPath: .status.addonCount
           priority: 1
         - name: Age
           type: date

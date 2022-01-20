@@ -129,7 +129,9 @@ async def on_cluster_create(client, name, namespace, spec, **kwargs):
     )
     # Convert the cluster spec into overrides for the Helm values
     cluster_values = {
-        "cloudConfigSecretName": secret.metadata.name,
+        "global": {
+            "cloudCredentialsSecretName": secret.metadata.name,
+        },
         "controlPlane": {
             "machineFlavor": spec.control_plane_machine_size,
             "machineRootVolumeSize": spec.machine_root_volume_size,
@@ -152,16 +154,14 @@ async def on_cluster_create(client, name, namespace, spec, **kwargs):
             for node_group in spec.node_groups
         ],
         "addons": {
-            "values": {
-                "certManager": {
-                    "enabled": spec.addons.cert_manager,
-                },
-                "ingress": {
-                    "enabled": spec.addons.ingress,
-                },
-                "monitoring": {
-                    "enabled": spec.addons.monitoring,
-                },
+            "certManager": {
+                "enabled": spec.addons.cert_manager,
+            },
+            "ingress": {
+                "enabled": spec.addons.ingress,
+            },
+            "monitoring": {
+                "enabled": spec.addons.monitoring,
             },
         },
     }
@@ -173,7 +173,7 @@ async def on_cluster_create(client, name, namespace, spec, **kwargs):
 
 
 @on("delete", AzimuthCluster.api_version, AzimuthCluster.name)
-async def on_cluster_delete(client, name, namespace, **kwargs):
+async def on_cluster_delete(client, name, namespace, spec, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
@@ -212,11 +212,6 @@ async def on_cluster_resume(client, name, namespace, body, status, **kwargs):
         )
     ])
     try:
-        jobs = k8s.Job(client).list(labels = labels, namespace = namespace)
-        _ = await jobs.__anext__()
-    except StopAsyncIteration:
-        builder.addons_job_absent()
-    try:
         kcps = capi.KubeadmControlPlane(client).list(labels = labels, namespace = namespace)
         _ = await kcps.__anext__()
     except StopAsyncIteration:
@@ -226,6 +221,19 @@ async def on_cluster_resume(client, name, namespace, body, status, **kwargs):
         _ = await clusters.__anext__()
     except StopAsyncIteration:
         builder.cluster_absent()
+    # The addon jobs need different labels
+    # Each addon that is deployed will have an install job
+    builder.remove_unknown_addons([
+        job
+        async for job in k8s.Job(client).list(
+            namespace = namespace,
+            labels = {
+                "app.kubernetes.io/name": "addons",
+                "app.kubernetes.io/instance": name,
+                "capi.stackhpc.com/operation": "install",
+            }
+        )
+    ])
     await AzimuthClusterStatus(client).replace(
         name,
         dict(body, status = builder.build()),
@@ -316,20 +324,36 @@ async def on_capi_machine_event(builder, type, body, **kwargs):
         builder.machine_updated(body)
 
 
-@on_managed_object_event(k8s.Job.api_version, k8s.Job.name)
-async def on_addons_job_event(builder, type, body, meta, **kwargs):
+@on_managed_object_event(
+    k8s.Job.api_version,
+    k8s.Job.name,
+    # The addon jobs use the label app.kubernetes.io/instance to identify the cluster
+    cluster_label = "app.kubernetes.io/instance",
+    # They should also have the following labels
+    labels = {
+        "app.kubernetes.io/name": "addons",
+        "app.kubernetes.io/component": kopf.PRESENT,
+        "capi.stackhpc.com/operation": kopf.PRESENT,
+    }
+)
+async def on_addon_job_event(builder, type, body, meta, spec, **kwargs):
     """
-    Executes on events for CAPI addon deployment jobs.
+    Executes on events for CAPI addon jobs.
     """
-    if type != "DELETED" and not meta.get("deletionTimestamp"):
-        builder.addons_job_updated(body)
+    # Ignore delete events and jobs that are deleted or suspended
+    if (
+        type != "DELETED" and
+        not meta.get("deletionTimestamp") and
+        not spec.get("suspend", False)
+    ):
+        builder.addon_job_updated(body)
 
 
-# The kubeconfig secret does not have the capi.stackhpc.com/cluster label
-# But it does have cluster.x-k8s.io/cluster-name
 @on_managed_object_event(
     k8s.Secret.api_version,
     k8s.Secret.name,
+    # The kubeconfig secret does not have the capi.stackhpc.com/cluster label
+    # But it does have cluster.x-k8s.io/cluster-name
     cluster_label = "cluster.x-k8s.io/cluster-name"
 )
 async def on_cluster_secret_event(builder, type, body, name, **kwargs):

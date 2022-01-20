@@ -1,18 +1,15 @@
 import logging
 
-from yaml.nodes import Node
-
-from azimuth_capi.capi_resources import Cluster
-
 from .models.v1alpha1 import (
     ClusterPhase,
     NetworkingPhase,
     ControlPlanePhase,
     NodePhase,
-    AddonsPhase,
+    AddonPhase,
     ClusterStatus,
     NodeRole,
     NodeStatus,
+    AddonStatus,
 )
 
 
@@ -29,6 +26,8 @@ class ClusterStatusBuilder:
         Returns the current status.
         """
         self._reconcile_cluster_phase()
+        self.status.node_count = len(self.status.nodes)
+        self.status.addon_count = len(self.status.addons)
         return self.status.dict(by_alias = True)
 
     def _any_node_has_phase(self, *phases):
@@ -48,6 +47,12 @@ class ClusterStatusBuilder:
             if node.role is role
         )
         return len(versions) > 1
+
+    def _any_addon_has_phase(self, *phases):
+        """
+        Returns true if any addon has one of the given phases.
+        """
+        return any(addon.phase in phases for addon in self.status.addons.values())
 
     def _reconcile_cluster_phase(self):
         """
@@ -91,22 +96,18 @@ class ClusterStatusBuilder:
         elif self._any_node_has_phase(
             NodePhase.PENDING,
             NodePhase.PROVISIONING,
-            NodePhase.PROVISIONED,
             NodePhase.DELETING,
             NodePhase.DELETED
         ):
             self.status.phase = ClusterPhase.RECONCILING
         # All nodes are either Ready, Unhealthy, Failed or Unknown
-        elif self.status.addons_phase in {
-            AddonsPhase.PENDING,
-            AddonsPhase.DEPLOYING
-        }:
+        elif self._any_addon_has_phase(
+            AddonPhase.PENDING,
+            AddonPhase.INSTALLING,
+            AddonPhase.UNINSTALLING
+        ):
             self.status.phase = ClusterPhase.RECONCILING
-        elif self.status.addons_phase is AddonsPhase.FAILED:
-            self.status.phase = ClusterPhase.FAILED
-        elif self.status.addons_phase is AddonsPhase.UNKNOWN:
-            self.status.phase = ClusterPhase.UNKNOWN
-        # The addons are Deployed
+        # All addons are either Installed, Failed or Unknown
         # Now we know that there is no reconciliation happening, consider cluster health
         elif (
             self.status.control_plane_phase is ControlPlanePhase.UNHEALTHY or
@@ -114,6 +115,10 @@ class ClusterStatusBuilder:
                 NodePhase.UNHEALTHY,
                 NodePhase.FAILED,
                 NodePhase.UNKNOWN
+            ) or
+            self._any_addon_has_phase(
+                AddonPhase.FAILED,
+                AddonPhase.UNKNOWN
             )
         ):
             self.status.phase = ClusterPhase.UNHEALTHY
@@ -210,6 +215,8 @@ class ClusterStatusBuilder:
         status = obj.get("status", {})
         phase = status.get("phase", "Unknown")
         # We want to break the running phase down depending on node health
+        # We also want to remove the Provisioned phase as a transition between Provisioning
+        # and Ready, and just leave those nodes in the Provisioning phase
         # All other CAPI machine phases correspond to the node phases
         if phase == "Running":
             conditions = status.get("conditions", [])
@@ -218,6 +225,8 @@ class ClusterStatusBuilder:
                 node_phase = NodePhase.READY
             else:
                 node_phase = NodePhase.UNHEALTHY
+        elif phase == "Provisioned":
+            node_phase = NodePhase.PROVISIONING
         else:
             node_phase = NodePhase(phase)
         # Replace the node object in the node set
@@ -238,8 +247,6 @@ class ClusterStatusBuilder:
             # The node group will be in a label if applicable
             node_group = labels.get("capi.stackhpc.com/node-group")
         )
-        # Also update the node count
-        self.status.node_count = len(self.status.nodes)
         return self
 
     def machine_deleted(self, obj):
@@ -248,7 +255,6 @@ class ClusterStatusBuilder:
         """
         # Just remove the node from the node set
         self.status.nodes.pop(obj["metadata"]["name"], None)
-        self.status.node_count = len(self.status.nodes)
         return self
 
     def remove_unknown_nodes(self, machines):
@@ -259,7 +265,6 @@ class ClusterStatusBuilder:
         known = set(self.status.nodes.keys())
         for name in known - current:
             self.status.nodes.pop(name)
-        self.status.node_count = len(self.status.nodes)
 
     def kubeconfig_secret_updated(self, obj):
         """
@@ -268,27 +273,43 @@ class ClusterStatusBuilder:
         self.status.kubeconfig_secret_name = obj["metadata"]["name"]
         return self
 
-    def addons_job_updated(self, obj):
+    def addon_job_updated(self, obj):
         """
-        Updates the status when an addons job is updated.
+        Updates the status when an addon job is updated.
         """
+        # First, extract the component and operation from the labels
+        labels = obj["metadata"]["labels"]
+        component = labels["app.kubernetes.io/component"]
+        operation = labels["capi.stackhpc.com/operation"]
+        # Then calculate the next phase for the addon
         status = obj.get("status", {})
         conditions = status.get("conditions", [])
         complete = next((c for c in conditions if c["type"] == "Complete"), None)
         failed = next((c for c in conditions if c["type"] == "Failed"), None)
         if complete and complete["status"] == "True":
-            self.status.addons_phase = AddonsPhase.DEPLOYED
+            if operation == "install":
+                addon_phase = AddonPhase.INSTALLED
+            else:
+                # When an uninstall job completes, remove the addon
+                self.status.addons.pop(component)
+                return self
         elif failed and failed["status"] == "True":
-            self.status.addons_phase = AddonsPhase.FAILED
+            addon_phase = AddonPhase.FAILED
         elif status.get("active", 0) > 0:
-            self.status.addons_phase = AddonsPhase.DEPLOYING
+            if operation == "install":
+                addon_phase = AddonPhase.INSTALLING
+            else:
+                addon_phase = AddonPhase.UNINSTALLING
         else:
-            self.status.addons_phase = AddonsPhase.PENDING
+            addon_phase = AddonPhase.PENDING
+        self.status.addons[component] = AddonStatus(phase = addon_phase)
         return self
 
-    def addons_job_absent(self):
+    def remove_unknown_addons(self, install_jobs):
         """
-        Called when the addons job is absent after a resume.
+        Given the current set of addon install jobs, remove any unknown addons from the status.
         """
-        self.status.addons_phase = AddonsPhase.UNKNOWN
-        return self
+        current = set(j.metadata.labels["app.kubernetes.io/component"] for j in install_jobs)
+        known = set(self.status.addons.keys())
+        for component in known - current:
+            self.status.addons.pop(component)
