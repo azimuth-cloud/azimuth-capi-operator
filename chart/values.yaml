@@ -1,0 +1,38 @@
+# The image to use for the sync component
+image:
+  repository: ghcr.io/stackhpc/azimuth-capi-operator
+  pullPolicy: IfNotPresent
+  tag: ""  # Defaults to appVersion if not given
+
+imagePullSecrets: []
+
+# Pod-level security context
+podSecurityContext:
+  runAsNonRoot: true
+
+# Container-level security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+
+# Resources requests and limits for the containers
+resources: {}
+
+# Node selector for operator pods
+nodeSelector: {}
+
+# Affinity rules for operator pods
+affinity: {}
+
+# Tolerations for operator pods
+tolerations: []
+
+# Configuration for the kubectl proxy container
+kubectlProxy:
+  image:
+    repository: bitnami/kubectl
+    pullPolicy: IfNotPresent
+    tag: ""  # Defaults to the Kubernetes version if not given
+  resources: {}
