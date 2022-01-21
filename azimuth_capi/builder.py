@@ -107,7 +107,7 @@ class ClusterStatusBuilder:
             AddonPhase.UNINSTALLING
         ):
             self.status.phase = ClusterPhase.RECONCILING
-        # All addons are either Installed, Failed or Unknown
+        # All addons are either Ready, Failed or Unknown
         # Now we know that there is no reconciliation happening, consider cluster health
         elif (
             self.status.control_plane_phase is ControlPlanePhase.UNHEALTHY or
@@ -273,36 +273,82 @@ class ClusterStatusBuilder:
         self.status.kubeconfig_secret_name = obj["metadata"]["name"]
         return self
 
+    def _addon_is_latest_revision(self, component, revision):
+        """
+        Returns true if the specified revision is the latest for the given component.
+        """
+        # If the revision is >= the previous largest revision we have seen, it is the latest
+        latest = getattr(self.status.addons.get(component), "revision", 0)
+        return revision >= latest
+
+    def _addon_previous_phase(self, component):
+        """
+        Returns the previous phase for the addon.
+        """
+        addon = self.status.addons.get(component)
+        return AddonPhase(addon.phase) if addon else AddonPhase.UNKNOWN
+
     def addon_job_updated(self, obj):
         """
         Updates the status when an addon job is updated.
         """
-        # First, extract the component and operation from the labels
         labels = obj["metadata"]["labels"]
         component = labels["app.kubernetes.io/component"]
         operation = labels["capi.stackhpc.com/operation"]
-        # Then calculate the next phase for the addon
-        status = obj.get("status", {})
-        conditions = status.get("conditions", [])
-        complete = next((c for c in conditions if c["type"] == "Complete"), None)
-        failed = next((c for c in conditions if c["type"] == "Failed"), None)
-        if complete and complete["status"] == "True":
+        revision = int(labels["capi.stackhpc.com/revision"])
+        # Suspended jobs are not considered
+        if obj.get("spec", {}).get("suspend", False):
+            return self
+        # We only process jobs for the latest revision
+        if self._addon_is_latest_revision(component, revision):
+            previous_phase = self._addon_previous_phase(component)
+            # Then calculate the next phase for the addon
+            status = obj.get("status", {})
+            conditions = status.get("conditions", [])
+            complete = next((c for c in conditions if c["type"] == "Complete"), None)
+            failed = next((c for c in conditions if c["type"] == "Failed"), None)
+            is_complete = complete and complete["status"] == "True"
+            is_failed = failed and failed["status"] == "True"
+            is_active = status.get("active", 0) > 0
             if operation == "install":
-                addon_phase = AddonPhase.INSTALLED
+                if is_complete:
+                    addon_phase = AddonPhase.READY
+                elif is_failed:
+                    addon_phase = AddonPhase.FAILED
+                elif is_active:
+                    addon_phase = AddonPhase.INSTALLING
+                else:
+                    addon_phase = AddonPhase.PENDING
             else:
-                # When an uninstall job completes, remove the addon
-                self.status.addons.pop(component)
-                return self
-        elif failed and failed["status"] == "True":
-            addon_phase = AddonPhase.FAILED
-        elif status.get("active", 0) > 0:
-            if operation == "install":
-                addon_phase = AddonPhase.INSTALLING
-            else:
-                addon_phase = AddonPhase.UNINSTALLING
-        else:
-            addon_phase = AddonPhase.PENDING
-        self.status.addons[component] = AddonStatus(phase = addon_phase)
+                if is_complete:
+                    self.status.addons.pop(component, None)
+                    return self
+                if is_failed:
+                    addon_phase = AddonPhase.FAILED
+                elif is_active:
+                    addon_phase = AddonPhase.UNINSTALLING
+                else:
+                    # The job has just launched - the phase stays the same
+                    addon_phase = previous_phase
+            self.status.addons[component] = AddonStatus(phase = addon_phase, revision = revision)
+        return self
+
+    def addon_job_deleted(self, obj):
+        """
+        Updates the status when an addon job is deleted.
+        """
+        # Uninstall jobs are completed at the same time that they are deleted
+        # So we need to handle that case here
+        labels = obj["metadata"]["labels"]
+        component = labels["app.kubernetes.io/component"]
+        operation = labels["capi.stackhpc.com/operation"]
+        revision = int(labels["capi.stackhpc.com/revision"])
+        if self._addon_is_latest_revision(component, revision) and operation == "uninstall":
+            status = obj.get("status", {})
+            conditions = status.get("conditions", [])
+            complete = next((c for c in conditions if c["type"] == "Complete"), None)
+            if complete and complete["status"] == "True":
+                self.status.addons.pop(component, None)
         return self
 
     def remove_unknown_addons(self, install_jobs):

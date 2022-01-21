@@ -173,7 +173,7 @@ async def on_cluster_create(client, name, namespace, spec, **kwargs):
 
 
 @on("delete", AzimuthCluster.api_version, AzimuthCluster.name)
-async def on_cluster_delete(client, name, namespace, spec, **kwargs):
+async def on_cluster_delete(client, name, namespace, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
@@ -336,16 +336,13 @@ async def on_capi_machine_event(builder, type, body, **kwargs):
         "capi.stackhpc.com/operation": kopf.PRESENT,
     }
 )
-async def on_addon_job_event(builder, type, body, meta, spec, **kwargs):
+async def on_addon_job_event(builder, type, body, **kwargs):
     """
     Executes on events for CAPI addon jobs.
     """
-    # Ignore delete events and jobs that are deleted or suspended
-    if (
-        type != "DELETED" and
-        not meta.get("deletionTimestamp") and
-        not spec.get("suspend", False)
-    ):
+    if type == "DELETED":
+        builder.addon_job_deleted(body)
+    else:
         builder.addon_job_updated(body)
 
 

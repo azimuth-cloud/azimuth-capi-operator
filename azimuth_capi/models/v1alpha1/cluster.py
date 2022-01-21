@@ -1,6 +1,6 @@
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr, conint
+from pydantic import Extra, Field, constr, conint
 
 from ..util import BaseModel, Enum, Dict
 
@@ -143,7 +143,7 @@ class AddonPhase(str, Enum):
     """
     PENDING      = "Pending"
     INSTALLING   = "Installing"
-    INSTALLED    = "Installed"
+    READY        = "Ready"
     UNINSTALLING = "Uninstalling"
     FAILED       = "Failed"
     UNKNOWN      = "Unknown"
@@ -194,6 +194,10 @@ class AddonStatus(BaseModel):
     phase: AddonPhase = Field(
         AddonPhase.UNKNOWN.value,
         description = "The phase of the addon."
+    )
+    revision: conint(ge = 0) = Field(
+        0,
+        description = "The revision of the addon."
     )
 
 
