@@ -1,4 +1,4 @@
-# The image to use for the sync component
+# The image to use for the operator
 image:
   repository: ghcr.io/stackhpc/azimuth-capi-operator
   pullPolicy: IfNotPresent
@@ -17,7 +17,7 @@ securityContext:
     drop: [ALL]
   readOnlyRootFilesystem: true
 
-# Resources requests and limits for the containers
+# Resource requests and limits for the containers
 resources: {}
 
 # Node selector for operator pods
