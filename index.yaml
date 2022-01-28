@@ -2,8 +2,18 @@ apiVersion: v1
 entries:
   azimuth-capi-operator:
   - apiVersion: v2
+    appVersion: d3845e2
+    created: "2022-01-28T14:47:51.91416459Z"
+    description: Helm chart for deploying the Azimuth CAPI operator.
+    digest: cd003f6c60d35a7a8cbd0b4452d9c6e1aba6d05857c8debfcaa4958fa1562a67
+    name: azimuth-capi-operator
+    type: application
+    urls:
+    - azimuth-capi-operator-0.1.0-dev.0.main.8.tgz
+    version: 0.1.0-dev.0.main.8
+  - apiVersion: v2
     appVersion: a02c8d3
-    created: "2022-01-24T17:36:37.84388182Z"
+    created: "2022-01-28T14:47:51.913776087Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 93b30c18e3958aa40fae12cf1ba19149f61dd95ea74b4ddf827d36fa548a03e8
     name: azimuth-capi-operator
@@ -13,7 +23,7 @@ entries:
     version: 0.1.0-dev.0.main.7
   - apiVersion: v2
     appVersion: 8f9f929
-    created: "2022-01-24T17:36:37.843374814Z"
+    created: "2022-01-28T14:47:51.913335985Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 9e0701ead3176efb9c6c50368ad971d2af394cda9f9586b1978d0518d5fb3696
     name: azimuth-capi-operator
@@ -23,7 +33,7 @@ entries:
     version: 0.1.0-dev.0.main.6
   - apiVersion: v2
     appVersion: 7585ebe
-    created: "2022-01-24T17:36:37.842612103Z"
+    created: "2022-01-28T14:47:51.91251178Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 5c0488184e11973dc37c5a646af0b925584405561f0743f00e0b7e07cc63fc02
     name: azimuth-capi-operator
@@ -31,4 +41,4 @@ entries:
     urls:
     - azimuth-capi-operator-0.1.0-dev.0.main.5.tgz
     version: 0.1.0-dev.0.main.5
-generated: "2022-01-24T17:36:37.841966194Z"
+generated: "2022-01-28T14:47:51.911714176Z"
