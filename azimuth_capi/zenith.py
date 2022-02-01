@@ -141,4 +141,4 @@ async def zenith_values(client, cluster, zenith_config):
     """
     Returns Helm values to apply Zenith to the specified cluster.
     """
-    return zenith_apiserver_values(client, cluster, zenith_config)
+    return await zenith_apiserver_values(client, cluster, zenith_config)
