@@ -75,7 +75,12 @@ async def zenith_apiserver_values(client, cluster, zenith_config):
         zenith_config
     )
     # Get the static pod definition for the Zenith client for the API server
-    zenith_client_apiserver_pod = default_loader.loads("pod-zenith-client-apiserver.yaml")
+    zenith_client_apiserver_pod = default_loader.loads(
+        "pod-zenith-client-apiserver.yaml",
+        zenith_kube_wait_image = zenith_config.apiserver_wait_image,
+        zenith_kube_mitm_image = zenith_config.apiserver_mitm_image,
+        zenith_client_image = zenith_config.client_image
+    )
     apiserver_client_config = yaml.safe_dump({
         # Use the SSH private key from the secret
         # The secret data is already base64-encoded

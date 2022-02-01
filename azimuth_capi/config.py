@@ -16,6 +16,13 @@ class ZenithConfig(BaseConfiguration):
     #: The port for the Zenith SSHD service
     sshd_port: conint(gt = 0) = 22
 
+    #: The Zenith client image to use
+    client_image: constr(min_length = 1) = "ghcr.io/stackhpc/zenith-client:main"
+    #: The image to use for waiting for the local API server to become available
+    apiserver_wait_image: constr(min_length = 1) = "ghcr.io/stackhpc/zenith-kube-wait:main"
+    #: The image to use for the API server MITM proxy
+    apiserver_mitm_image: constr(min_length = 1) = "ghcr.io/stackhpc/zenith-kube-mitm:main"
+
     @root_validator
     def validate_sshd_host_required(cls, values):
         """

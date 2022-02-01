@@ -10,10 +10,10 @@ spec:
   # Wait for the apiserver to be ready before we start
   initContainers:
     - name: zenith-kube-wait
-      image: ghcr.io/stackhpc/zenith-kube-wait:main
+      image: {{ zenith_kube_wait_image }}
   containers:
     - name: zenith-client
-      image: ghcr.io/stackhpc/zenith-client:main
+      image: {{ zenith_client_image }}
       env:
         - name: ZENITH_CLIENT_CONFIG
           value: /etc/zenith/client-apiserver.yaml
@@ -25,7 +25,7 @@ spec:
           mountPath: /etc/kubernetes/pki
           readOnly: true
     - name: zenith-kube-mitm
-      image: ghcr.io/stackhpc/zenith-kube-mitm:main
+      image: {{ zenith_kube_mitm_image }}
       env:
         # Bind only to localhost
         - name: ZENITH_KUBE_MITM_LISTEN_ADDRESS
