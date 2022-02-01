@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zenith-client-apiserver
+  namespace: kube-system
+  labels:
+    component: zenith-client
+    tier: control-plane
+spec:
+  # Wait for the apiserver to be ready before we start
+  initContainers:
+    - name: zenith-kube-wait
+      image: ghcr.io/stackhpc/zenith-kube-wait:main
+  containers:
+    - name: zenith-client
+      image: ghcr.io/stackhpc/zenith-client:main
+      env:
+        - name: ZENITH_CLIENT_CONFIG
+          value: /etc/zenith/client-apiserver.yaml
+      volumeMounts:
+        - name: zenith-config
+          mountPath: /etc/zenith
+          readOnly: true
+        - name: k8s-certs
+          mountPath: /etc/kubernetes/pki
+          readOnly: true
+    - name: zenith-kube-mitm
+      image: ghcr.io/stackhpc/zenith-kube-mitm:main
+      env:
+        # Bind only to localhost
+        - name: ZENITH_KUBE_MITM_LISTEN_ADDRESS
+          value: "127.0.0.1"
+        - name: ZENITH_KUBE_MITM_LISTEN_PORT
+          value: "8080"
+        # Proxy traffic to the API server running on this host
+        - name: ZENITH_KUBE_MITM_UPSTREAM_ADDRESS
+          value: "127.0.0.1"
+        - name: ZENITH_KUBE_MITM_UPSTREAM_PORT
+          value: "6443"
+        # Use the front-proxy certificate to authenticate the proxy so that our
+        # user and group headers are accepted
+        - name: ZENITH_KUBE_MITM_CLIENT_CERTIFICATE_PATH
+          value: /etc/kubernetes/pki/front-proxy-client.crt
+        - name: ZENITH_KUBE_MITM_CLIENT_CERTIFICATE_KEY_PATH
+          value: /etc/kubernetes/pki/front-proxy-client.key
+      volumeMounts:
+        - name: k8s-certs
+          mountPath: /etc/kubernetes/pki
+          readOnly: true
+  dnsPolicy: ClusterFirstWithHostNet
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: zenith-config
+      hostPath:
+        path: /etc/zenith
+        type: DirectoryOrCreate
+    - name: k8s-certs
+      hostPath:
+        path: /etc/kubernetes/pki
+        type: DirectoryOrCreate
