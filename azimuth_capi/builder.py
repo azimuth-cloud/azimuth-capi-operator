@@ -10,6 +10,7 @@ from .models.v1alpha1 import (
     NodeRole,
     NodeStatus,
     AddonStatus,
+    ServiceStatus,
 )
 
 
@@ -19,16 +20,19 @@ class ClusterStatusBuilder:
     """
     def __init__(self, status):
         self.status: ClusterStatus = ClusterStatus.parse_obj(status)
+        # Store the current status so we can compare at the end
+        self._previous_status = self.status.dict(by_alias = True)
         self.logger = logging.getLogger(__name__)
 
     def build(self):
         """
-        Returns the current status.
+        Returns a tuple of (changed, status)
         """
         self._reconcile_cluster_phase()
         self.status.node_count = len(self.status.nodes)
         self.status.addon_count = len(self.status.addons)
-        return self.status.dict(by_alias = True)
+        next_status = self.status.dict(by_alias = True)
+        return next_status != self._previous_status, next_status
 
     def _any_node_has_phase(self, *phases):
         """
@@ -265,6 +269,7 @@ class ClusterStatusBuilder:
         known = set(self.status.nodes.keys())
         for name in known - current:
             self.status.nodes.pop(name)
+        return self
 
     def kubeconfig_secret_updated(self, obj):
         """
@@ -359,3 +364,52 @@ class ClusterStatusBuilder:
         known = set(self.status.addons.keys())
         for component in known - current:
             self.status.addons.pop(component)
+        return self
+
+    def _service_status(self, obj):
+        """
+        Returns the service status object for the given secret object.
+        """
+        annotations = obj["metadata"]["annotations"]
+        # If no label is specified, derive one from the name
+        if "azimuth.stackhpc.com/service-label" in annotations:
+            label = annotations["azimuth.stackhpc.com/service-label"]
+        else:
+            name = obj["metadata"]["labels"]["azimuth.stackhpc.com/service-name"]
+            label = " ".join(
+                word.capitalize()
+                for word in name.removesuffix("-proxy").split("-")
+            )
+        return ServiceStatus(
+            fqdn = annotations["azimuth.stackhpc.com/zenith-fqdn"],
+            label = label.strip(),
+            icon_url = annotations.get("azimuth.stackhpc.com/service-icon-url"),
+            description = annotations.get("azimuth.stackhpc.com/service-description")
+        )
+
+    def service_secret_updated(self, obj):
+        """
+        Updates the status when a service secret is updated.
+        """
+        name = obj["metadata"]["labels"]["azimuth.stackhpc.com/service-name"]
+        self.status.services[name] = self._service_status(obj)
+        return self
+
+    def service_secret_deleted(self, obj):
+        """
+        Updates the status when a service secret is deleted.
+        """
+        name = obj["metadata"]["labels"]["azimuth.stackhpc.com/service-name"]
+        self.status.services.pop(name, None)
+        return self
+
+    def remove_unknown_services(self, secrets):
+        """
+        Given the current set of service secrets, remove any unknown services from the status.
+        """
+        services = {}
+        for obj in secrets:
+            name = obj["metadata"]["labels"]["azimuth.stackhpc.com/service-name"]
+            services[name] = self._service_status(obj)
+        self.status.services = services
+        return self

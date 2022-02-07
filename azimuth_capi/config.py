@@ -1,8 +1,43 @@
+import re
 import typing as t
 
 from pydantic import Field, AnyHttpUrl, conint, constr, root_validator
 
 from configomatic import Configuration as BaseConfiguration, LoggingConfiguration
+
+
+class SemVerVersion(str):
+    """
+    Type for a string that is a valid SemVer version.
+    """
+    REGEX = re.compile(r"^[0-9]+.[0-9]+.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$")
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not isinstance(v, str):
+            raise TypeError('string required')
+        if cls.REGEX.fullmatch(v) is None:
+            raise ValueError('invalid semver format')
+        return cls(v)
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({super().__repr__()})'
+
+
+class CAPIHelmChartConfig(BaseConfiguration):
+    """
+    Configuration for the CAPI Helm chart used to deploy clusters.
+    """
+    #: The repository containing the CAPI Helm charts
+    repository: AnyHttpUrl = "https://stackhpc.github.io/capi-helm-charts"
+    #: The name of the CAPI Helm chart to use to deploy clusters
+    name: constr(min_length = 1) = "openstack-cluster"
+    #: The version of the CAPI Helm chart to use to deploy clusters
+    version: SemVerVersion = "0.1.0-dev.0.main.121"
 
 
 class ZenithConfig(BaseConfiguration):
@@ -16,12 +51,19 @@ class ZenithConfig(BaseConfiguration):
     #: The port for the Zenith SSHD service
     sshd_port: conint(gt = 0) = 22
 
-    #: The Zenith client image to use
-    client_image: constr(min_length = 1) = "ghcr.io/stackhpc/zenith-client:main"
-    #: The image to use for waiting for the local API server to become available
-    apiserver_wait_image: constr(min_length = 1) = "ghcr.io/stackhpc/zenith-kube-wait:main"
-    #: The image to use for the API server MITM proxy
-    apiserver_mitm_image: constr(min_length = 1) = "ghcr.io/stackhpc/zenith-kube-mitm:main"
+    #: The repository for the Zenith charts
+    chart_repository: AnyHttpUrl = "https://stackhpc.github.io/zenith"
+    #: The version of the charts to use
+    chart_version: SemVerVersion = "0.1.0-dev.0.client-chart.138"
+
+    #: Defaults for use with the apiserver chart
+    apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
+    #: Defaults for use with the proxy chart
+    proxy_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
+
+    #: Icon URLs for built-in services
+    kubernetes_dashboard_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
+    monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
 
     @root_validator
     def validate_sshd_host_required(cls, values):
@@ -56,12 +98,12 @@ class Configuration(BaseConfiguration):
     logging: LoggingConfiguration = Field(default_factory = LoggingConfiguration)
 
     #: The API group of the cluster CRDs
-    api_group: str = "azimuth.stackhpc.com"
-    #: The repository containing the CAPI Helm charts
-    capi_helm_repo: str = "https://stackhpc.github.io/capi-helm-charts"
-
+    api_group: constr(min_length = 1) = "azimuth.stackhpc.com"
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
+
+    #: The CAPI Helm chart configuration
+    capi_helm_chart: CAPIHelmChartConfig = Field(default_factory = CAPIHelmChartConfig)
 
     #: Configuration for Zenith support
     zenith: ZenithConfig = Field(default_factory = ZenithConfig)

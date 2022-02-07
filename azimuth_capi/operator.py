@@ -4,7 +4,7 @@ import logging
 
 import kopf
 
-from easykube import Client, ApiError, ResourceSpec
+from easykube import Client, ApiError, ResourceSpec, PRESENT
 from easykube import resources as k8s
 
 from . import capi_resources as capi
@@ -102,58 +102,56 @@ async def on_cluster_create(client, name, namespace, body, spec, **kwargs):
         await AzimuthClusterTemplate(client).fetch(spec.template_name)
     )
     chart = Chart(
-        # The repository is a configuration item
-        repository = settings.capi_helm_repo,
-        # The chart name and version come from the template spec
-        name = template.spec.chart_name,
-        # The version comes from the template spec
-        version = template.spec.chart_version
+        repository = settings.capi_helm_chart.repository,
+        name = settings.capi_helm_chart.name,
+        version = settings.capi_helm_chart.version
     )
-    # Convert the cluster spec into overrides for the Helm values
-    cluster_values = {
-        "global": {
-            "cloudCredentialsSecretName": secret.metadata.name,
-        },
-        "controlPlane": {
-            "machineFlavor": spec.control_plane_machine_size,
-            "machineRootVolumeSize": spec.machine_root_volume_size,
-            "healthCheck": {
-                "enabled": spec.autohealing,
+    # Generate the Helm values for the release
+    helm_values = deepmerge(
+        template.spec.values.dict(by_alias = True),
+        {
+            "global": {
+                "cloudCredentialsSecretName": spec.cloud_credentials_secret_name,
             },
-        },
-        "nodeGroupDefaults": {
-            "machineRootVolumeSize": spec.machine_root_volume_size,
-            "healthCheck": {
-                "enabled": spec.autohealing,
+            "controlPlane": {
+                "machineFlavor": spec.control_plane_machine_size,
+                "machineRootVolumeSize": spec.machine_root_volume_size,
+                "healthCheck": {
+                    "enabled": spec.autohealing,
+                },
             },
-        },
-        "nodeGroups": [
-            {
-                "name": node_group.name,
-                "machineFlavor": node_group.machine_size,
-                "machineCount": node_group.count,
-            }
-            for node_group in spec.node_groups
-        ],
-        "addons": {
-            "certManager": {
-                "enabled": spec.addons.cert_manager,
+            "nodeGroupDefaults": {
+                "machineRootVolumeSize": spec.machine_root_volume_size,
+                "healthCheck": {
+                    "enabled": spec.autohealing,
+                },
             },
-            "ingress": {
-                "enabled": spec.addons.ingress,
+            "nodeGroups": [
+                {
+                    "name": node_group.name,
+                    "machineFlavor": node_group.machine_size,
+                    "machineCount": node_group.count,
+                }
+                for node_group in spec.node_groups
+            ],
+            "addons": {
+                "kubernetesDashboard": {
+                    "enabled": spec.addons.dashboard,
+                },
+                "certManager": {
+                    "enabled": spec.addons.cert_manager,
+                },
+                "ingress": {
+                    "enabled": spec.addons.ingress,
+                },
+                "monitoring": {
+                    "enabled": spec.addons.monitoring,
+                },
             },
-            "monitoring": {
-                "enabled": spec.addons.monitoring,
-            },
-        },
-    }
-    helm_values = template.spec.values.dict(by_alias = True)
-    helm_values = deepmerge(helm_values, cluster_values)
+        }
+    )
     if settings.zenith.enabled:
-        helm_values = deepmerge(
-            helm_values,
-            await zenith_values(client, body, settings.zenith)
-        )
+        helm_values = deepmerge(helm_values, await zenith_values(client, body, secret))
     # Use Helm to install or upgrade the release
     await Release(name, namespace).install_or_upgrade(chart, helm_values)
 
@@ -220,11 +218,24 @@ async def on_cluster_resume(client, name, namespace, body, status, **kwargs):
             }
         )
     ])
-    await AzimuthClusterStatus(client).replace(
-        name,
-        dict(body, status = builder.build()),
-        namespace = namespace
-    )
+    # Also account for services that have been removed
+    builder.remove_unknown_services([
+        secret
+        async for secret in k8s.Secret(client).list(
+            namespace = namespace,
+            labels = {
+                "capi.stackhpc.com/cluster": name,
+                "azimuth.stackhpc.com/service-name": PRESENT,
+            }
+        )
+    ])
+    changed, next_status = builder.build()
+    if changed:
+        await AzimuthClusterStatus(client).replace(
+            name,
+            dict(body, status = next_status),
+            namespace = namespace
+        )
 
 
 def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", **kwargs):
@@ -252,14 +263,15 @@ def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", 
                     builder = ClusterStatusBuilder(cluster.get("status", {}))
                     # Run the update function with the builder
                     await fn(parent = cluster, builder = builder, **inner)
-                    cluster.status = builder.build()
-                    # The cluster CRD uses a status subresource, so we have to specifically
-                    # use that in order to replace the status
-                    await AzimuthClusterStatus(inner["client"]).replace(
-                        cluster.metadata.name,
-                        cluster,
-                        namespace = cluster.metadata.namespace
-                    )
+                    changed, next_status = builder.build()
+                    if changed:
+                        # The cluster CRD uses a status subresource, so we have to specifically
+                        # use that in order to replace the status
+                        await AzimuthClusterStatus(inner["client"]).replace(
+                            cluster.metadata.name,
+                            dict(cluster, status = next_status),
+                            namespace = cluster.metadata.namespace
+                        )
                 except ApiError as exc:
                     # On a 404, don't bother trying again as the cluster is gone
                     if exc.response.status_code == 404:
@@ -341,7 +353,25 @@ async def on_addon_job_event(builder, type, body, **kwargs):
 )
 async def on_cluster_secret_event(builder, type, body, name, **kwargs):
     """
-    Exectes on events for CAPI cluster secrets.
+    Executes on events for CAPI cluster secrets.
     """
     if type != "DELETED" and name.endswith("-kubeconfig"):
         builder.kubeconfig_secret_updated(body)
+
+
+@on_managed_object_event(
+    k8s.Secret.api_version,
+    k8s.Secret.name,
+    # Secrets representing services should have a service-name label
+    labels = {
+        "azimuth.stackhpc.com/service-name": kopf.PRESENT,
+    }
+)
+async def on_service_secret_event(builder, type, body, **kwargs):
+    """
+    Executes on events for Zenith service secrets.
+    """
+    if type == "DELETED":
+        builder.service_secret_deleted(body)
+    else:
+        builder.service_secret_updated(body)

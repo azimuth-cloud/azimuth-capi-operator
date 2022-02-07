@@ -1,6 +1,6 @@
 import typing as t
 
-from pydantic import Extra, Field, constr, conint
+from pydantic import Extra, Field, AnyHttpUrl, constr, conint
 
 from ..util import BaseModel, Enum, Dict
 
@@ -27,6 +27,10 @@ class AddonsSpec(BaseModel):
     """
     The spec for the addons of the cluster.
     """
+    dashboard: bool = Field(
+        False,
+        description = "Indicates if the Kubernetes dashboard should be enabled."
+    )
     cert_manager: bool = Field(
         False,
         description = "Indicates if cert-manager should be enabled."
@@ -201,6 +205,28 @@ class AddonStatus(BaseModel):
     )
 
 
+class ServiceStatus(BaseModel):
+    """
+    The status of a service in the cluster.
+    """
+    fqdn: constr(min_length = 1) = Field(
+        ...,
+        description = "The FQDN of the service."
+    )
+    label: constr(min_length = 1) = Field(
+        ...,
+        description = "A human-readable label for the service."
+    )
+    icon_url: t.Optional[AnyHttpUrl] = Field(
+        None,
+        description = "A URL to an icon for the service."
+    )
+    description: t.Optional[str] = Field(
+        None,
+        description = "A brief description of the service."
+    )
+
+
 class ClusterStatus(BaseModel):
     """
     The status of the cluster.
@@ -243,6 +269,10 @@ class ClusterStatus(BaseModel):
     addons: Dict[str, AddonStatus] = Field(
         default_factory = dict,
         description = "The status of the addons for the cluster, indexed by addon name."
+    )
+    services: Dict[str, ServiceStatus] = Field(
+        default_factory = dict,
+        description = "The services for the cluster, indexed by service name."
     )
 
 
