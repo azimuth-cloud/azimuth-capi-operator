@@ -1,3 +1,13 @@
+# Configuration for the operator
+# For all available options, see azimuth_capi/config.py
+config:
+  # Settings for the Zenith support
+  # Zenith support is enabled if the registrar admin URL and SSHD host are given
+  zenith: {}
+    # registrarAdminUrl:
+    # sshdHost:
+    # sshdPort:
+
 # The image to use for the operator
 image:
   repository: ghcr.io/stackhpc/azimuth-capi-operator

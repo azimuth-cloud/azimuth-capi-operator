@@ -54,6 +54,8 @@ class ZenithConfig(BaseConfiguration):
     #: The repository for the Zenith charts
     chart_repository: AnyHttpUrl = "https://stackhpc.github.io/zenith"
     #: The version of the charts to use
+    #: When changing this, be aware that the operator may depend on the layout of
+    #: the Helm values at a particular version
     chart_version: SemVerVersion = "0.1.0-dev.0.main.139"
 
     #: Defaults for use with the apiserver chart
@@ -66,7 +68,7 @@ class ZenithConfig(BaseConfiguration):
     monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
 
     @root_validator
-    def validate_sshd_host_required(cls, values):
+    def validate_zenith_enabled(cls, values):
         """
         Ensures that the SSHD host is set when the registrar URL is given.
         """
