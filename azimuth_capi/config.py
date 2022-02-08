@@ -37,7 +37,7 @@ class CAPIHelmChartConfig(BaseConfiguration):
     #: The name of the CAPI Helm chart to use to deploy clusters
     name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    version: SemVerVersion = "0.1.0-dev.0.main.121"
+    version: SemVerVersion = "0.1.0-dev.0.main.123"
 
 
 class ZenithConfig(BaseConfiguration):
@@ -54,7 +54,7 @@ class ZenithConfig(BaseConfiguration):
     #: The repository for the Zenith charts
     chart_repository: AnyHttpUrl = "https://stackhpc.github.io/zenith"
     #: The version of the charts to use
-    chart_version: SemVerVersion = "0.1.0-dev.0.client-chart.138"
+    chart_version: SemVerVersion = "0.1.0-dev.0.main.139"
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)

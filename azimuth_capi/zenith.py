@@ -92,7 +92,7 @@ async def ensure_zenith_secret(
             },
         }
         kopf.adopt(secret_data, cluster)
-        return await Secret(client).create(secret_data)
+        return await Secret(client).create(secret_data, namespace = namespace)
     else:
         return await Secret(client).patch(
             secret_name,
