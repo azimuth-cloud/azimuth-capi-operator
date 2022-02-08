@@ -13,6 +13,9 @@ spec:
   template:
     metadata:
       labels: {{ include "azimuth-capi-operator.selectorLabels" . | nindent 8 }}
+      annotations:
+        # Force the deployment to roll when the config changes
+        azimuth.stackhpc.com/config-hash: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ include "azimuth-capi-operator.fullname" . }}
       {{- with .Values.imagePullSecrets }}
@@ -26,6 +29,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
+            - name: etc-azimuth
+              mountPath: /etc/azimuth
+              readOnly: true
             - name: tmp
               mountPath: /tmp
         # The operator delegates Kubernetes authentication to "kubectl proxy"
@@ -47,5 +53,8 @@ spec:
       tolerations: {{ toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        - name: etc-azimuth
+          secret:
+            secretName: {{ include "azimuth-capi-operator.fullname" . }}
         - name: tmp
           emptyDir: {}

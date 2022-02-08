@@ -56,6 +56,10 @@ class ClusterTemplateSpec(BaseModel):
         ...,
         description = "The human-readable name of the template."
     )
+    deprecated: bool = Field(
+        False,
+        description = "Indicates if this is a deprecated template."
+    )
     description: constr(min_length = 1) = Field(
         ...,
         description = (
@@ -63,21 +67,9 @@ class ClusterTemplateSpec(BaseModel):
             "using the template."
         )
     )
-    chart_name: constr(min_length = 1) = Field(
-        "openstack-cluster",
-        description = "The name of the CAPI Helm chart to use."
-    )
-    chart_version: constr(min_length = 1) = Field(
-        ...,
-        description = "The version of the specified CAPI Helm chart to use."
-    )
     values: ClusterTemplateValues = Field(
         ...,
         description = "The values to use when deploying the Helm chart."
-    )
-    deprecated: bool = Field(
-        False,
-        description = "Indicates if this is a deprecated template."
     )
 
 

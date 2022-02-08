@@ -17,12 +17,18 @@ class Loader:
         # Make a toyaml filter available
         self.env.filters["toyaml"] = yaml.safe_dump
 
+    def loads(self, template, **params):
+        """
+        Render the specified template with the given params and return the result as a string.
+        """
+        return self.env.get_template(template).render(**params)
+
     def load(self, template, **params):
         """
-        Render the specified template with the given params, load the result as
-        YAML and return it.
+        Render the specified template with the given params, load the result as YAML and
+        return the resulting object.
         """
-        return yaml.safe_load(self.env.get_template(template).render(**params))
+        return yaml.safe_load(self.loads(template, **params))
 
 
 default_loader = Loader(settings = settings, models = models)
