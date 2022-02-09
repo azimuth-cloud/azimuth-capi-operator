@@ -27,7 +27,7 @@ spec:
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           image: {{ printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.image.tag) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env: {{ toYaml .Values.extraEnv | nindent 12 }}
+          env: {{ tpl (toYaml .Values.extraEnv) . | nindent 12 }}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: etc-azimuth
