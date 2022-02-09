@@ -8,6 +8,9 @@ config:
     # sshdHost:
     # sshdPort:
 
+# Extra environment variables
+extraEnv: []
+
 # Additional configuration volumes that will be added to the projected
 # config volume - should be in the format expected by projected volume sources
 extraConfigVolumes: []
