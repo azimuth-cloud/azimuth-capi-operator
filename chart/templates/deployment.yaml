@@ -54,7 +54,12 @@ spec:
       {{- end }}
       volumes:
         - name: etc-azimuth
-          secret:
-            secretName: {{ include "azimuth-capi-operator.fullname" . }}
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "azimuth-capi-operator.fullname" . }}
+              {{- range .Values.extraConfigVolumes }}
+              - {{ tpl (toYaml .) $ | nindent 16 }}
+              {{- end }}
         - name: tmp
           emptyDir: {}

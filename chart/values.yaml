@@ -8,6 +8,10 @@ config:
     # sshdHost:
     # sshdPort:
 
+# Additional configuration volumes that will be added to the projected
+# config volume - should be in the format expected by projected volume sources
+extraConfigVolumes: []
+
 # The image to use for the operator
 image:
   repository: ghcr.io/stackhpc/azimuth-capi-operator

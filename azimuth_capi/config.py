@@ -3,7 +3,7 @@ import typing as t
 
 from pydantic import Field, AnyHttpUrl, conint, constr, root_validator
 
-from configomatic import Configuration as BaseConfiguration, LoggingConfiguration
+from configomatic import Configuration as BaseConfiguration, Section, LoggingConfiguration
 
 
 class SemVerVersion(str):
@@ -28,7 +28,7 @@ class SemVerVersion(str):
         return f'{self.__class__.__name__}({super().__repr__()})'
 
 
-class CAPIHelmChartConfig(BaseConfiguration):
+class CAPIHelmChartConfig(Section):
     """
     Configuration for the CAPI Helm chart used to deploy clusters.
     """
@@ -40,7 +40,7 @@ class CAPIHelmChartConfig(BaseConfiguration):
     version: SemVerVersion = "0.1.0-dev.0.main.123"
 
 
-class ZenithConfig(BaseConfiguration):
+class ZenithConfig(Section):
     """
     Configuration for Zenith support.
     """
