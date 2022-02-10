@@ -1,0 +1,79 @@
+global:
+  cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
+
+controlPlane:
+  machineFlavor: "{{ spec.control_plane_machine_size }}"
+  machineRootVolumeSize: {{ spec.machine_root_volume_size }}
+  healthCheck:
+    enabled: {{ "true" if spec.autohealing else "false" }}
+
+nodeGroupDefaults:
+  machineRootVolumeSize: {{ spec.machine_root_volume_size }}
+  healthCheck:
+    enabled: {{ "true" if spec.autohealing else "false" }}
+
+nodeGroups:
+  {% for node_group in spec.node_groups %}
+  - name: "{{ node_group.name }}"
+    machineFlavor: "{{ node_group.machine_size }}"
+    machineCount: {{ node_group.count }}
+  {% endfor %}
+
+addons:
+  kubernetesDashboard:
+    enabled: {{ "true" if spec.addons.dashboard else "false" }}
+  certManager:
+    enabled: {{ "true" if spec.addons.cert_manager else "false" }}
+  ingress:
+    enabled: {{ "true" if spec.addons.ingress else "false" }}
+  monitoring:
+    enabled: {{ "true" if spec.addons.monitoring else "false" }}
+  # Add kubeapps as an extra addon
+  extraAddons:
+    kubeapps:
+      enabled: {{ "true" if spec.addons.apps else "false" }}
+      dependsOn: [storage]
+      installType: helm
+      helm:
+        chart:
+          repo: "{{ settings.kubeapps_release.chart_repository }}"
+          name: "{{ settings.kubeapps_release.chart_name }}"
+          version: "{{ settings.kubeapps_release.chart_version }}"
+        release:
+          namespace: "{{ settings.kubeapps_release.release_namespace }}"
+          values:
+            # Disable replication but enable persistence for postgresql
+            postgresql:
+              replication:
+                enabled: false
+              persistence:
+                enabled: true
+              # Enabling the security context is required for volume permissions
+              securityContext:
+                enabled: true
+            {% if settings.zenith.enabled %}
+            # If Zenith is enabled, tell kubeapps there is an external auth proxy
+            authProxy:
+              enabled: true
+              external: true
+              skipKubeappsLoginPage: true
+              # Setting these causes the login/logout to short-circuit
+              # The user is automatically logged out when their cloud token expires
+              oauthLoginURI: /
+              oauthLogoutURI: /
+            {% endif %}
+      # kubeapps uses the bitnami postgresql chart, which requires the generated
+      # postgresql password to be manually passed in for upgrades
+      # https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues/#credential-errors-while-upgrading-chart-releases
+      # We can use a pre-install hook to do this
+      hooks:
+        # This is interpreted as a Go template by Helm as well as being in a Jinja template here
+        # So we have to escape the go-template for Jinja and for Helm
+        preInstall: |
+          function postgresql_passwd() {
+              kubectl get secret kubeapps-postgresql \
+                -n {{ settings.kubeapps_release.release_namespace }} \
+                -o go-template='{% raw %}{{ "{{" }} index .data "postgresql-password" | base64decode }}{% endraw %}' \
+                2>/dev/null
+          }
+          export HELM_EXTRA_ARGS="--set-string postgresql.postgresqlPassword=$(postgresql_passwd)"

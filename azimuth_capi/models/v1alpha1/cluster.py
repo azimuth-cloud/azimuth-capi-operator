@@ -43,6 +43,10 @@ class AddonsSpec(BaseModel):
         False,
         description = "Indicates if monitoring should be enabled."
     )
+    apps: bool = Field(
+        False,
+        description = "Indicates if Kubeapps should be enabled."
+    )
 
 
 class ClusterSpec(BaseModel):
