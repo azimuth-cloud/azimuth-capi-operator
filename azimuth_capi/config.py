@@ -54,12 +54,6 @@ class KubeappsHelmReleaseConfig(Section):
     release_namespace: constr(min_length = 1) = "kubeapps"
 
 
-class ExtraProxy(Section):
-    """
-    Config for an additional proxy to be deployed.
-    """
-
-
 class ZenithConfig(Section):
     """
     Configuration for Zenith support.
@@ -87,11 +81,6 @@ class ZenithConfig(Section):
     kubernetes_dashboard_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
     monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
     kubeapps_icon_url: AnyHttpUrl = "https://user-images.githubusercontent.com/642657/153432175-b4aefccc-b94d-4373-b471-7afa02575a4b.png"
-
-    #: Additional proxies to pre-deploy in anticipation of services being deployed
-    #: in the workload cluster
-    #: TODO: REMOVE THIS - IT IS A HACK FOR THE IRIS DEMO AND NOT HOW THIS SHOULD WORK!
-    extra_proxies: t.List[ExtraProxy] = Field(default_factory = list)
 
     @root_validator
     def validate_zenith_enabled(cls, values):
