@@ -37,7 +37,7 @@ class CAPIHelmChartConfig(Section):
     #: The name of the CAPI Helm chart to use to deploy clusters
     name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    version: SemVerVersion = "0.1.0-dev.0.main.123"
+    version: SemVerVersion = ">=0.1.0-dev.0.main,<0.1.0-dev.0.main.9999"
 
 
 class KubeappsHelmReleaseConfig(Section):
@@ -49,7 +49,7 @@ class KubeappsHelmReleaseConfig(Section):
     #: The name of the kubeapps Helm chart
     chart_name: constr(min_length = 1) = "kubeapps"
     #: The version of the kubeapps Helm chart to use
-    chart_version: SemVerVersion = "7.7.4"
+    chart_version: SemVerVersion = "~7.7.4"
     #: The release namespace for kubeapps installations
     release_namespace: constr(min_length = 1) = "kubeapps"
 
@@ -70,7 +70,7 @@ class ZenithConfig(Section):
     #: The version of the charts to use
     #: When changing this, be aware that the operator may depend on the layout of
     #: the Helm values at a particular version
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.142"
+    chart_version: SemVerVersion = ">=0.1.0-dev.0.main,<0.1.0-dev.0.main.9999"
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
