@@ -193,6 +193,7 @@ async def zenith_service_values(
     mitm_auth_inject,
     zenith_auth_params,
     icon_url = None,
+    label = None,
     description = None
 ):
     """
@@ -207,6 +208,8 @@ async def zenith_service_values(
         extra_annotations = {}
         if icon_url:
             extra_annotations["azimuth.stackhpc.com/service-icon-url"] = icon_url
+        if label:
+            extra_annotations["azimuth.stackhpc.com/service-label"] = label
         if description:
             extra_annotations["azimuth.stackhpc.com/service-description"] = description
         zenith_secret = await ensure_zenith_secret(
@@ -313,6 +316,23 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             },
             zenith_auth_params,
             settings.zenith.monitoring_icon_url
+        ),
+        zenith_service_values(
+            client,
+            cluster,
+            "kubeapps",
+            settings.kubeapps_release.release_namespace,
+            cluster["spec"]["addons"]["apps"],
+            {
+                "host": "kubeapps",
+                "port": 80,
+            },
+            {
+                "type": "serviceaccount",
+            },
+            zenith_auth_params,
+            settings.zenith.kubeapps_icon_url,
+            label = "Applications"
         )
     )
     return deepmerge(*values)

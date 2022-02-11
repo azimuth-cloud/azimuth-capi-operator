@@ -109,46 +109,7 @@ async def on_cluster_create(client, name, namespace, body, spec, **kwargs):
     # Generate the Helm values for the release
     helm_values = deepmerge(
         template.spec.values.dict(by_alias = True),
-        {
-            "global": {
-                "cloudCredentialsSecretName": spec.cloud_credentials_secret_name,
-            },
-            "controlPlane": {
-                "machineFlavor": spec.control_plane_machine_size,
-                "machineRootVolumeSize": spec.machine_root_volume_size,
-                "healthCheck": {
-                    "enabled": spec.autohealing,
-                },
-            },
-            "nodeGroupDefaults": {
-                "machineRootVolumeSize": spec.machine_root_volume_size,
-                "healthCheck": {
-                    "enabled": spec.autohealing,
-                },
-            },
-            "nodeGroups": [
-                {
-                    "name": node_group.name,
-                    "machineFlavor": node_group.machine_size,
-                    "machineCount": node_group.count,
-                }
-                for node_group in spec.node_groups
-            ],
-            "addons": {
-                "kubernetesDashboard": {
-                    "enabled": spec.addons.dashboard,
-                },
-                "certManager": {
-                    "enabled": spec.addons.cert_manager,
-                },
-                "ingress": {
-                    "enabled": spec.addons.ingress,
-                },
-                "monitoring": {
-                    "enabled": spec.addons.monitoring,
-                },
-            },
-        }
+        default_loader.load("cluster-values.yaml", spec = spec, settings = settings)
     )
     if settings.zenith.enabled:
         helm_values = deepmerge(helm_values, await zenith_values(client, body, secret))
