@@ -4,8 +4,13 @@ import logging
 
 import kopf
 
-from easykube import Client, ApiError, ResourceSpec, PRESENT
-from easykube import resources as k8s
+from easykube import (
+    Configuration,
+    ApiError,
+    ResourceSpec,
+    PRESENT,
+    resources as k8s
+)
 
 from . import capi_resources as capi
 from .builder import ClusterStatusBuilder
@@ -18,6 +23,10 @@ from .zenith import zenith_values
 
 
 logger = logging.getLogger(__name__)
+
+
+# Get the easykube configuration from the environment
+ekconfig = Configuration.from_environment()
 
 
 @kopf.on.startup()
@@ -66,7 +75,7 @@ def on(event, *args, **kwargs):
                 return await fn(client = client, **inner)
             else:
                 try:
-                    async with Client.from_environment() as client:
+                    async with ekconfig.async_client() as client:
                         return await fn(client = client, **inner)
                 except ApiError as exc:
                     raise kopf.TemporaryError(str(exc), delay = 1)

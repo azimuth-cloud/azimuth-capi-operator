@@ -12,12 +12,10 @@ import httpx
 import kopf
 import yaml
 
-from easykube import ApiError
-from easykube.resources import Secret
+from easykube import ApiError, resources as k8s
 
 from .config import settings
 from .helm import Chart, Release
-from .template import default_loader
 from .utils import deepmerge
 
 
@@ -53,7 +51,7 @@ async def ensure_zenith_secret(
     )
     # Even if the secret already exists, we will patch the labels and annotations to match
     try:
-        _ = await Secret(client).fetch(secret_name, namespace = namespace)
+        _ = await k8s.Secret(client).fetch(secret_name, namespace = namespace)
     except ApiError as exc:
         if exc.status_code != 404:
             raise
@@ -92,9 +90,9 @@ async def ensure_zenith_secret(
             },
         }
         kopf.adopt(secret_data, cluster)
-        return await Secret(client).create(secret_data, namespace = namespace)
+        return await k8s.Secret(client).create(secret_data, namespace = namespace)
     else:
-        return await Secret(client).patch(
+        return await k8s.Secret(client).patch(
             secret_name,
             {
                 "metadata": {
@@ -241,7 +239,7 @@ async def zenith_service_values(
             }
         )
     else:
-        await Secret(client).delete(secret_name, namespace = cluster_namespace)
+        await k8s.Secret(client).delete(secret_name, namespace = cluster_namespace)
     # Install or uninstall the Zenith client as an extra addon
     return {
         "addons": {

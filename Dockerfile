@@ -47,10 +47,7 @@ RUN pip install --no-deps --requirement /application/requirements.txt
 COPY . /application
 RUN pip install --no-deps -e /application
 
-# Install the startup script
-COPY ./scripts/* /usr/bin/
-
 # By default, run the operator using kopf
 USER $APP_UID
 ENTRYPOINT ["tini", "-g", "--"]
-CMD ["azimuth-capi-operator", "--all-namespaces"]
+CMD ["kopf", "run", "--module", "azimuth_capi.operator", "--all-namespaces"]

@@ -45,11 +45,3 @@ affinity: {}
 
 # Tolerations for operator pods
 tolerations: []
-
-# Configuration for the kubectl proxy container
-kubectlProxy:
-  image:
-    repository: bitnami/kubectl
-    pullPolicy: IfNotPresent
-    tag: ""  # Defaults to the Kubernetes version if not given
-  resources: {}

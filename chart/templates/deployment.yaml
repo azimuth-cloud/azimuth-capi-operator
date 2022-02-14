@@ -35,15 +35,6 @@ spec:
               readOnly: true
             - name: tmp
               mountPath: /tmp
-        # The operator delegates Kubernetes authentication to "kubectl proxy"
-        - name: kubectl-proxy
-          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
-          {{- $vn := semver .Capabilities.KubeVersion.Version }}
-          {{- $defaultTag := printf "%d.%d.%d" $vn.Major $vn.Minor $vn.Patch }}
-          image: {{ printf "%s:%s" .Values.kubectlProxy.image.repository (default $defaultTag .Values.kubectlProxy.image.tag) }}
-          imagePullPolicy: {{ .Values.kubectlProxy.image.pullPolicy }}
-          args: [proxy]
-          resources: {{ toYaml .Values.kubectlProxy.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector: {{ toYaml . | nindent 8 }}
       {{- end }}
