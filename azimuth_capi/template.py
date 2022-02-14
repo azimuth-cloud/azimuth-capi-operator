@@ -2,7 +2,7 @@ import jinja2
 import yaml
 
 from .config import settings
-from . import models
+from . import models, utils
 
 
 class Loader:
@@ -14,8 +14,11 @@ class Loader:
         loader = jinja2.PackageLoader(self.__module__.rsplit(".", maxsplit = 1)[0])
         self.env = jinja2.Environment(loader = loader, autoescape = False)
         self.env.globals.update(globals)
-        # Make a toyaml filter available
-        self.env.filters["toyaml"] = yaml.safe_dump
+        self.env.filters.update(
+            deepmerge = utils.deepmerge,
+            fromyaml = yaml.safe_load,
+            toyaml = yaml.safe_dump
+        )
 
     def loads(self, template, **params):
         """

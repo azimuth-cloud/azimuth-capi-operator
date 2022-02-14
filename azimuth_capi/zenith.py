@@ -277,6 +277,7 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
     }
     values = await asyncio.gather(
         zenith_apiserver_values(client, cluster),
+        # TODO: REMOVE THESE FIXED DEPLOYMENTS AND DO IT PROPERLY
         zenith_service_values(
             client,
             cluster,
@@ -319,7 +320,7 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             client,
             cluster,
             "kubeapps",
-            settings.kubeapps_release.release_namespace,
+            settings.kubeapps.release_namespace,
             cluster["spec"]["addons"]["apps"],
             {
                 "host": "kubeapps",
@@ -331,6 +332,23 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             zenith_auth_params,
             settings.zenith.kubeapps_icon_url,
             label = "Applications"
+        ),
+        zenith_service_values(
+            client,
+            cluster,
+            "jupyterhub",
+            "default",
+            cluster["spec"]["addons"]["apps"],
+            {
+                "host": "proxy-public",
+                "port": 80,
+            },
+            # JupyterHub consumes the X-Remote-User header from Azimuth
+            # We do not have to inject any authentication
+            {},
+            zenith_auth_params,
+            settings.zenith.jupyterhub_icon_url,
+            label = "JupyterHub"
         )
     )
     return deepmerge(*values)

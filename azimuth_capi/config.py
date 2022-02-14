@@ -40,9 +40,9 @@ class CAPIHelmChartConfig(Section):
     version: SemVerVersion = "0.1.0-dev.0.main.124"
 
 
-class KubeappsHelmReleaseConfig(Section):
+class KubeappsConfig(Section):
     """
-    Configuration for the Kubeapps Helm release for installing apps on workload clusters.
+    Configuration for the Kubeapps installation on workload clusters.
     """
     #: The repository containing the kubeapps Helm chart
     chart_repository: AnyHttpUrl = "https://charts.bitnami.com/bitnami"
@@ -52,6 +52,8 @@ class KubeappsHelmReleaseConfig(Section):
     chart_version: SemVerVersion = "~7.7.4"
     #: The release namespace for kubeapps installations
     release_namespace: constr(min_length = 1) = "kubeapps"
+    # The values to use for the release
+    release_values: t.Dict[str, t.Any] = Field(default_factory = dict)
 
 
 class ZenithConfig(Section):
@@ -81,6 +83,7 @@ class ZenithConfig(Section):
     kubernetes_dashboard_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
     monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
     kubeapps_icon_url: AnyHttpUrl = "https://user-images.githubusercontent.com/642657/153432175-b4aefccc-b94d-4373-b471-7afa02575a4b.png"
+    jupyterhub_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/jupyter/design/master/logos/Square%20Logo/squarelogo-greytext-orangebody-greymoons/squarelogo-greytext-orangebody-greymoons.png"
 
     @root_validator
     def validate_zenith_enabled(cls, values):
@@ -123,7 +126,7 @@ class Configuration(BaseConfiguration):
     capi_helm_chart: CAPIHelmChartConfig = Field(default_factory = CAPIHelmChartConfig)
 
     #: Configuration for the Kubeapps release
-    kubeapps_release: KubeappsHelmReleaseConfig = Field(default_factory = KubeappsHelmReleaseConfig)
+    kubeapps: KubeappsConfig = Field(default_factory = KubeappsConfig)
 
     #: Configuration for Zenith support
     zenith: ZenithConfig = Field(default_factory = ZenithConfig)
