@@ -285,7 +285,7 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             "kubernetes-dashboard",
             cluster["spec"]["addons"]["dashboard"],
             {
-                "host": "kubernetes-dashboard",
+                "host": "kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local",
                 "port": 443,
                 "scheme": "https",
             },
@@ -302,7 +302,7 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             "monitoring-system",
             cluster["spec"]["addons"]["monitoring"],
             {
-                "host": "monitoring-grafana",
+                "host": "monitoring-grafana.monitoring-system.svc.cluster.local",
                 "port": 80,
             },
             {
@@ -323,7 +323,7 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             settings.kubeapps.release_namespace,
             cluster["spec"]["addons"]["apps"],
             {
-                "host": "kubeapps",
+                "host": f"kubeapps.{settings.kubeapps.release_namespace}.svc.cluster.local",
                 "port": 80,
             },
             {
@@ -340,7 +340,7 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             "default",
             cluster["spec"]["addons"]["apps"],
             {
-                "host": "proxy-public",
+                "host": "proxy-public.default.svc.cluster.local",
                 "port": 80,
             },
             # JupyterHub consumes the X-Remote-User header from Azimuth
