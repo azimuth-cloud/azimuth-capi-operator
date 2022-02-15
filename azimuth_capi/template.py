@@ -15,7 +15,7 @@ class Loader:
         self.env = jinja2.Environment(loader = loader, autoescape = False)
         self.env.globals.update(globals)
         self.env.filters.update(
-            deepmerge = utils.deepmerge,
+            mergeconcat = utils.mergeconcat,
             fromyaml = yaml.safe_load,
             toyaml = yaml.safe_dump
         )

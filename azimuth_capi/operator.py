@@ -18,7 +18,7 @@ from .config import settings
 from .helm import Chart, Release
 from .models import v1alpha1 as api
 from .template import default_loader
-from .utils import deepmerge
+from .utils import mergeconcat
 from .zenith import zenith_values
 
 
@@ -111,17 +111,18 @@ async def on_cluster_create(client, name, namespace, body, spec, **kwargs):
         await AzimuthClusterTemplate(client).fetch(spec.template_name)
     )
     chart = Chart(
-        repository = settings.capi_helm_chart.repository,
-        name = settings.capi_helm_chart.name,
-        version = settings.capi_helm_chart.version
+        repository = settings.capi_helm.chart_repository,
+        name = settings.capi_helm.chart_name,
+        version = settings.capi_helm.chart_version
     )
     # Generate the Helm values for the release
-    helm_values = deepmerge(
+    helm_values = mergeconcat(
+        settings.capi_helm.default_values,
         template.spec.values.dict(by_alias = True),
         default_loader.load("cluster-values.yaml", spec = spec, settings = settings)
     )
     if settings.zenith.enabled:
-        helm_values = deepmerge(helm_values, await zenith_values(client, body, secret))
+        helm_values = mergeconcat(helm_values, await zenith_values(client, body, secret))
     # Use Helm to install or upgrade the release
     await Release(name, namespace).install_or_upgrade(chart, helm_values)
 

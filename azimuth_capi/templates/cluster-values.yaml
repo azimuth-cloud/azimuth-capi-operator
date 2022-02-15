@@ -65,7 +65,7 @@ addons:
         release:
           namespace: "{{ settings.kubeapps.release_namespace }}"
           values:
-            {{ kubeapps_default_values | fromyaml | deepmerge(settings.kubeapps.release_values) | toyaml | indent(12) }}
+            {{ kubeapps_default_values | fromyaml | mergeconcat(settings.kubeapps.release_values) | toyaml | indent(12) }}
       # kubeapps uses the bitnami postgresql chart, which requires the generated
       # postgresql password to be manually passed in for upgrades
       # https://docs.bitnami.com/general/how-to/troubleshoot-helm-chart-issues/#credential-errors-while-upgrading-chart-releases

@@ -16,7 +16,7 @@ from easykube import ApiError, resources as k8s
 
 from .config import settings
 from .helm import Chart, Release
-from .utils import deepmerge
+from .utils import mergeconcat
 
 
 def b64encode(value):
@@ -124,7 +124,7 @@ async def zenith_apiserver_values(client, cluster):
             name = "zenith-apiserver",
             version = settings.zenith.chart_version
         ),
-        deepmerge(
+        mergeconcat(
             settings.zenith.apiserver_defaults,
             {
                 "zenithClient": {
@@ -219,7 +219,7 @@ async def zenith_service_values(
             },
             extra_annotations
         )
-        release_values = deepmerge(
+        release_values = mergeconcat(
             release_values,
             {
                 "upstream": service_upstream,
@@ -351,4 +351,4 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
             label = "JupyterHub"
         )
     )
-    return deepmerge(*values)
+    return mergeconcat(*values)

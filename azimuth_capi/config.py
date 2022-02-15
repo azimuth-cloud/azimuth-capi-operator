@@ -28,16 +28,19 @@ class SemVerVersion(str):
         return f'{self.__class__.__name__}({super().__repr__()})'
 
 
-class CAPIHelmChartConfig(Section):
+class CAPIHelmConfig(Section):
     """
     Configuration for the CAPI Helm chart used to deploy clusters.
     """
     #: The repository containing the CAPI Helm charts
-    repository: AnyHttpUrl = "https://stackhpc.github.io/capi-helm-charts"
+    chart_repository: AnyHttpUrl = "https://stackhpc.github.io/capi-helm-charts"
     #: The name of the CAPI Helm chart to use to deploy clusters
-    name: constr(min_length = 1) = "openstack-cluster"
+    chart_name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    version: SemVerVersion = "0.1.0-dev.0.main.124"
+    chart_version: SemVerVersion = "0.1.0-dev.0.main.124"
+    #: The default values to use for all clusters
+    #: Values defined in templates take precedence
+    default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
 
 
 class KubeappsConfig(Section):
@@ -122,8 +125,8 @@ class Configuration(BaseConfiguration):
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
 
-    #: The CAPI Helm chart configuration
-    capi_helm_chart: CAPIHelmChartConfig = Field(default_factory = CAPIHelmChartConfig)
+    #: The CAPI Helm configuration
+    capi_helm: CAPIHelmConfig = Field(default_factory = CAPIHelmConfig)
 
     #: Configuration for the Kubeapps release
     kubeapps: KubeappsConfig = Field(default_factory = KubeappsConfig)
