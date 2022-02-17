@@ -298,17 +298,17 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
         zenith_service_values(
             client,
             cluster,
-            "monitoring",
+            "kube-prometheus-stack",
             "monitoring-system",
             cluster["spec"]["addons"]["monitoring"],
             {
-                "host": "monitoring-grafana.monitoring-system.svc.cluster.local",
+                "host": "kube-prometheus-stack-grafana.monitoring-system.svc.cluster.local",
                 "port": 80,
             },
             {
                 "type": "basic",
                 "basic": {
-                    "secretName": "monitoring-grafana",
+                    "secretName": "kube-prometheus-stack-grafana",
                     "usernameKey": "admin-user",
                     "passwordKey": "admin-password",
                 },
