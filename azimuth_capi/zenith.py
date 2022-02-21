@@ -314,7 +314,8 @@ async def zenith_values(client, cluster, cloud_credentials_secret):
                 },
             },
             zenith_auth_params,
-            settings.zenith.monitoring_icon_url
+            settings.zenith.monitoring_icon_url,
+            label = "Monitoring"
         ),
         zenith_service_values(
             client,
