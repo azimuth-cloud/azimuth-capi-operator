@@ -1,0 +1,54 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+  # Inject our certificate as the CA bundle
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/{{ include "azimuth-capi-operator.fullname" . }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        name: {{ include "azimuth-capi-operator.fullname" . }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate-cluster-template
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    name: validate-cluster-template.webhook.azimuth.stackhpc.com
+    rules:
+      - apiGroups:
+          - azimuth.stackhpc.com
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+          - DELETE
+        resources:
+          - clustertemplates
+    sideEffects: None
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      service:
+        name: {{ include "azimuth-capi-operator.fullname" . }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate-cluster
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    name: validate-cluster.webhook.azimuth.stackhpc.com
+    rules:
+      - apiGroups:
+          - azimuth.stackhpc.com
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - clusters
+    sideEffects: None

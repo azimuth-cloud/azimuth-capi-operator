@@ -36,11 +36,17 @@ nodeGroupDefaults:
     enabled: {{ "true" if spec.autohealing else "false" }}
 
 nodeGroups:
-  {% for node_group in spec.node_groups %}
+{% for node_group in spec.node_groups %}
   - name: "{{ node_group.name }}"
     machineFlavor: "{{ node_group.machine_size }}"
+    autoscale: {{ "true" if node_group.autoscale else "false" }}
+{% if node_group.autoscale %}
+    machineCountMin: {{ node_group.min_count }}
+    machineCountMax: {{ node_group.max_count }}
+{% else %}
     machineCount: {{ node_group.count }}
-  {% endfor %}
+{% endif %}
+{% endfor %}
 
 addons:
   kubernetesDashboard:

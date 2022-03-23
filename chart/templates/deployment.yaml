@@ -27,11 +27,17 @@ spec:
           securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
           image: {{ printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.image.tag) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env: {{ tpl (toYaml .Values.extraEnv) . | nindent 12 }}
+          ports:
+            - name: webhook
+              containerPort: 8443
+              protocol: TCP
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: etc-azimuth
               mountPath: /etc/azimuth
+              readOnly: true
+            - name: etc-azimuth-cert
+              mountPath: /etc/azimuth/cert
               readOnly: true
             - name: tmp
               mountPath: /tmp
@@ -46,12 +52,10 @@ spec:
       {{- end }}
       volumes:
         - name: etc-azimuth
-          projected:
-            sources:
-              - secret:
-                  name: {{ include "azimuth-capi-operator.fullname" . }}
-              {{- range .Values.extraConfigVolumes }}
-              - {{ tpl (toYaml .) $ | nindent 16 }}
-              {{- end }}
+          secret:
+            secretName: {{ include "azimuth-capi-operator.fullname" . }}
+        - name: etc-azimuth-cert
+          secret:
+            secretName: {{ include "azimuth-capi-operator.fullname" . }}-cert
         - name: tmp
           emptyDir: {}

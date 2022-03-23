@@ -1,7 +1,7 @@
 import re
 import typing as t
 
-from pydantic import Field, AnyHttpUrl, conint, constr, root_validator
+from pydantic import Field, AnyHttpUrl, FilePath, conint, constr, root_validator, validator
 
 from configomatic import Configuration as BaseConfiguration, Section, LoggingConfiguration
 
@@ -37,7 +37,7 @@ class CAPIHelmConfig(Section):
     #: The name of the CAPI Helm chart to use to deploy clusters
     chart_name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.145"
+    chart_version: SemVerVersion = "0.1.0-dev.0.main.146"
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -108,6 +108,49 @@ class ZenithConfig(Section):
         return bool(self.registrar_admin_url)
 
 
+class WebhookConfiguration(Section):
+    """
+    Configuration for the internal webhook server.
+    """
+    #: The port to run the webhook server on
+    port: conint(ge = 1000) = 8443
+    #: Indicates whether kopf should manage the webhook configurations
+    managed: bool = False
+    #: The path to the TLS certificate to use
+    certfile: t.Optional[FilePath] = None
+    #: The path to the key for the TLS certificate
+    keyfile: t.Optional[FilePath] = None
+    #: The host for the webhook server (required for self-signed certificate generation)
+    host: t.Optional[constr(min_length = 1)] = None
+
+    @validator("certfile", always = True)
+    def validate_certfile(cls, v, values, **kwargs):
+        """
+        Validate that certfile is specified when configs are not managed.
+        """
+        if "managed" in values and not values["managed"] and v is None:
+            raise ValueError("required when webhook configurations are not managed")
+        return v
+
+    @validator("keyfile", always = True)
+    def validate_keyfile(cls, v, values, **kwargs):
+        """
+        Validate that keyfile is specified when certfile is present.
+        """
+        if "certfile" in values and values["certfile"] is not None and v is None:
+            raise ValueError("required when certfile is given")
+        return v
+
+    @validator("host", always = True)
+    def validate_host(cls, v, values, **kwargs):
+        """
+        Validate that host is specified when there is no certificate specified.
+        """
+        if values.get("certfile") is None and v is None:
+            raise ValueError("required when certfile is not given")
+        return v
+
+
 class Configuration(BaseConfiguration):
     """
     Top-level configuration model.
@@ -124,6 +167,9 @@ class Configuration(BaseConfiguration):
     api_group: constr(min_length = 1) = "azimuth.stackhpc.com"
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
+
+    #: The webhook configuration
+    webhook: WebhookConfiguration = Field(default_factory = WebhookConfiguration)
 
     #: The CAPI Helm configuration
     capi_helm: CAPIHelmConfig = Field(default_factory = CAPIHelmConfig)

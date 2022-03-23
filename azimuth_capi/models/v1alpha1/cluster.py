@@ -1,6 +1,6 @@
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr, conint
+from pydantic import Extra, Field, AnyHttpUrl, constr, conint, validator
 
 from ..util import BaseModel, Enum, Dict
 
@@ -17,10 +17,44 @@ class NodeGroupSpec(BaseModel):
         ...,
         description = "The name of the size to use for the machines in the node group."
     )
-    count: conint(ge = 0) = Field(
-        ...,
-        description = "The number of nodes in the node group."
+    autoscale: bool = Field(
+        False,
+        description = "Whether the node group should autoscale or not."
     )
+    count: t.Optional[conint(ge = 0)] = Field(
+        None,
+        description = "The fixed number of nodes in the node group when not autoscaling."
+    )
+    min_count: t.Optional[conint(ge = 1)] = Field(
+        None,
+        description = "The minimum number of nodes in the node group when autoscaling."
+    )
+    max_count: t.Optional[conint(ge = 1)] = Field(
+        None,
+        description = "The maximum number of nodes in the node group when autoscaling."
+    )
+
+    @validator("count", always = True)
+    def check_count_required(cls, v, values, **kwargs):
+        if not values["autoscale"] and v is None:
+            raise ValueError("must be given for a non-autoscaled node group")
+        return v
+
+    @validator("min_count", always = True)
+    def check_min_count_required(cls, v, values, **kwargs):
+        if values["autoscale"] and v is None:
+            raise ValueError("must be given for an autoscaled node group")
+        return v
+
+    @validator("max_count", always = True)
+    def check_max_count_required(cls, v, values, **kwargs):
+        if values["autoscale"]:
+            if v is None:
+                raise ValueError("must be given for an autoscaled node group")
+            min_count = values["min_count"]
+            if min_count and v < min_count:
+                raise ValueError("must be greater than or equal to the minimum count")
+        return v
 
 
 class AddonsSpec(BaseModel):
