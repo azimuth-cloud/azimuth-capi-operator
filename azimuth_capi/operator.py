@@ -2,6 +2,8 @@ import asyncio
 import functools
 import logging
 
+import pydantic
+
 import kopf
 
 from easykube import (
@@ -43,6 +45,15 @@ def apply_settings(**kwargs):
         prefix = settings.annotation_prefix,
         key = "last-handled-configuration",
     )
+    kopf_settings.admission.server = kopf.WebhookServer(
+        addr = "0.0.0.0",
+        port = settings.webhook.port,
+        host = settings.webhook.host,
+        certfile = settings.webhook.certfile,
+        pkeyfile = settings.webhook.keyfile
+    )
+    if settings.webhook.managed:
+        kopf_settings.admission.managed = f"webhook.{settings.api_group}"
 
 
 # Load the CRDs and create easykube resource specs for them
@@ -94,9 +105,85 @@ async def register_crds(client, **kwargs):
     )
 
 
+@on("validate", AzimuthClusterTemplate.api_version, AzimuthClusterTemplate.name)
+async def validate_cluster_template(client, name, spec, operation, **kwargs):
+    """
+    Validates cluster template objects.
+    """
+    if operation in {"CREATE", "UPDATE"}:
+        try:
+            spec = api.ClusterTemplateSpec.parse_obj(spec)
+        except pydantic.ValidationError as exc:
+            raise kopf.AdmissionError(str(exc))
+        # The template values are immutable, so test for that
+        try:
+            existing = await AzimuthClusterTemplate(client).fetch(name)
+        except ApiError as exc:
+            if exc.response.status_code != 404:
+                raise
+        else:
+            if existing.spec["values"] != spec.values.dict(by_alias = True):
+                raise kopf.AdmissionError("field 'values' cannot be changed")
+    elif operation == "DELETE":
+        clusters = AzimuthCluster(client).list(
+            labels = { f"{settings.api_group}/cluster-template": name },
+            all_namespaces = True
+        )
+        try:
+            _ = await clusters.__anext__()
+        except StopAsyncIteration:
+            pass  # In this case, the delete is permitted
+        else:
+            raise kopf.AdmissionError("template is in use by at least one cluster")
+
+
+@on("validate", AzimuthCluster.api_version, AzimuthCluster.name)
+async def validate_cluster(client, name, namespace, spec, operation, **kwargs):
+    """
+    Validates cluster objects.
+    """
+    if operation not in {"CREATE", "UPDATE"}:
+        return
+    try:
+        spec = api.ClusterSpec.parse_obj(spec)
+    except pydantic.ValidationError as exc:
+        raise kopf.AdmissionError(str(exc))
+    # The credentials secret must exist
+    try:
+        _ = await k8s.Secret(client).fetch(
+            spec.cloud_credentials_secret_name,
+            namespace = namespace
+        )
+    except ApiError as exc:
+        if exc.response.status_code == 404:
+            raise kopf.AdmissionError("specified cloud credentials secret does not exist")
+        else:
+            raise
+    # The specified template must exist
+    try:
+        template = await AzimuthClusterTemplate(client).fetch(spec.template_name)
+    except ApiError as exc:
+        if exc.response.status_code == 404:
+            raise kopf.AdmissionError("specified cluster template does not exist")
+        else:
+            raise
+    # If the template is being changed (including on create), it must not be deprecated
+    if template.spec.deprecated:
+        try:
+            existing = await AzimuthCluster(client).fetch(name, namespace = namespace)
+        except ApiError as exc:
+            if exc.response.status_code == 404:
+                raise kopf.AdmissionError("specified cluster template is deprecated")
+            else:
+                raise
+        else:
+            if existing.spec["templateName"] != template.metadata.name:
+                raise kopf.AdmissionError("specified cluster template is deprecated")
+
+
 @on("create", AzimuthCluster.api_version, AzimuthCluster.name)
 @on("update", AzimuthCluster.api_version, AzimuthCluster.name, field = "spec")
-async def on_cluster_create(client, name, namespace, body, spec, **kwargs):
+async def on_cluster_create(client, name, namespace, body, spec, patch, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
     """
@@ -125,6 +212,11 @@ async def on_cluster_create(client, name, namespace, body, spec, **kwargs):
         helm_values = mergeconcat(helm_values, await zenith_values(client, body, secret))
     # Use Helm to install or upgrade the release
     await Release(name, namespace).install_or_upgrade(chart, helm_values)
+    # Patch the labels to include the cluster template
+    # This is used by the admission webhook to search for clusters using a template in
+    # order to prevent deletion of cluster templates that are in use
+    labels = patch.setdefault("metadata", {}).setdefault("labels", {})
+    labels[f"{settings.api_group}/cluster-template"] = spec.template_name
 
 
 @on("delete", AzimuthCluster.api_version, AzimuthCluster.name)
