@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: webhook
+      port: 443
+      targetPort: webhook
+      protocol: TCP
+  selector: {{ include "azimuth-capi-operator.selectorLabels" . | nindent 4 }}

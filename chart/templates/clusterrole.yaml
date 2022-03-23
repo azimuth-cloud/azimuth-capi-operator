@@ -100,6 +100,12 @@ rules:
     verbs:
       - "*"
   - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - "*"
+  - apiGroups:
       - batch
     resources:
       - jobs

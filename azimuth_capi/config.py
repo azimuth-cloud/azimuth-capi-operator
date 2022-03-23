@@ -113,15 +113,15 @@ class WebhookConfiguration(Section):
     Configuration for the internal webhook server.
     """
     #: The port to run the webhook server on
-    port: conint(ge = 1000) = 8080
-    #: The host for the webhook server
-    host: constr(min_length = 1)
+    port: conint(ge = 1000) = 8443
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
     certfile: t.Optional[FilePath] = None
     #: The path to the key for the TLS certificate
     keyfile: t.Optional[FilePath] = None
+    #: The host for the webhook server (required for self-signed certificate generation)
+    host: t.Optional[constr(min_length = 1)] = None
 
     @validator("certfile", always = True)
     def validate_certfile(cls, v, values, **kwargs):
@@ -139,6 +139,15 @@ class WebhookConfiguration(Section):
         """
         if "certfile" in values and values["certfile"] is not None and v is None:
             raise ValueError("required when certfile is given")
+        return v
+
+    @validator("host", always = True)
+    def validate_host(cls, v, values, **kwargs):
+        """
+        Validate that host is specified when there is no certificate specified.
+        """
+        if values.get("certfile") is None and v is None:
+            raise ValueError("required when certfile is not given")
         return v
 
 

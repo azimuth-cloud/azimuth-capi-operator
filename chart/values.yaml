@@ -1,19 +1,6 @@
 # Configuration for the operator
 # For all available options, see azimuth_capi/config.py
-config:
-  # Settings for the Zenith support
-  # Zenith support is enabled if the registrar admin URL and SSHD host are given
-  zenith: {}
-    # registrarAdminUrl:
-    # sshdHost:
-    # sshdPort:
-
-# Extra environment variables
-extraEnv: []
-
-# Additional configuration volumes that will be added to the projected
-# config volume - should be in the format expected by projected volume sources
-extraConfigVolumes: []
+config: {}
 
 # The image to use for the operator
 image:

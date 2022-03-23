@@ -105,7 +105,12 @@ async def register_crds(client, **kwargs):
     )
 
 
-@on("validate", AzimuthClusterTemplate.api_version, AzimuthClusterTemplate.name)
+@on(
+    "validate",
+    AzimuthClusterTemplate.api_version,
+    AzimuthClusterTemplate.name,
+    id = "validate-cluster-template"
+)
 async def validate_cluster_template(client, name, spec, operation, **kwargs):
     """
     Validates cluster template objects.
@@ -137,7 +142,12 @@ async def validate_cluster_template(client, name, spec, operation, **kwargs):
             raise kopf.AdmissionError("template is in use by at least one cluster")
 
 
-@on("validate", AzimuthCluster.api_version, AzimuthCluster.name)
+@on(
+    "validate",
+    AzimuthCluster.api_version,
+    AzimuthCluster.name,
+    id = "validate-cluster"
+)
 async def validate_cluster(client, name, namespace, spec, operation, **kwargs):
     """
     Validates cluster objects.

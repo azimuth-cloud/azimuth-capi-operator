@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+spec:
+  # The certificate is issued for our service name
+  dnsNames:
+    - {{ include "azimuth-capi-operator.fullname" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "azimuth-capi-operator.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "azimuth-capi-operator.fullname" . }}
+  secretName: {{ include "azimuth-capi-operator.fullname" . }}-cert
