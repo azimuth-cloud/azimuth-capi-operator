@@ -1,3 +1,4 @@
+import json
 import logging
 
 from .models.v1alpha1 import (
@@ -31,7 +32,8 @@ class ClusterStatusBuilder:
         self._reconcile_cluster_phase()
         self.status.node_count = len(self.status.nodes)
         self.status.addon_count = len(self.status.addons)
-        next_status = self.status.dict(by_alias = True)
+        # In order to benefit from the Pydantic conversion, go to JSON and back again
+        next_status = json.loads(self.status.json(by_alias = True))
         return next_status != self._previous_status, next_status
 
     def _any_node_has_phase(self, *phases):
@@ -249,7 +251,9 @@ class ClusterStatusBuilder:
             # Take the version from the spec, which should always be set
             kubelet_version = obj["spec"]["version"].lstrip("v"),
             # The node group will be in a label if applicable
-            node_group = labels.get("capi.stackhpc.com/node-group")
+            node_group = labels.get("capi.stackhpc.com/node-group"),
+            # Use the timestamp from the metadata for the created time
+            created = obj["metadata"]["creationTimestamp"]
         )
         return self
 
