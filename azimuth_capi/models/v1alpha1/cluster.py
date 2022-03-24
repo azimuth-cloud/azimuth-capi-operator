@@ -1,3 +1,4 @@
+import datetime as dt
 import typing as t
 
 from pydantic import Extra, Field, AnyHttpUrl, constr, conint, validator
@@ -226,6 +227,10 @@ class NodeStatus(BaseModel):
             "The node group that the node belongs to. "
             "Only used for worker nodes."
         )
+    )
+    created: t.Optional[dt.datetime] = Field(
+        None,
+        description = "The datetime at which the node was created."
     )
 
 

@@ -249,7 +249,9 @@ class ClusterStatusBuilder:
             # Take the version from the spec, which should always be set
             kubelet_version = obj["spec"]["version"].lstrip("v"),
             # The node group will be in a label if applicable
-            node_group = labels.get("capi.stackhpc.com/node-group")
+            node_group = labels.get("capi.stackhpc.com/node-group"),
+            # Use the timestamp from the metadata for the created time
+            created = obj["metadata"]["creationTimestamp"]
         )
         return self
 
