@@ -386,14 +386,21 @@ async def on_capi_controlplane_event(builder, type, body, **kwargs):
 
 
 @on_managed_object_event(capi.Machine.api_version, capi.Machine.name)
-async def on_capi_machine_event(builder, type, body, **kwargs):
+async def on_capi_machine_event(client, builder, type, body, **kwargs):
     """
     Executes on events for CAPI machines with an associated Azimuth cluster.
     """
     if type == "DELETED":
         builder.machine_deleted(body)
     else:
-        builder.machine_updated(body)
+        # Get the underlying infrastructure machine as we need it for the size
+        infra_ref = body["spec"]["infrastructureRef"]
+        infra_resource = await client.api(infra_ref["apiVersion"]).resource(infra_ref["kind"])
+        infra_machine = await infra_resource.fetch(
+            infra_ref["name"],
+            namespace = infra_ref["namespace"]
+        )
+        builder.machine_updated(body, infra_machine)
 
 
 @on_managed_object_event(

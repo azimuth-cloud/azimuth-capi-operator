@@ -213,6 +213,10 @@ class NodeStatus(BaseModel):
         NodePhase.UNKNOWN.value,
         description = "The phase of the node."
     )
+    size: t.Optional[constr(min_length = 1)] = Field(
+        None,
+        description = "The name of the size of the machine."
+    )
     ip: t.Optional[str] = Field(
         None,
         description = "The internal IP address of the node."
