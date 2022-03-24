@@ -32,8 +32,7 @@ class ClusterStatusBuilder:
         self._reconcile_cluster_phase()
         self.status.node_count = len(self.status.nodes)
         self.status.addon_count = len(self.status.addons)
-        # In order to benefit from the Pydantic conversion, go to JSON and back again
-        next_status = json.loads(self.status.json(by_alias = True))
+        next_status = self.status.dict(by_alias = True)
         return next_status != self._previous_status, next_status
 
     def _any_node_has_phase(self, *phases):

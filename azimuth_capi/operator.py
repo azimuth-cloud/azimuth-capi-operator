@@ -3,6 +3,7 @@ import functools
 import logging
 
 import pydantic
+from pydantic.json import pydantic_encoder
 
 import kopf
 
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 # Get the easykube configuration from the environment
-ekconfig = Configuration.from_environment()
+ekconfig = Configuration.from_environment(json_encoder = pydantic_encoder)
 
 
 @kopf.on.startup()
