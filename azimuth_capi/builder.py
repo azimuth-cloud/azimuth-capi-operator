@@ -1,4 +1,3 @@
-import json
 import logging
 
 from .models.v1alpha1 import (
