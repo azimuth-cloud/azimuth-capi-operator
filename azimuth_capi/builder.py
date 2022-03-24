@@ -211,7 +211,7 @@ class ClusterStatusBuilder:
         self.status.kubernetes_version = None
         return self
 
-    def machine_updated(self, obj):
+    def machine_updated(self, obj, infra_machine):
         """
         Updates the status when a CAPI machine is updated.
         """
@@ -238,6 +238,8 @@ class ClusterStatusBuilder:
             # The node role should be in the labels
             role = NodeRole(labels["capi.stackhpc.com/component"]),
             phase = node_phase,
+            # This assumes an OpenStackMachine for now
+            size = infra_machine.spec.flavor,
             ip = next(
                 (
                     a["address"]
