@@ -288,7 +288,7 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
                         "key": "value",
                     },
                     "config": {
-                        "registrarAdminUrl": "http://host.docker.internal:5000", #settings.zenith.registrar_admin_url,
+                        "registrarAdminUrl": settings.zenith.registrar_admin_url,
                         "sshdHost": settings.zenith.sshd_host,
                         "sshdPort": settings.zenith.sshd_port,
                         "defaultAuthParams": {
