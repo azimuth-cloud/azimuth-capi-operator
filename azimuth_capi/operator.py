@@ -230,42 +230,6 @@ async def on_cluster_create(client, name, namespace, body, spec, patch, **kwargs
     labels[f"{settings.api_group}/cluster-template"] = spec.template_name
 
 
-async def ensure_finalizer(resource, name, namespace, finalizer):
-    """
-    Ensures that a finalizer is present on an object.
-    """
-    obj = await resource.fetch(name, namespace = namespace)
-    finalizers = obj.metadata.get("finalizers", [])
-    if finalizer not in finalizers:
-        _ = await resource.patch(
-            name,
-            {
-                "metadata": {
-                    "finalizers": list(finalizers) + [finalizer],
-                },
-            },
-            namespace = namespace
-        )
-
-
-async def remove_finalizer(resource, name, namespace, finalizer):
-    """
-    Ensures that a finalizer is not present on an object.
-    """
-    obj = await resource.fetch(name, namespace = namespace)
-    finalizers = obj.metadata.get("finalizers", [])
-    if finalizer in finalizers:
-        _ = await resource.patch(
-            name,
-            {
-                "metadata": {
-                    "finalizers": [f for f in finalizers if f != finalizer],
-                },
-            },
-            namespace = namespace
-        )
-
-
 @on("delete", AzimuthCluster.api_version, AzimuthCluster.name)
 async def on_cluster_delete(client, name, namespace, **kwargs):
     """
