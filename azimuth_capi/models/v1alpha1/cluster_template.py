@@ -32,19 +32,9 @@ class ClusterTemplateValues(BaseModel):
         ...,
         description = "The global values for the deployment."
     )
-    machine_image: constr(min_length = 1) = Field(
-        ...,
-        description = (
-            "The name of the image to use for cluster machines. "
-            "This is used when creating machines with ephemeral root disks."
-        )
-    )
     machine_image_id: constr(min_length = 1) = Field(
         ...,
-        description = (
-            "The ID of the image to use for cluster machines. "
-            "This is used when creating machines with volumes as root disks."
-        )
+        description = "The ID of the image to use for cluster machines."
     )
 
 

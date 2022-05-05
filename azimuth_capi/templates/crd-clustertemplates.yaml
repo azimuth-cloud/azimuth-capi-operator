@@ -23,12 +23,6 @@ spec:
         - name: Kubernetes Version
           type: string
           jsonPath: .spec.values.global.kubernetesVersion
-        - name: Chart
-          type: string
-          jsonPath: .spec.chartName
-        - name: Chart Version
-          type: string
-          jsonPath: .spec.chartVersion
         - name: Deprecated
           type: boolean
           jsonPath: .spec.deprecated

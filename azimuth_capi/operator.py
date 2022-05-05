@@ -92,15 +92,6 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
             spec = api.ClusterTemplateSpec.parse_obj(spec)
         except pydantic.ValidationError as exc:
             raise kopf.AdmissionError(str(exc))
-        # The template values are immutable, so test for that
-        try:
-            existing = await AzimuthClusterTemplate(ekclient).fetch(name)
-        except ApiError as exc:
-            if exc.response.status_code != 404:
-                raise
-        else:
-            if existing.spec["values"] != spec.values.dict(by_alias = True):
-                raise kopf.AdmissionError("field 'values' cannot be changed")
     elif operation == "DELETE":
         clusters = AzimuthCluster(ekclient).list(
             labels = { f"{settings.api_group}/cluster-template": name },
