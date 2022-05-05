@@ -86,11 +86,11 @@ def on(event, *args, **kwargs):
             if client:
                 return await fn(client = client, **inner)
             else:
-                try:
-                    async with ekconfig.async_client() as client:
+                async with ekconfig.async_client() as client:
+                    try:
                         return await fn(client = client, **inner)
-                except ApiError as exc:
-                    raise kopf.TemporaryError(str(exc), delay = 1)
+                    except ApiError as exc:
+                        raise kopf.TemporaryError(str(exc), delay = 1)
         return wrapper
     return decorator
 
@@ -235,19 +235,92 @@ async def on_cluster_delete(client, name, namespace, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
+    # Due to a bug in the CAPO operator, we must ensure all openstackmachines are deleted
+    # before the openstackcluster is deleted
+    # See https://github.com/kubernetes-sigs/cluster-api-provider-openstack/issues/1143
+    # We do this by setting an additional finalizer on the infra cluster and removing it
+    # once all the machines are gone
+    finalizer = f"{settings.annotation_prefix}/finalizer"
+    try:
+        cluster = await capi.Cluster(client).fetch(name, namespace = namespace)
+    except ApiError as exc:
+        if exc.status_code == 404:
+            infra_ref = None
+            infra_resource = None
+        else:
+            raise
+    else:
+        infra_ref = cluster.spec["infrastructureRef"]
+        infra_resource = await client.api(infra_ref["apiVersion"]).resource(infra_ref["kind"])
+    if infra_resource:
+        try:
+            infra_cluster = await infra_resource.fetch(
+                infra_ref["name"],
+                namespace = infra_ref["namespace"]
+            )
+        except ApiError as exc:
+            if exc.status_code != 404:
+                raise
+        else:
+            finalizers = infra_cluster.metadata.get("finalizers", [])
+            if finalizer not in finalizers:
+                _ = await infra_resource.patch(
+                    infra_ref["name"],
+                    {
+                        "metadata": {
+                            "finalizers": list(finalizers) + [finalizer],
+                        },
+                    },
+                    namespace = infra_ref["namespace"]
+                )
     # If the corresponding Helm release exists, delete it
     release = Release(name, namespace)
     exists = await release.exists()
     if exists:
         await release.delete()
+    # Wait for there to be no machines for the cluster
+    # Once there are no machines, remove the finalizer from the infra cluster
+    if infra_resource:
+        # We do this by watching the Azimuth cluster object instead of listing machines
+        az_cluster, stream = await AzimuthCluster(client).watch_one(name, namespace = namespace)
+        if az_cluster and len(az_cluster.get("status", {}).get("nodes", {})) > 0:
+            async with stream as events:
+                async for event in events:
+                    if (
+                        event["type"] == "DELETED" or
+                        (
+                            event["type"] == "MODIFIED" and
+                            len(event["object"].get("status", {}).get("nodes", {})) < 1
+                        )
+                    ):
+                        break
+        try:
+            infra_cluster = await infra_resource.fetch(
+                infra_ref["name"],
+                namespace = infra_ref["namespace"]
+            )
+        except ApiError as exc:
+            if exc.status_code != 404:
+                raise
+        else:
+            finalizers = infra_cluster.metadata.get("finalizers", [])
+            if finalizer in finalizers:
+                _ = await infra_resource.patch(
+                    infra_ref["name"],
+                    {
+                        "metadata": {
+                            "finalizers": [f for f in finalizers if f != finalizer],
+                        },
+                    },
+                    namespace = infra_ref["namespace"]
+                )
     # Wait until the associated CAPI cluster no longer exists
-    while True:
-        cluster, events = await capi.Cluster(client).watch_one(name, namespace = namespace)
-        if not cluster:
-            break
-        async for event in events:
-            if event["type"] == "DELETED":
-                break
+    cluster, stream = await capi.Cluster(client).watch_one(name, namespace = namespace)
+    if cluster:
+        async with stream as events:
+            async for event in events:
+                if event["type"] == "DELETED":
+                    break
 
 
 @on("resume", AzimuthCluster.api_version, AzimuthCluster.name)
