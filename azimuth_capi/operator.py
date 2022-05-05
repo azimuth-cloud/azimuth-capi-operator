@@ -3,6 +3,7 @@ import dataclasses
 import functools
 import logging
 import ssl
+import sys
 
 import pydantic
 
@@ -61,8 +62,20 @@ async def apply_settings(**kwargs):
     if settings.webhook.managed:
         kopf_settings.admission.managed = f"webhook.{settings.api_group}"
     # Create the CRDs
-    await ekclient.apply_object(cluster_template_crd)
-    await ekclient.apply_object(cluster_crd)
+    try:
+        await ekclient.apply_object(cluster_template_crd)
+        await ekclient.apply_object(cluster_crd)
+    except Exception as exc:
+        logger.exception("error applying CRDs - exiting")
+        sys.exit(1)
+
+
+@kopf.on.cleanup()
+async def on_cleanup(**kwargs):
+    """
+    Runs on operator shutdown.
+    """
+    await ekclient.aclose()
 
 
 @kopf.on.validate(
