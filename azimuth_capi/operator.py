@@ -282,17 +282,18 @@ async def on_cluster_delete(client, name, namespace, **kwargs):
     # Once there are no machines, remove the finalizer from the infra cluster
     if infra_resource:
         # We do this by watching the Azimuth cluster object instead of listing machines
-        az_cluster, events = await AzimuthCluster(client).watch_one(name, namespace = namespace)
+        az_cluster, stream = await AzimuthCluster(client).watch_one(name, namespace = namespace)
         if az_cluster and len(az_cluster.get("status", {}).get("nodes", {})) > 0:
-            async for event in events:
-                if (
-                    event["type"] == "DELETED" or
-                    (
-                        event["type"] == "MODIFIED" and
-                        len(event["object"].get("status", {}).get("nodes", {})) < 1
-                    )
-                ):
-                    break
+            async with stream as events:
+                async for event in events:
+                    if (
+                        event["type"] == "DELETED" or
+                        (
+                            event["type"] == "MODIFIED" and
+                            len(event["object"].get("status", {}).get("nodes", {})) < 1
+                        )
+                    ):
+                        break
         try:
             infra_cluster = await infra_resource.fetch(
                 infra_ref["name"],
@@ -314,11 +315,12 @@ async def on_cluster_delete(client, name, namespace, **kwargs):
                     namespace = infra_ref["namespace"]
                 )
     # Wait until the associated CAPI cluster no longer exists
-    cluster, events = await capi.Cluster(client).watch_one(name, namespace = namespace)
+    cluster, stream = await capi.Cluster(client).watch_one(name, namespace = namespace)
     if cluster:
-        async for event in events:
-            if event["type"] == "DELETED":
-                break
+        async with stream as events:
+            async for event in events:
+                if event["type"] == "DELETED":
+                    break
 
 
 @on("resume", AzimuthCluster.api_version, AzimuthCluster.name)
