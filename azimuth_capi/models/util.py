@@ -10,6 +10,9 @@ class Enum(enum.Enum):
     """
     Enum that does not include a title in the JSON-Schema.
     """
+    def __str__(self):
+        return str(self.value)
+
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.pop("title", None)
@@ -70,6 +73,16 @@ class BaseModel(Section):
             # When extra fields are allowed, stop Kubernetes pruning them
             if model.__config__.extra == Extra.allow:
                 schema["x-kubernetes-preserve-unknown-fields"] = True
+
+    def dict(self, **kwargs):
+        # Unless otherwise specified, we want by_alias = True
+        kwargs.setdefault("by_alias", True)
+        return super().dict(**kwargs)
+
+    def json(self, **kwargs):
+        # Unless otherwise specified, we want by_alias = True
+        kwargs.setdefault("by_alias", True)
+        return super().json(**kwargs)
 
     @classmethod
     def schema(cls, *args, **kwargs):

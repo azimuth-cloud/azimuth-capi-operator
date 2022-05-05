@@ -1,4 +1,3 @@
-import asyncio
 import base64
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -16,6 +15,7 @@ from easykube import ApiError, resources as k8s
 
 from .config import settings
 from .helm import Chart, Release
+from .template import default_loader
 from .utils import mergeconcat
 
 
@@ -26,13 +26,7 @@ def b64encode(value):
     return base64.b64encode(value.encode()).decode()
 
 
-async def ensure_zenith_secret(
-    client,
-    cluster,
-    secret_name,
-    extra_labels,
-    extra_annotations
-):
+async def ensure_zenith_secret(client, cluster, secret_name):
     """
     Ensures that a secret containing an SSH keypair for a Zenith reservation
     exists with the given name and returns it.
@@ -42,13 +36,10 @@ async def ensure_zenith_secret(
     """
     namespace = cluster["metadata"]["namespace"]
     cluster_name = cluster["metadata"]["name"]
-    labels = dict(
-        {
-            "app.kubernetes.io/managed-by": "azimuth-capi-operator",
-            "capi.stackhpc.com/cluster": cluster_name,
-        },
-        **extra_labels
-    )
+    labels = {
+        "app.kubernetes.io/managed-by": "azimuth-capi-operator",
+        "capi.stackhpc.com/cluster": cluster_name,
+    }
     # Even if the secret already exists, we will patch the labels and annotations to match
     try:
         _ = await k8s.Secret(client).fetch(secret_name, namespace = namespace)
@@ -72,13 +63,10 @@ async def ensure_zenith_secret(
                 "name": secret_name,
                 "namespace": namespace,
                 "labels": labels,
-                "annotations": dict(
-                    {
-                        "azimuth.stackhpc.com/zenith-subdomain": response_data["subdomain"],
-                        "azimuth.stackhpc.com/zenith-fqdn": response_data["fqdn"],
-                    },
-                    **extra_annotations
-                ),
+                "annotations": {
+                    "azimuth.stackhpc.com/zenith-subdomain": response_data["subdomain"],
+                    "azimuth.stackhpc.com/zenith-fqdn": response_data["fqdn"],
+                },
             },
             "stringData": {
                 "id_ed25519": (
@@ -94,12 +82,7 @@ async def ensure_zenith_secret(
     else:
         return await k8s.Secret(client).patch(
             secret_name,
-            {
-                "metadata": {
-                    "labels": labels,
-                    "annotations": extra_annotations,
-                },
-            },
+            { "metadata": { "labels": labels } },
             namespace = namespace
         )
 
@@ -110,36 +93,34 @@ async def zenith_apiserver_values(client, cluster):
     """
     name = cluster["metadata"]["name"]
     # First, reserve a subdomain for the API server
-    apiserver_secret = await ensure_zenith_secret(
-        client,
-        cluster,
-        f"{name}-zenith-apiserver",
-        {},
-        {}
-    )
+    apiserver_secret = await ensure_zenith_secret(client, cluster, f"{name}-zenith-apiserver")
     # Get the static pod definition for the Zenith client for the API server
-    configmap, pod = await Release("zenith-apiserver", "kube-system").template_resources(
-        Chart(
-            repository = settings.zenith.chart_repository,
-            name = "zenith-apiserver",
-            version = settings.zenith.chart_version
-        ),
-        mergeconcat(
-            settings.zenith.apiserver_defaults,
-            {
-                "zenithClient": {
-                    # Use the SSH private key from the secret
-                    # The secret data is already base64-encoded
-                    "sshPrivateKeyData": apiserver_secret.data["id_ed25519"],
-                    # Specify the SSHD host and port from our configuration
-                    "server": {
-                        "host": settings.zenith.sshd_host,
-                        "port": settings.zenith.sshd_port,
+    resources = list(
+        await Release("zenith-apiserver", "kube-system").template_resources(
+            Chart(
+                repository = settings.zenith.chart_repository,
+                name = "zenith-apiserver",
+                version = settings.zenith.chart_version
+            ),
+            mergeconcat(
+                settings.zenith.apiserver_defaults,
+                {
+                    "zenithClient": {
+                        # Use the SSH private key from the secret
+                        # The secret data is already base64-encoded
+                        "sshPrivateKeyData": apiserver_secret.data["id_ed25519"],
+                        # Specify the SSHD host and port from our configuration
+                        "server": {
+                            "host": settings.zenith.sshd_host,
+                            "port": settings.zenith.sshd_port,
+                        },
                     },
-                },
-            }
+                }
+            )
         )
     )
+    configmap = next(r for r in resources if r["kind"] == "ConfigMap")
+    pod = next(r for r in resources if r["kind"] == "Pod")
     # Return the values required to enable Zenith support
     return {
         # The control plane will use the allocated Zenith FQDN on port 443
@@ -181,72 +162,36 @@ async def zenith_apiserver_values(client, cluster):
     }
 
 
-async def zenith_service_values(
-    client,
-    cluster,
-    service_name,
-    service_namespace,
-    service_enabled,
-    service_upstream,
-    mitm_auth_inject,
-    zenith_auth_params,
-    icon_url = None,
-    label = None,
-    description = None
-):
+def zenith_client_values(enabled, name, namespace, **kwargs):
     """
     Returns the Helm values required to launch a Zenith client for the specified service.
     """
-    cluster_name = cluster["metadata"]["name"]
-    cluster_namespace = cluster["metadata"]["namespace"]
-    secret_name = f"{cluster_name}-{service_name}-zenith"
-    release_values = settings.zenith.proxy_defaults.copy()
-    if service_enabled:
-        # Reserve a subdomain for the service and store the associated keypair in a secret
-        extra_annotations = {}
-        if icon_url:
-            extra_annotations["azimuth.stackhpc.com/service-icon-url"] = icon_url
-        if label:
-            extra_annotations["azimuth.stackhpc.com/service-label"] = label
-        if description:
-            extra_annotations["azimuth.stackhpc.com/service-description"] = description
-        zenith_secret = await ensure_zenith_secret(
-            client,
-            cluster,
-            secret_name,
-            {
-                "azimuth.stackhpc.com/service-name": service_name,
-            },
-            extra_annotations
-        )
-        release_values = mergeconcat(
-            release_values,
-            {
-                "upstream": service_upstream,
-                "zenithClient": {
-                    "sshPrivateKeyData": zenith_secret.data["id_ed25519"],
-                    "server": {
-                        "host": settings.zenith.sshd_host,
-                        "port": settings.zenith.sshd_port,
-                    },
-                    "auth": {
-                        "params": zenith_auth_params,
-                    },
-                },
-                "mitmProxy": {
-                    "authInject": mitm_auth_inject,
-                },
-            }
-        )
-    else:
-        await k8s.Secret(client).delete(secret_name, namespace = cluster_namespace)
-    # Install or uninstall the Zenith client as an extra addon
+    # Install or uninstall the Zenith client resources as an extra addon using kustomize
     return {
         "addons": {
             "extraAddons": {
-                f"{service_name}-proxy": {
-                    "enabled": service_enabled,
-                    "dependsOn": [service_name],
+                f"{name}-client": {
+                    "enabled": enabled,
+                    "dependsOn": [name],
+                    "installType": "kustomize",
+                    "kustomize": {
+                        "kustomization": {
+                            "resources": ["./zenith-client.yaml"],
+                        },
+                    },
+                    "extraFiles": {
+                        "zenith-client.yaml": default_loader.loads(
+                            "zenith-client.yaml",
+                            name = name,
+                            namespace = namespace,
+                            **kwargs
+                        )
+                    },
+                },
+                # Remove the old proxy services for now
+                f"{name}-proxy": {
+                    "enabled": False,
+                    "dependsOn": [name],
                     "installType": "helm",
                     "helm": {
                         "chart": {
@@ -255,8 +200,8 @@ async def zenith_service_values(
                             "version": settings.zenith.chart_version,
                         },
                         "release": {
-                            "namespace": service_namespace,
-                            "values": release_values,
+                            "namespace": namespace,
+                            "values": {},
                         },
                     },
                 },
@@ -265,91 +210,92 @@ async def zenith_service_values(
     }
 
 
-async def zenith_values(client, cluster, cloud_credentials_secret):
+async def zenith_values(client, cluster, addons):
     """
     Returns Helm values to apply Zenith to the specified cluster.
     """
-    # Extract the project id from the cloud credentials secret
-    clouds_b64 = cloud_credentials_secret.data["clouds.yaml"]
-    clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
-    zenith_auth_params = {
-        "tenancy-id": clouds["clouds"]["openstack"]["auth"]["project_id"],
-    }
-    values = await asyncio.gather(
-        zenith_apiserver_values(client, cluster),
-        # TODO: REMOVE THESE FIXED DEPLOYMENTS AND DO IT PROPERLY
-        zenith_service_values(
-            client,
-            cluster,
+    return mergeconcat(
+        await zenith_apiserver_values(client, cluster),
+        # Produce the values required to install Zenith clients for the cluster services
+        zenith_client_values(
+            addons.dashboard,
             "kubernetes-dashboard",
             "kubernetes-dashboard",
-            cluster["spec"]["addons"]["dashboard"],
-            {
-                "host": "kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local",
-                "port": 443,
-                "scheme": "https",
+            upstream_service_name = "kubernetes-dashboard",
+            upstream_port = 443,
+            upstream_scheme = "https",
+            mitm_proxy_enabled = True,
+            mitm_proxy_auth_inject_type = "ServiceAccount",
+            mitm_proxy_auth_inject_service_account = {
+                "clusterRoleName": "cluster-admin",
             },
-            {
-                "type": "serviceaccount",
-            },
-            zenith_auth_params,
-            settings.zenith.kubernetes_dashboard_icon_url
+            icon_url = settings.zenith.kubernetes_dashboard_icon_url
         ),
-        zenith_service_values(
-            client,
-            cluster,
+        zenith_client_values(
+            addons.monitoring,
             "kube-prometheus-stack",
             "monitoring-system",
-            cluster["spec"]["addons"]["monitoring"],
-            {
-                "host": "kube-prometheus-stack-grafana.monitoring-system.svc.cluster.local",
-                "port": 80,
+            upstream_service_name = "kube-prometheus-stack-grafana",
+            upstream_port = 80,
+            mitm_proxy_enabled = True,
+            mitm_proxy_auth_inject_type = "Basic",
+            mitm_proxy_auth_inject_basic = {
+                "secretName": "kube-prometheus-stack-grafana",
+                "usernameKey": "admin-user",
+                "passwordKey": "admin-password",
             },
-            {
-                "type": "basic",
-                "basic": {
-                    "secretName": "kube-prometheus-stack-grafana",
-                    "usernameKey": "admin-user",
-                    "passwordKey": "admin-password",
-                },
-            },
-            zenith_auth_params,
-            settings.zenith.monitoring_icon_url,
-            label = "Monitoring"
+            label = "Monitoring",
+            icon_url = settings.zenith.monitoring_icon_url
         ),
-        zenith_service_values(
-            client,
-            cluster,
+        zenith_client_values(
+            addons.apps,
             "kubeapps",
             settings.kubeapps.release_namespace,
-            cluster["spec"]["addons"]["apps"],
-            {
-                "host": f"kubeapps.{settings.kubeapps.release_namespace}.svc.cluster.local",
-                "port": 80,
+            upstream_service_name = "kubeapps",
+            upstream_port = 80,
+            mitm_proxy_enabled = True,
+            mitm_proxy_auth_inject_type = "ServiceAccount",
+            mitm_proxy_auth_inject_service_account = {
+                "clusterRoleName": "cluster-admin",
             },
-            {
-                "type": "serviceaccount",
-            },
-            zenith_auth_params,
-            settings.zenith.kubeapps_icon_url,
-            label = "Applications"
-        ),
-        zenith_service_values(
-            client,
-            cluster,
-            "jupyterhub",
-            "default",
-            cluster["spec"]["addons"]["apps"],
-            {
-                "host": "proxy-public.default.svc.cluster.local",
-                "port": 80,
-            },
-            # JupyterHub consumes the X-Remote-User header from Azimuth
-            # We do not have to inject any authentication
-            {},
-            zenith_auth_params,
-            settings.zenith.jupyterhub_icon_url,
-            label = "JupyterHub"
+            label = "Applications",
+            icon_url = settings.zenith.kubeapps_icon_url
         )
     )
-    return mergeconcat(*values)
+
+
+async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
+    """
+    Returns the resources required to enable the Zenith operator for the given cluster.
+    """
+    # The project ID for the cluster is automatically injected as a Zenith auth param
+    # for all clients created by the operator unless auth is explicitly skipped
+    clouds_b64 = cloud_credentials_secret.data["clouds.yaml"]
+    clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
+    project_id = clouds["clouds"]["openstack"]["auth"]["project_id"]
+    return list(
+        await Release(name, namespace).template_resources(
+            Chart(
+                repository = settings.zenith.chart_repository,
+                name = "zenith-operator",
+                version = settings.zenith.chart_version
+            ),
+            mergeconcat(
+                settings.zenith.operator_defaults,
+                {
+                    "kubeconfigSecret": {
+                        "name": f"{name}-kubeconfig",
+                        "key": "value",
+                    },
+                    "config": {
+                        "registrarAdminUrl": settings.zenith.registrar_admin_url,
+                        "sshdHost": settings.zenith.sshd_host,
+                        "sshdPort": settings.zenith.sshd_port,
+                        "defaultAuthParams": {
+                            "tenancy-id": project_id,
+                        },
+                    },
+                }
+            )
+        )
+    )

@@ -1,0 +1,52 @@
+---
+apiVersion: zenith.stackhpc.com/v1alpha1
+kind: Reservation
+metadata:
+  name: {{ name }}
+  namespace: {{ namespace }}
+  labels:
+    app.kubernetes.io/managed-by: azimuth-capi-operator
+  annotations:
+{% if label %}
+    azimuth.stackhpc.com/service-label: {{ label }}
+{% endif %}
+{% if description %}
+    azimuth.stackhpc.com/service-description: {{ description }}
+{% endif %}
+{% if icon_url %}
+    azimuth.stackhpc.com/service-icon-url: {{ icon_url }}
+{% endif %}
+spec:
+  credentialSecretName: {{ name }}-zenith-credential
+---
+apiVersion: zenith.stackhpc.com/v1alpha1
+kind: Client
+metadata:
+  name: {{ name }}
+  namespace: {{ namespace }}
+  labels:
+    app.kubernetes.io/managed-by: azimuth-capi-operator
+spec:
+  reservationName: {{ name }}
+  upstream:
+    serviceName: {{ upstream_service_name }}
+    port: {{ upstream_port }}
+    scheme: {{ upstream_scheme | default("http") }}
+  mitmProxy:
+    enabled: {{ "true" if mitm_proxy_enabled else "false" }}
+{% if mitm_proxy_enabled %}
+    authInject:
+      type: {{ mitm_proxy_auth_inject_type }}
+{% if mitm_proxy_auth_inject_basic %}
+      basic:
+        {{ mitm_proxy_auth_inject_basic | toyaml | indent(8) }}
+{% endif %}
+{% if mitm_proxy_auth_inject_bearer %}
+      bearer:
+        {{ mitm_proxy_auth_inject_bearer | toyaml | indent(8) }}
+{% endif %}
+{% if mitm_proxy_auth_inject_service_account %}
+      serviceAccount:
+        {{ mitm_proxy_auth_inject_service_account | toyaml | indent(8) }}
+{% endif %}
+{% endif %}
