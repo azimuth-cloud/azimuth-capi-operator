@@ -37,7 +37,7 @@ class CAPIHelmConfig(Section):
     #: The name of the CAPI Helm chart to use to deploy clusters
     chart_name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.158"
+    chart_version: SemVerVersion = "0.1.0-dev.0.main.159"
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -75,7 +75,7 @@ class ZenithConfig(Section):
     #: The version of the charts to use
     #: When changing this, be aware that the operator may depend on the layout of
     #: the Helm values at a particular version
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.160"
+    chart_version: SemVerVersion = "0.1.0-dev.0.main.163"
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
