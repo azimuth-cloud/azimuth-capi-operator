@@ -26,12 +26,18 @@ global:
 
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
-  machineRootVolumeSize: {{ spec.machine_root_volume_size }}
+{% if spec.machine_root_volume_size > 0 %}
+  machineRootVolume:
+    diskSize: {{ spec.machine_root_volume_size }}
+{% endif %}
   healthCheck:
     enabled: {{ "true" if spec.autohealing else "false" }}
 
 nodeGroupDefaults:
-  machineRootVolumeSize: {{ spec.machine_root_volume_size }}
+{% if spec.machine_root_volume_size > 0 %}
+  machineRootVolume:
+    diskSize: {{ spec.machine_root_volume_size }}
+{% endif %}
   healthCheck:
     enabled: {{ "true" if spec.autohealing else "false" }}
 
