@@ -1,11 +1,9 @@
-import typing as t
-
 from pydantic import Extra, Field, constr
 
-from ..util import BaseModel
+from kube_custom_resource import CustomResource, Scope, schema
 
 
-class ClusterTemplateGlobalValues(BaseModel):
+class ClusterTemplateGlobalValues(schema.BaseModel):
     """
     The global values used when deploying the Helm chart.
     """
@@ -18,14 +16,12 @@ class ClusterTemplateGlobalValues(BaseModel):
     )
 
 
-class ClusterTemplateValues(BaseModel):
+class ClusterTemplateValues(schema.BaseModel):
     """
     The values to use when deploying the Helm chart.
     """
     class Config:
-        fields = {
-            "global_": "global",
-        }
+        fields = { "global_": "global" }
         extra = Extra.allow
 
     global_: ClusterTemplateGlobalValues = Field(
@@ -38,7 +34,7 @@ class ClusterTemplateValues(BaseModel):
     )
 
 
-class ClusterTemplateSpec(BaseModel):
+class ClusterTemplateSpec(schema.BaseModel):
     """
     The spec of an Azimuth cluster template.
     """
@@ -63,7 +59,27 @@ class ClusterTemplateSpec(BaseModel):
     )
 
 
-class ClusterTemplate(BaseModel):
+class ClusterTemplate(
+    CustomResource,
+    scope = Scope.CLUSTER,
+    printer_columns = [
+        {
+            "name": "Label",
+            "type": "string",
+            "jsonPath": ".spec.label",
+        },
+        {
+            "name": "Kubernetes Version",
+            "type": "string",
+            "jsonPath": ".spec.values.global.kubernetesVersion",
+        },
+        {
+            "name": "Deprecated",
+            "type": "boolean",
+            "jsonPath": ".spec.deprecated",
+        },
+    ]
+):
     """
     An Azimuth cluster template.
     """

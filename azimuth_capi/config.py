@@ -28,6 +28,25 @@ class SemVerVersion(str):
         return f'{self.__class__.__name__}({super().__repr__()})'
 
 
+class HelmClientConfiguration(Section):
+    """
+    Configuration for the Helm client.
+    """
+    #: The default timeout to use with Helm releases
+    #: Can be an integer number of seconds or a duration string like 5m, 5h
+    default_timeout: t.Union[int, constr(min_length = 1)] = "1h"
+    #: The executable to use
+    #: By default, we assume Helm is on the PATH
+    executable: constr(min_length = 1) = "helm"
+    #: The maximum number of revisions to retain in the history of releases
+    history_max_revisions: int = 10
+    #: Indicates whether to verify TLS when pulling charts
+    insecure_skip_tls_verify: bool = False
+    #: The directory to use for unpacking charts
+    #: By default, the system temporary directory is used
+    unpack_directory: t.Optional[str] = None
+
+
 class CAPIHelmConfig(Section):
     """
     Configuration for the CAPI Helm chart used to deploy clusters.
@@ -167,8 +186,19 @@ class Configuration(BaseConfiguration):
 
     #: The API group of the cluster CRDs
     api_group: constr(min_length = 1) = "azimuth.stackhpc.com"
+    #: A list of categories to place CRDs into
+    crd_categories: t.List[constr(min_length = 1)] = Field(
+        default_factory = lambda: ["azimuth"]
+    )
+
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
+
+    #: The field manager name to use for server-side apply
+    easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
+
+    #: The Helm client configuration
+    helm_client: HelmClientConfiguration = Field(default_factory = HelmClientConfiguration)
 
     #: The webhook configuration
     webhook: WebhookConfiguration = Field(default_factory = WebhookConfiguration)

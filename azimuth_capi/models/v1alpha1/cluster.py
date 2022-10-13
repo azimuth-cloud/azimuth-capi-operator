@@ -1,12 +1,12 @@
 import datetime as dt
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr, conint, validator
+from pydantic import Extra, Field, AnyHttpUrl, constr, validator
 
-from ..util import BaseModel, Enum, Dict
+from kube_custom_resource import CustomResource, schema
 
 
-class NodeGroupSpec(BaseModel):
+class NodeGroupSpec(schema.BaseModel):
     """
     The spec for a group of homogeneous nodes in the cluster.
     """
@@ -22,15 +22,15 @@ class NodeGroupSpec(BaseModel):
         False,
         description = "Whether the node group should autoscale or not."
     )
-    count: t.Optional[conint(ge = 0)] = Field(
+    count: t.Optional[schema.conint(ge = 0)] = Field(
         None,
         description = "The fixed number of nodes in the node group when not autoscaling."
     )
-    min_count: t.Optional[conint(ge = 1)] = Field(
+    min_count: t.Optional[schema.conint(ge = 1)] = Field(
         None,
         description = "The minimum number of nodes in the node group when autoscaling."
     )
-    max_count: t.Optional[conint(ge = 1)] = Field(
+    max_count: t.Optional[schema.conint(ge = 1)] = Field(
         None,
         description = "The maximum number of nodes in the node group when autoscaling."
     )
@@ -58,7 +58,7 @@ class NodeGroupSpec(BaseModel):
         return v
 
 
-class AddonsSpec(BaseModel):
+class AddonsSpec(schema.BaseModel):
     """
     The spec for the addons of the cluster.
     """
@@ -84,7 +84,7 @@ class AddonsSpec(BaseModel):
     )
 
 
-class ClusterSpec(BaseModel):
+class ClusterSpec(schema.BaseModel):
     """
     The spec for an Azimuth cluster.
     """
@@ -104,14 +104,6 @@ class ClusterSpec(BaseModel):
         True,
         description = "Indicates if auto-healing should be enabled."
     )
-    machine_root_volume_size: conint(ge = 0) = Field(
-        0,
-        description = (
-            "The size of the root volume for machines in the cluster. "
-            "If greater than zero a volume is provisioned for the root volume, "
-            "otherwise the ephemeral volume of the machine size is used."
-        )
-    )
     control_plane_machine_size: constr(min_length = 1) = Field(
         ...,
         description = "The name of the size to use for control plane machines."
@@ -126,7 +118,7 @@ class ClusterSpec(BaseModel):
     )
 
 
-class ClusterPhase(str, Enum):
+class ClusterPhase(str, schema.Enum):
     """
     The overall phase of the cluster.
     """
@@ -139,7 +131,7 @@ class ClusterPhase(str, Enum):
     UNKNOWN      = "Unknown"
 
 
-class NetworkingPhase(str, Enum):
+class NetworkingPhase(str, schema.Enum):
     """
     The phase of the networking for the cluster.
     """
@@ -151,7 +143,7 @@ class NetworkingPhase(str, Enum):
     UNKNOWN      = "Unknown"
 
 
-class ControlPlanePhase(str, Enum):
+class ControlPlanePhase(str, schema.Enum):
     """
     The phase of the control plane of the cluster.
     """
@@ -166,7 +158,7 @@ class ControlPlanePhase(str, Enum):
     UNKNOWN      = "Unknown"
 
 
-class NodePhase(str, Enum):
+class NodePhase(str, schema.Enum):
     """
     The phase of a node in the cluster.
     """
@@ -180,7 +172,7 @@ class NodePhase(str, Enum):
     UNKNOWN      = "Unknown"
 
 
-class AddonPhase(str, Enum):
+class AddonPhase(str, schema.Enum):
     """
     The phase of an addon in the cluster.
     """
@@ -192,7 +184,7 @@ class AddonPhase(str, Enum):
     UNKNOWN      = "Unknown"
 
 
-class NodeRole(str, Enum):
+class NodeRole(str, schema.Enum):
     """
     The role of a node.
     """
@@ -201,7 +193,7 @@ class NodeRole(str, Enum):
     UNKNOWN = "Unknown"
 
 
-class NodeStatus(BaseModel):
+class NodeStatus(schema.BaseModel):
     """
     The status of a node in the cluster.
     """
@@ -238,7 +230,7 @@ class NodeStatus(BaseModel):
     )
 
 
-class AddonStatus(BaseModel):
+class AddonStatus(schema.BaseModel):
     """
     The status of an addon in the cluster.
     """
@@ -246,13 +238,13 @@ class AddonStatus(BaseModel):
         AddonPhase.UNKNOWN.value,
         description = "The phase of the addon."
     )
-    revision: conint(ge = 0) = Field(
+    revision: schema.conint(ge = 0) = Field(
         0,
         description = "The revision of the addon."
     )
 
 
-class ServiceStatus(BaseModel):
+class ServiceStatus(schema.BaseModel):
     """
     The status of a service in the cluster.
     """
@@ -274,7 +266,7 @@ class ServiceStatus(BaseModel):
     )
 
 
-class ClusterStatus(BaseModel):
+class ClusterStatus(schema.BaseModel):
     """
     The status of the cluster.
     """
@@ -305,7 +297,7 @@ class ClusterStatus(BaseModel):
         0,
         description = "The number of nodes in the cluster."
     )
-    nodes: Dict[str, NodeStatus] = Field(
+    nodes: schema.Dict[str, NodeStatus] = Field(
         default_factory = dict,
         description = "The status of the nodes in cluster, indexed by node name."
     )
@@ -313,17 +305,59 @@ class ClusterStatus(BaseModel):
         0,
         description = "The number of addons for the cluster."
     )
-    addons: Dict[str, AddonStatus] = Field(
+    addons: schema.Dict[str, AddonStatus] = Field(
         default_factory = dict,
         description = "The status of the addons for the cluster, indexed by addon name."
     )
-    services: Dict[str, ServiceStatus] = Field(
+    services: schema.Dict[str, ServiceStatus] = Field(
         default_factory = dict,
         description = "The services for the cluster, indexed by service name."
     )
 
 
-class Cluster(BaseModel):
+class Cluster(
+    CustomResource,
+    subresources = {"status": {}},
+    printer_columns = [
+        {
+            "name": "Label",
+            "type": "string",
+            "jsonPath": ".spec.label",
+        },
+        {
+            "name": "Template",
+            "type": "string",
+            "jsonPath": ".spec.templateName",
+        },
+        {
+            "name": "Kubernetes Version",
+            "type": "string",
+            "jsonPath": ".status.kubernetesVersion",
+        },
+        {
+            "name": "Phase",
+            "type": "string",
+            "jsonPath": ".status.phase",
+        },
+        {
+            "name": "Control Plane",
+            "type": "string",
+            "jsonPath": ".status.controlPlanePhase",
+            "priority": 1,
+        },
+        {
+            "name": "Node Count",
+            "type": "integer",
+            "jsonPath": ".status.nodeCount",
+        },
+        {
+            "name": "Addon Count",
+            "type": "integer",
+            "jsonPath": ".status.addonCount",
+            "priority": 1,
+        },
+    ]
+):
     """
     An Azimuth cluster.
     """
