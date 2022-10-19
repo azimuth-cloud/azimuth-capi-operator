@@ -2,7 +2,7 @@ import jinja2
 import yaml
 
 from .config import settings
-from . import models, utils
+from . import utils
 
 
 class Loader:
@@ -34,4 +34,4 @@ class Loader:
         return yaml.safe_load(self.loads(template, **params))
 
 
-default_loader = Loader(settings = settings, models = models)
+default_loader = Loader(settings = settings)

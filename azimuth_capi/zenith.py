@@ -11,10 +11,11 @@ import httpx
 import kopf
 import yaml
 
-from easykube import ApiError, resources as k8s
+from easykube import ApiError
+
+from pyhelm3 import Client as HelmClient
 
 from .config import settings
-from .helm import Chart, Release
 from .template import default_loader
 from .utils import mergeconcat
 
@@ -34,15 +35,16 @@ async def ensure_zenith_secret(client, cluster, secret_name):
     If the secret does not exist, it is created. If the secret already exists, the
     labels and annotations are patched.
     """
-    namespace = cluster["metadata"]["namespace"]
-    cluster_name = cluster["metadata"]["name"]
+    namespace = cluster.metadata.namespace
+    cluster_name = cluster.metadata.name
     labels = {
         "app.kubernetes.io/managed-by": "azimuth-capi-operator",
         "capi.stackhpc.com/cluster": cluster_name,
     }
+    eksecrets = await client.api("v1").resource("secrets")
     # Even if the secret already exists, we will patch the labels and annotations to match
     try:
-        _ = await k8s.Secret(client).fetch(secret_name, namespace = namespace)
+        _ = await eksecrets.fetch(secret_name, namespace = namespace)
     except ApiError as exc:
         if exc.status_code != 404:
             raise
@@ -77,10 +79,10 @@ async def ensure_zenith_secret(client, cluster, secret_name):
                 "id_ed25519.pub": public_key_text,
             },
         }
-        kopf.adopt(secret_data, cluster)
-        return await k8s.Secret(client).create(secret_data, namespace = namespace)
+        kopf.adopt(secret_data, cluster.dict(by_alias = True))
+        return await eksecrets.create(secret_data, namespace = namespace)
     else:
-        return await k8s.Secret(client).patch(
+        return await eksecrets.patch(
             secret_name,
             { "metadata": { "labels": labels } },
             namespace = namespace
@@ -91,17 +93,25 @@ async def zenith_apiserver_values(client, cluster):
     """
     Returns the Helm values required to use Zenith for the API server.
     """
-    name = cluster["metadata"]["name"]
+    name = cluster.metadata.name
     # First, reserve a subdomain for the API server
     apiserver_secret = await ensure_zenith_secret(client, cluster, f"{name}-zenith-apiserver")
     # Get the static pod definition for the Zenith client for the API server
+    client = HelmClient(
+        default_timeout = settings.helm_client.default_timeout,
+        executable = settings.helm_client.executable,
+        history_max_revisions = settings.helm_client.history_max_revisions,
+        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
+        unpack_directory = settings.helm_client.unpack_directory
+    )
     resources = list(
-        await Release("zenith-apiserver", "kube-system").template_resources(
-            Chart(
-                repository = settings.zenith.chart_repository,
-                name = "zenith-apiserver",
+        await client.template_resources(
+            await client.get_chart(
+                "zenith-apiserver",
+                repo = settings.zenith.chart_repository,
                 version = settings.zenith.chart_version
             ),
+            "zenith-apiserver",
             mergeconcat(
                 settings.zenith.apiserver_defaults,
                 {
@@ -116,7 +126,8 @@ async def zenith_apiserver_values(client, cluster):
                         },
                     },
                 }
-            )
+            ),
+            namespace = "kube-system"
         )
     )
     configmap = next(r for r in resources if r["kind"] == "ConfigMap")
@@ -273,13 +284,21 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
     clouds_b64 = cloud_credentials_secret.data["clouds.yaml"]
     clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
     project_id = clouds["clouds"]["openstack"]["auth"]["project_id"]
+    client = HelmClient(
+        default_timeout = settings.helm_client.default_timeout,
+        executable = settings.helm_client.executable,
+        history_max_revisions = settings.helm_client.history_max_revisions,
+        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
+        unpack_directory = settings.helm_client.unpack_directory
+    )
     return list(
-        await Release(name, namespace).template_resources(
-            Chart(
-                repository = settings.zenith.chart_repository,
-                name = "zenith-operator",
+        await client.template_resources(
+            await client.get_chart(
+                "zenith-operator",
+                repo = settings.zenith.chart_repository,
                 version = settings.zenith.chart_version
             ),
+            name,
             mergeconcat(
                 settings.zenith.operator_defaults,
                 {
@@ -296,6 +315,7 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
                         },
                     },
                 }
-            )
+            ),
+            namespace = namespace
         )
     )
