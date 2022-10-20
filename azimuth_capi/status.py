@@ -236,6 +236,11 @@ def machine_updated(cluster, obj, infra_machine):
             ),
             None
         ),
+        ips = [
+            a["address"]
+            for a in status.get("addresses", [])
+            if a["type"] == "InternalIP"
+        ],
         # Take the version from the spec, which should always be set
         kubelet_version = obj["spec"]["version"].lstrip("v"),
         # The node group will be in a label if applicable
