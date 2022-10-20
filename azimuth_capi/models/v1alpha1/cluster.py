@@ -213,6 +213,10 @@ class NodeStatus(schema.BaseModel):
         None,
         description = "The internal IP address of the node."
     )
+    ips: t.List[str] = Field(
+        default_factory = list,
+        description = "The IP addresses of the node."
+    )
     kubelet_version: t.Optional[str] = Field(
         None,
         description = "The kubelet version of the node."
