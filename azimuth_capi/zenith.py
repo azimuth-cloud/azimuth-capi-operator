@@ -177,48 +177,28 @@ def zenith_client_values(enabled, name, namespace, **kwargs):
     """
     Returns the Helm values required to launch a Zenith client for the specified service.
     """
-    # Install or uninstall the Zenith client resources as an extra addon using kustomize
-    return {
-        "addons": {
-            "extraAddons": {
-                f"{name}-client": {
-                    "enabled": enabled,
-                    "dependsOn": [name],
-                    "installType": "kustomize",
-                    "kustomize": {
-                        "kustomization": {
-                            "resources": ["./zenith-client.yaml"],
-                        },
-                    },
-                    "extraFiles": {
-                        "zenith-client.yaml": default_loader.loads(
-                            "zenith-client.yaml",
-                            name = name,
-                            namespace = namespace,
-                            **kwargs
-                        )
-                    },
-                },
-                # Remove the old proxy services for now
-                f"{name}-proxy": {
-                    "enabled": False,
-                    "dependsOn": [name],
-                    "installType": "helm",
-                    "helm": {
-                        "chart": {
-                            "repo": settings.zenith.chart_repository,
-                            "name": "zenith-proxy",
-                            "version": settings.zenith.chart_version,
-                        },
-                        "release": {
+    if enabled:
+        return {
+            "addons": {
+                "custom": {
+                    f"{name}-client": {
+                        "kind": "Manifests",
+                        "spec": {
                             "namespace": namespace,
-                            "values": {},
+                            "manifests": {
+                                "zenith-client.yaml": default_loader.loads(
+                                    "zenith-client.yaml",
+                                    name = name,
+                                    **kwargs
+                                ),
+                            },
                         },
                     },
                 },
             },
-        },
-    }
+        }
+    else:
+        return {}
 
 
 async def zenith_values(client, cluster, addons):

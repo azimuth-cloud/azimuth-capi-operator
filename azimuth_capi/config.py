@@ -56,7 +56,7 @@ class CAPIHelmConfig(Section):
     #: The name of the CAPI Helm chart to use to deploy clusters
     chart_name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.179"
+    chart_version: SemVerVersion = "0.1.0-dev.0.feature-addon-provider.185"
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -71,7 +71,7 @@ class KubeappsConfig(Section):
     #: The name of the kubeapps Helm chart
     chart_name: constr(min_length = 1) = "kubeapps"
     #: The version of the kubeapps Helm chart to use
-    chart_version: SemVerVersion = "~7.7.4"
+    chart_version: SemVerVersion = "11.0.1"
     #: The release namespace for kubeapps installations
     release_namespace: constr(min_length = 1) = "kubeapps"
     # The values to use for the release

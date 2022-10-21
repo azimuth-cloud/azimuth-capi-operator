@@ -341,19 +341,23 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
         _ = await clusters.__anext__()
     except StopAsyncIteration:
         status.cluster_absent(instance)
-    # Remove any addons that do not have an install job
-    ekjobs = await ekclient.api("batch/v1").resource("jobs")
+    # Remove any addons that do not have a corresponding resource
+    ekaddons = ekclient.api("addons.stackhpc.com/v1alpha1")
+    ekhelmreleases = await ekaddons.resource("helmreleases")
+    ekmanifests = await ekaddons.resource("manifests")
     status.remove_unknown_addons(
         instance,
         [
-            job
-            async for job in ekjobs.list(
+            addon
+            async for addon in ekhelmreleases.list(
                 namespace = namespace,
-                labels = {
-                    "app.kubernetes.io/name": "addons",
-                    "app.kubernetes.io/instance": name,
-                    "capi.stackhpc.com/operation": "install",
-                }
+                labels = { "capi.stackhpc.com/cluster": name }
+            )
+        ] + [
+            addon
+            async for addon in ekmanifests.list(
+                namespace = namespace,
+                labels = { "capi.stackhpc.com/cluster": name }
             )
         ]
     )
@@ -441,31 +445,31 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):
         status.machine_updated(cluster, body, infra_machine)
 
 
-@on_managed_object_event(
-    "batch/v1",
-    "jobs",
-    # The addon jobs use the label app.kubernetes.io/instance to identify the cluster
-    cluster_label = "app.kubernetes.io/instance",
-    # They should also have the following labels
-    labels = {
-        "app.kubernetes.io/name": "addons",
-        "app.kubernetes.io/component": kopf.PRESENT,
-        "capi.stackhpc.com/operation": kopf.PRESENT,
-    }
-)
-async def on_addon_job_event(cluster, type, body, **kwargs):
+@on_managed_object_event("addons.stackhpc.com/v1alpha1", "helmreleases")
+async def on_helmrelease_event(cluster, type, body, **kwargs):
     """
-    Executes on events for CAPI addon jobs.
+    Executes on events for HelmRelease addons.
     """
     if type == "DELETED":
-        status.addon_job_deleted(cluster, body)
+        status.addon_deleted(cluster, body)
     else:
-        status.addon_job_updated(cluster, body)
+        status.addon_updated(cluster, body)
+
+
+@on_managed_object_event("addons.stackhpc.com/v1alpha1", "manifests")
+async def on_manifests_event(cluster, type, body, **kwargs):
+    """
+    Executes on events for Manifests addons.
+    """
+    if type == "DELETED":
+        status.addon_deleted(cluster, body)
+    else:
+        status.addon_updated(cluster, body)
 
 
 @on_managed_object_event(
-    "batch/v1",
-    "jobs",
+    "v1",
+    "secrets",
     # The kubeconfig secret does not have the capi.stackhpc.com/cluster label
     # But it does have cluster.x-k8s.io/cluster-name
     cluster_label = "cluster.x-k8s.io/cluster-name"

@@ -275,91 +275,31 @@ def kubeconfig_secret_updated(cluster, obj):
     cluster.status.kubeconfig_secret_name = obj["metadata"]["name"]
 
 
-def _addon_is_latest_revision(cluster, component, revision):
+def addon_updated(cluster, obj):
     """
-    Returns true if the specified revision is the latest for the given component.
+    Updates the status when an addon is updated.
     """
-    # If the revision is >= the previous largest revision we have seen, it is the latest
-    latest = getattr(cluster.status.addons.get(component), "revision", 0)
-    return revision >= latest
+    component = obj["metadata"]["labels"]["capi.stackhpc.com/component"]
+    status = obj.get("status", {})
+    cluster.status.addons[component] = AddonStatus(
+        phase = status.get("phase", AddonPhase.UNKNOWN.value),
+        revision = status.get("revision", 0)
+    )
 
 
-def _addon_previous_phase(cluster, component):
+def addon_deleted(cluster, obj):
     """
-    Returns the previous phase for the addon.
+    Updates the status when an addon is deleted.
     """
-    addon = cluster.status.addons.get(component)
-    return AddonPhase(addon.phase) if addon else AddonPhase.UNKNOWN
+    component = obj["metadata"]["labels"]["capi.stackhpc.com/component"]
+    cluster.status.addons.pop(component, None)
 
 
-def addon_job_updated(cluster, obj):
+def remove_unknown_addons(cluster, addons):
     """
-    Updates the status when an addon job is updated.
+    Given the current set of addons, remove any unknown addons from the status.
     """
-    labels = obj["metadata"]["labels"]
-    component = labels["app.kubernetes.io/component"]
-    operation = labels["capi.stackhpc.com/operation"]
-    revision = int(labels["capi.stackhpc.com/revision"])
-    # Suspended jobs are not considered
-    if obj.get("spec", {}).get("suspend", False):
-        return cluster
-    # We only process jobs for the latest revision
-    if _addon_is_latest_revision(cluster, component, revision):
-        previous_phase = _addon_previous_phase(cluster, component)
-        # Then calculate the next phase for the addon
-        status = obj.get("status", {})
-        conditions = status.get("conditions", [])
-        complete = next((c for c in conditions if c["type"] == "Complete"), None)
-        failed = next((c for c in conditions if c["type"] == "Failed"), None)
-        is_complete = complete and complete["status"] == "True"
-        is_failed = failed and failed["status"] == "True"
-        is_active = status.get("active", 0) > 0
-        if operation == "install":
-            if is_complete:
-                addon_phase = AddonPhase.READY
-            elif is_failed:
-                addon_phase = AddonPhase.FAILED
-            elif is_active:
-                addon_phase = AddonPhase.INSTALLING
-            else:
-                addon_phase = AddonPhase.PENDING
-        else:
-            if is_complete:
-                cluster.status.addons.pop(component, None)
-                return cluster
-            if is_failed:
-                addon_phase = AddonPhase.FAILED
-            elif is_active:
-                addon_phase = AddonPhase.UNINSTALLING
-            else:
-                # The job has just launched - the phase stays the same
-                addon_phase = previous_phase
-        cluster.status.addons[component] = AddonStatus(phase = addon_phase, revision = revision)
-
-
-def addon_job_deleted(cluster, obj):
-    """
-    Updates the status when an addon job is deleted.
-    """
-    # Uninstall jobs are completed at the same time that they are deleted
-    # So we need to handle that case here
-    labels = obj["metadata"]["labels"]
-    component = labels["app.kubernetes.io/component"]
-    operation = labels["capi.stackhpc.com/operation"]
-    revision = int(labels["capi.stackhpc.com/revision"])
-    if _addon_is_latest_revision(cluster, component, revision) and operation == "uninstall":
-        status = obj.get("status", {})
-        conditions = status.get("conditions", [])
-        complete = next((c for c in conditions if c["type"] == "Complete"), None)
-        if complete and complete["status"] == "True":
-            cluster.status.addons.pop(component, None)
-
-
-def remove_unknown_addons(cluster, install_jobs):
-    """
-    Given the current set of addon install jobs, remove any unknown addons from the status.
-    """
-    current = set(j.metadata.labels["app.kubernetes.io/component"] for j in install_jobs)
+    current = set(a["metadata"]["labels"]["capi.stackhpc.com/component"] for a in addons)
     known = set(cluster.status.addons.keys())
     for component in known - current:
         cluster.status.addons.pop(component)
