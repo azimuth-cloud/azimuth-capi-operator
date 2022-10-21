@@ -93,7 +93,9 @@ def _reconcile_cluster_phase(cluster):
     elif _any_addon_has_phase(
         cluster,
         AddonPhase.PENDING,
+        AddonPhase.PREPARING,
         AddonPhase.INSTALLING,
+        AddonPhase.UPGRADING,
         AddonPhase.UNINSTALLING
     ):
         cluster.status.phase = ClusterPhase.RECONCILING
