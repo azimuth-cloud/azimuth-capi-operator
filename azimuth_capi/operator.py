@@ -1,5 +1,6 @@
 import base64
 import functools
+import json
 import logging
 import ssl
 import sys
@@ -482,7 +483,60 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):
         status.kubeconfig_secret_updated(cluster, body)
 
 
-def service_name(reservation):
+async def annotate_addon_for_reservation(
+    cluster_name,
+    cluster_namespace,
+    reservation,
+    service_name,
+    service_status = None
+):
+    """
+    Annotates the addon for the reservation, if one exists, with information
+    about the reservation.
+    """
+    # If the reservation is not part of a Helm release, it isn't part of an addon
+    annotations = reservation["metadata"].get("annotations", {})
+    release_namespace = annotations.get("meta.helm.sh/release-namespace")
+    release_name = annotations.get("meta.helm.sh/release-name")
+    if not release_namespace or not release_name:
+        return
+    # Search the addons for the one that produced the release
+    labels = {
+        "addons.stackhpc.com/cluster": cluster_name,
+        "addons.stackhpc.com/release-namespace": release_namespace,
+        "addons.stackhpc.com/release-name": release_name,
+    }
+    ekaddons = ekclient.api("addons.stackhpc.com/v1alpha1")
+    ekresource = await ekaddons.resource("helmreleases")
+    addon = await ekresource.first(labels = labels, namespace = cluster_namespace)
+    if not addon:
+        ekresource = await ekaddons.resource("manifests")
+        addon = await ekresource.first(labels = labels, namespace = cluster_namespace)
+    if not addon:
+        return
+    # Add the service to the services annotation for the addon
+    # Note that this function will not run concurrently for two reservations on the same
+    # cluster, so this is a safe operation
+    annotations = addon.metadata.get("annotations", {})
+    services = json.loads(annotations.get("azimuth.stackhpc.com/services", "{}"))
+    if service_status:
+        services[service_name] = service_status.dict()
+    else:
+        services.pop(service_name, None)
+    _ = await ekresource.patch(
+        addon.metadata.name,
+        {
+            "metadata": {
+                "annotations": {
+                    "services": json.dumps(services),
+                }
+            }
+        },
+        namespace = addon.metadata.namespace
+    )
+
+
+def get_service_name(reservation):
     """
     Returns the service name for the reservation.
     """
@@ -491,7 +545,7 @@ def service_name(reservation):
     return name if name.startswith(namespace) else f"{namespace}-{name}"
 
 
-def service_status(reservation):
+def get_service_status(reservation):
     """
     Returns the service status for the given reservation.
     """
@@ -546,18 +600,28 @@ async def monitor_cluster_services(name, namespace, **kwargs):
             ekzenithreservations = await ekzenithapi.resource("reservations")
             initial, events = await ekzenithreservations.watch_list(all_namespaces = True)
             # The initial reservations represent the current known state of the services
-            # So we rebuild and replace the full service state
+            # So we rebuild and replace the full service state for the cluster
+            cluster_services = {}
+            for reservation in initial:
+                if reservation.get("status", {}).get("phase", "Unknown") != "Ready":
+                    continue
+                service_name = get_service_name(reservation)
+                service_status = get_service_status(reservation)
+                cluster_services[service_name] = service_status
+                await annotate_addon_for_reservation(
+                    name,
+                    namespace,
+                    reservation,
+                    service_name,
+                    service_status
+                )
             await ekclusterstatus.json_patch(
                 name,
                 [
                     {
                         "op": "replace",
                         "path": "/status/services",
-                        "value": {
-                            service_name(reservation): service_status(reservation)
-                            for reservation in initial
-                            if reservation.get("status", {}).get("phase", "Unknown") == "Ready"
-                        },
+                        "value": cluster_services,
                     },
                 ],
                 namespace = namespace
@@ -565,29 +629,47 @@ async def monitor_cluster_services(name, namespace, **kwargs):
             # For subsequent events, we just need to patch the state of the specified service
             async for event in events:
                 event_type, reservation = event["type"], event.get("object")
+                if not reservation:
+                    continue
+                service_name = get_service_name(reservation)
                 if event_type in {"ADDED", "MODIFIED"}:
                     if reservation.get("status", {}).get("phase", "Unknown") == "Ready":
+                        service_status = get_service_status(reservation)
                         await ekclusterstatus.patch(
                             name,
                             {
                                 "status": {
                                     "services": {
-                                        service_name(reservation): service_status(reservation),
+                                        service_name: service_status,
                                     },
                                 },
                             },
                             namespace = namespace
                         )
+                        await annotate_addon_for_reservation(
+                            name,
+                            namespace,
+                            reservation,
+                            service_name,
+                            service_status
+                        )
                 elif event_type == "DELETED":
+                    service_name = get_service_name(reservation)
                     await ekclusterstatus.json_patch(
                         name,
                         [
                             {
                                 "op": "remove",
-                                "path": f"/status/services/{service_name(reservation)}",
+                                "path": f"/status/services/{service_name}",
                             },
                         ],
                         namespace = namespace
+                    )
+                    await annotate_addon_for_reservation(
+                        name,
+                        namespace,
+                        reservation,
+                        service_name
                     )
         except (ApiError, ssl.SSLCertVerificationError) as exc:
             # These are expected, recoverable errors that we can retry

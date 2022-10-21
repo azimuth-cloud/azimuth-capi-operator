@@ -108,14 +108,17 @@ rules:
       - get
       - watch
   - apiGroups:
+      - addons.stackhpc.com
+    resources:
+      - "*"
+    verbs:
+      - list
+      - get
+      - watch
+      - patch
+  - apiGroups:
       - apps
     resources:
       - deployments
-    verbs:
-      - "*"
-  - apiGroups:
-      - batch
-    resources:
-      - jobs
     verbs:
       - "*"
