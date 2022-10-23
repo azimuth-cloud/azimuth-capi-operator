@@ -523,7 +523,7 @@ async def annotate_addon_for_reservation(
         services[service_name] = service_status.dict()
     else:
         services.pop(service_name, None)
-    _ = await ekresource.patch(
+    return await ekresource.patch(
         addon.metadata.name,
         {
             "metadata": {
@@ -607,14 +607,16 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                     continue
                 service_name = get_service_name(reservation)
                 service_status = get_service_status(reservation)
-                cluster_services[service_name] = service_status
-                await annotate_addon_for_reservation(
+                addon = await annotate_addon_for_reservation(
                     name,
                     namespace,
                     reservation,
                     service_name,
                     service_status
                 )
+                # If the addon has the Helm chart label, store the service
+                if "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
+                    cluster_services[service_name] = service_status
             await ekclusterstatus.json_patch(
                 name,
                 [
@@ -635,24 +637,25 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                 if event_type in {"ADDED", "MODIFIED"}:
                     if reservation.get("status", {}).get("phase", "Unknown") == "Ready":
                         service_status = get_service_status(reservation)
-                        await ekclusterstatus.patch(
-                            name,
-                            {
-                                "status": {
-                                    "services": {
-                                        service_name: service_status,
-                                    },
-                                },
-                            },
-                            namespace = namespace
-                        )
-                        await annotate_addon_for_reservation(
+                        addon = await annotate_addon_for_reservation(
                             name,
                             namespace,
                             reservation,
                             service_name,
                             service_status
                         )
+                        if "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
+                            await ekclusterstatus.patch(
+                                name,
+                                {
+                                    "status": {
+                                        "services": {
+                                            service_name: service_status,
+                                        },
+                                    },
+                                },
+                                namespace = namespace
+                            )
                 elif event_type == "DELETED":
                     service_name = get_service_name(reservation)
                     await ekclusterstatus.json_patch(
