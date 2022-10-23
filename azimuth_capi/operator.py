@@ -528,7 +528,7 @@ async def annotate_addon_for_reservation(
         {
             "metadata": {
                 "annotations": {
-                    "services": json.dumps(services),
+                    "azimuth.stackhpc.com/services": json.dumps(services),
                 }
             }
         },
