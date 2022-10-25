@@ -1,29 +1,3 @@
-{% set kubeapps_default_values %}
-# By default, enable persistence for postgresql
-postgresql:
-  # Use a known password for now
-  auth:
-    postgresPassword: 4e28f9f253ec2cd8fc9f775e8c6c43b2
-  architecture: standalone
-  primary:
-    persistence:
-      enabled: true
-  # Enabling the security context is required for volume permissions
-  securityContext:
-    enabled: true
-{% if settings.zenith.enabled %}
-# If Zenith is enabled, tell kubeapps there is an external auth proxy
-authProxy:
-  enabled: true
-  external: true
-  skipKubeappsLoginPage: true
-  # Setting these causes the login/logout to short-circuit
-  # The user is automatically logged out when their cloud token expires
-  oauthLoginURI: /
-  oauthLogoutURI: /
-{% endif %}
-{% endset %}
-
 global:
   cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
@@ -56,17 +30,3 @@ addons:
     enabled: {{ "true" if spec.addons.ingress else "false" }}
   monitoring:
     enabled: {{ "true" if spec.addons.monitoring else "false" }}
-{% if spec.addons.apps %}
-  # Add kubeapps as a custom addon if requested
-  custom:
-    kubeapps:
-      kind: HelmRelease
-      spec:
-        namespace: "{{ settings.kubeapps.release_namespace }}"
-        chart:
-          repo: "{{ settings.kubeapps.chart_repository }}"
-          name: "{{ settings.kubeapps.chart_name }}"
-          version: "{{ settings.kubeapps.chart_version }}"
-        values:
-          {{ kubeapps_default_values | fromyaml | mergeconcat(settings.kubeapps.release_values) | toyaml | indent(10) }}
-{% endif %}

@@ -237,20 +237,6 @@ async def zenith_values(client, cluster, addons):
             },
             label = "Monitoring",
             icon_url = settings.zenith.monitoring_icon_url
-        ),
-        zenith_client_values(
-            addons.apps,
-            "kubeapps",
-            settings.kubeapps.release_namespace,
-            upstream_service_name = "kubeapps",
-            upstream_port = 80,
-            mitm_proxy_enabled = True,
-            mitm_proxy_auth_inject_type = "ServiceAccount",
-            mitm_proxy_auth_inject_service_account = {
-                "clusterRoleName": "cluster-admin",
-            },
-            label = "Applications",
-            icon_url = settings.zenith.kubeapps_icon_url
         )
     )
 
