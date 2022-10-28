@@ -150,7 +150,7 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
         try:
             spec = api.ClusterTemplateSpec.parse_obj(spec)
         except pydantic.ValidationError as exc:
-            raise kopf.AdmissionError(str(exc))
+            raise kopf.AdmissionError(str(exc), code = 400)
     elif operation == "DELETE":
         ekresource = await ekresource_for_model(api.Cluster)
         clusters = ekresource.list(
@@ -162,7 +162,7 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
         except StopAsyncIteration:
             pass  # In this case, the delete is permitted
         else:
-            raise kopf.AdmissionError("template is in use by at least one cluster")
+            raise kopf.AdmissionError("template is in use by at least one cluster", code = 400)
 
 
 @model_handler(
@@ -181,7 +181,7 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
     try:
         spec = api.ClusterSpec.parse_obj(spec)
     except pydantic.ValidationError as exc:
-        raise kopf.AdmissionError(str(exc))
+        raise kopf.AdmissionError(str(exc), code = 400)
     # The credentials secret must exist
     ekresource = await ekclient.api("v1").resource("secrets")
     try:
@@ -191,7 +191,10 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
         )
     except ApiError as exc:
         if exc.status_code == 404:
-            raise kopf.AdmissionError("specified cloud credentials secret does not exist")
+            raise kopf.AdmissionError(
+                "specified cloud credentials secret does not exist",
+                code = 400
+            )
         else:
             raise
     # The specified template must exist
@@ -200,22 +203,27 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
         template = await ekresource.fetch(spec.template_name)
     except ApiError as exc:
         if exc.status_code == 404:
-            raise kopf.AdmissionError("specified cluster template does not exist")
+            raise kopf.AdmissionError("specified cluster template does not exist", code = 400)
         else:
             raise
-    # If the template is being changed (including on create), it must not be deprecated
-    if template.spec.deprecated:
-        ekresource = await ekresource_for_model(api.Cluster)
-        try:
-            existing = await ekresource.fetch(name, namespace = namespace)
-        except ApiError as exc:
-            if exc.status_code == 404:
-                raise kopf.AdmissionError("specified cluster template is deprecated")
-            else:
-                raise
+    # If the template is being changed, we want to impose additional conditions
+    ekresource = await ekresource_for_model(api.Cluster)
+    try:
+        existing = await ekresource.fetch(name, namespace = namespace)
+    except ApiError as exc:
+        if exc.status_code == 404:
+            existing = {}
         else:
-            if existing.spec["templateName"] != template.metadata.name:
-                raise kopf.AdmissionError("specified cluster template is deprecated")
+            raise
+    if not existing or existing.spec["templateName"] != template.metadata.name:
+        # The new template must not be deprecated
+        if template.spec.deprecated:
+            raise kopf.AdmissionError("specified cluster template is deprecated", code = 400)
+        # The new template must not be a downgrade
+        template_vn = template.spec["values"]["global"]["kubernetesVersion"]
+        existing_vn = existing.get("status", {}).get("kubernetesVersion")
+        if existing_vn and template_vn < existing_vn:
+            raise kopf.AdmissionError("specified cluster template would be a downgrade", code = 400)
 
 
 @model_handler(api.Cluster, kopf.on.create)
