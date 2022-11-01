@@ -274,7 +274,9 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
             version = settings.capi_helm.chart_version
         ),
         helm_values,
-        namespace = namespace
+        namespace = namespace,
+        # The target namespace already exists, because the cluster is in it
+        create_namespace = False
     )
     # Ensure that a Zenith operator instance exists for the cluster
     if settings.zenith.enabled:
