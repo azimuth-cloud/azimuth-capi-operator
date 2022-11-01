@@ -1,21 +1,22 @@
 import base64
+import datetime as dt
 import functools
 import json
 import logging
+import pathlib
 import ssl
 import sys
 
-import pydantic
-
 import kopf
+import httpx
+import pydantic
+import yaml
 
 from easykube import Configuration, ApiError
-
 from kube_custom_resource import CustomResourceRegistry
-
 from pyhelm3 import Client as HelmClient, errors as helm_errors
 
-from . import models, status
+from . import models, semver, status
 from .config import settings
 from .models import v1alpha1 as api
 from .template import default_loader
@@ -37,6 +38,16 @@ ekclient = (
     Configuration
         .from_environment(json_encoder = pydantic_encoder)
         .async_client(default_field_manager = settings.easykube_field_manager)
+)
+
+
+# Create a Helm client to target the underlying cluster
+helm_client = HelmClient(
+    default_timeout = settings.helm_client.default_timeout,
+    executable = settings.helm_client.executable,
+    history_max_revisions = settings.helm_client.history_max_revisions,
+    insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
+    unpack_directory = settings.helm_client.unpack_directory
 )
 
 
@@ -131,6 +142,8 @@ def model_handler(model, register_fn, /, include_instance = True, **kwargs):
                 if exc.status_code == 409:
                     # When a handler fails with a 409, we want to retry quickly
                     raise kopf.TemporaryError(str(exc), delay = 5)
+                else:
+                    raise
         return register_fn(api_version, model._meta.plural_name, **kwargs)(handler)
     return decorator
 
@@ -253,16 +266,9 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
             await zenith_values(ekclient, instance, instance.spec.addons)
         )
     # Use Helm to install or upgrade the release
-    client = HelmClient(
-        default_timeout = settings.helm_client.default_timeout,
-        executable = settings.helm_client.executable,
-        history_max_revisions = settings.helm_client.history_max_revisions,
-        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-        unpack_directory = settings.helm_client.unpack_directory
-    )
-    _ = await client.install_or_upgrade_release(
+    _ = await helm_client.install_or_upgrade_release(
         name,
-        await client.get_chart(
+        await helm_client.get_chart(
             settings.capi_helm.chart_name,
             repo = settings.capi_helm.chart_repository,
             version = settings.capi_helm.chart_version
@@ -289,15 +295,8 @@ async def on_cluster_delete(name, namespace, **kwargs):
     Executes whenever a cluster is deleted.
     """
     # Delete the corresponding Helm release
-    client = HelmClient(
-        default_timeout = settings.helm_client.default_timeout,
-        executable = settings.helm_client.executable,
-        history_max_revisions = settings.helm_client.history_max_revisions,
-        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-        unpack_directory = settings.helm_client.unpack_directory
-    )
     try:
-        await client.uninstall_release(name, namespace = namespace)
+        await helm_client.uninstall_release(name, namespace = namespace)
     except helm_errors.ReleaseNotFoundError:
         pass
     # Wait until the associated CAPI cluster no longer exists
@@ -685,3 +684,124 @@ async def monitor_cluster_services(name, namespace, **kwargs):
         except (ApiError, ssl.SSLCertVerificationError) as exc:
             # These are expected, recoverable errors that we can retry
             raise kopf.TemporaryError(str(exc))
+
+
+@model_handler(api.AppTemplate, kopf.on.create)
+# Use a param to distinguish an update to the spec, as we want to act instantly
+# in this case rather than waiting for the sync frequency to elapse
+@model_handler(api.AppTemplate, kopf.on.update, field = "spec", param = "update")
+@model_handler(api.AppTemplate, kopf.on.resume)
+@model_handler(
+    api.AppTemplate,
+    kopf.on.timer,
+    # Since we have create and update handlers, we want to idle after a change
+    interval = settings.timer_interval,
+    idle = settings.timer_interval
+)
+async def reconcile_app_template(instance, param, **kwargs):
+    """
+    Reconciles an app template when it is created or updated, when the operator
+    is resumed or periodically.
+    """
+    # First, we need to decide whether to do anything
+    now = dt.datetime.now(dt.timezone.utc)
+    sync_delta = dt.timedelta(seconds = instance.spec.sync_frequency)
+    # We can exit here is there is nothing to do
+    if not (
+        # If there was an update, we want to check for new versions
+        param == "update" or
+        # If there has never been a successful sync, do one
+        not instance.status.last_sync or
+        # If it has been longer than the sync delta since the last sync
+        instance.status.last_sync + sync_delta < now
+    ):
+        return
+    # Fetch the repository index from the specified URL
+    async with httpx.AsyncClient(base_url = instance.spec.chart.repo) as http:
+        response = await http.get("index.yaml")
+        response.raise_for_status()
+    # Get the available versions for the chart that match our constraint, sorted
+    # with the most recent first
+    version_range = semver.Range(instance.spec.version_range)
+    chart_versions = sorted(
+        (
+            v
+            for v in yaml.safe_load(response.text)["entries"][instance.spec.chart.name]
+            if semver.Version(v["version"]) in version_range
+        ),
+        key = lambda v: semver.Version(v["version"]),
+        reverse = True
+    )
+    # Throw away any versions that we aren't keeping
+    chart_versions = chart_versions[:instance.spec.keep_versions]
+    if not chart_versions:
+        raise kopf.PermanentError("no versions matching constraint")
+    next_label = None
+    next_logo = None
+    next_description = None
+    next_versions = []
+    # For each version, we need to make sure we have a values schema and optionally a UI schema
+    for chart_version in chart_versions:
+        existing_version = next(
+            (
+                version
+                for version in instance.status.versions
+                if version.name == chart_version["version"]
+            ),
+            None
+        )
+        # If we already know about the version, just use it as-is
+        if existing_version:
+            next_versions.append(existing_version)
+            continue
+        # Use the label, logo and description from the first version that has them
+        # The label goes in a custom annotation as there isn't really a field for it, falling back
+        # to the chart name if it is not present
+        next_label = (
+            next_label or
+            chart_version.get("annotations", {}).get("azimuth.stackhpc.com/label") or
+            chart_version["name"]
+        )
+        next_logo = next_logo or chart_version.get("icon")
+        next_description = next_description or chart_version.get("description")
+        # Pull the chart to extract the values schema and UI schema, if present
+        chart_context = helm_client.pull_chart(
+            instance.spec.chart.name,
+            repo = instance.spec.chart.repo,
+            version = chart_version["version"]
+        )
+        async with chart_context as chart:
+            chart_directory = pathlib.Path(chart.ref)
+            values_schema_file = chart_directory / "values.schema.json"
+            ui_schema_file = chart_directory / "azimuth-ui.schema.yaml"
+            if values_schema_file.is_file():
+                with values_schema_file.open() as fh:
+                    values_schema = json.load(fh)
+            else:
+                values_schema = {}
+            if ui_schema_file.is_file():
+                with ui_schema_file.open() as fh:
+                    ui_schema = yaml.safe_load(fh)
+            else:
+                ui_schema = {}
+        next_versions.append(
+            api.AppTemplateVersion(
+                name = chart_version["version"],
+                values_schema = values_schema,
+                ui_schema = ui_schema
+            )
+        )
+    instance.status.label = instance.spec.label or next_label
+    instance.status.logo = instance.spec.logo or next_logo
+    instance.status.description = instance.spec.description or next_description
+    instance.status.versions = next_versions
+    instance.status.last_sync = dt.datetime.now(dt.timezone.utc)
+    ekresource = await ekresource_for_model(api.AppTemplate, "status")
+    _ = await ekresource.replace(
+        instance.metadata.name,
+        {
+            # Include the resource version for optimistic concurrency
+            "metadata": { "resourceVersion": instance.metadata.resource_version },
+            "status": instance.status.dict(exclude_defaults = True),
+        }
+    )

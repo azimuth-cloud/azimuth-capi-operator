@@ -177,6 +177,9 @@ class Configuration(BaseConfiguration):
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
 
+    #: The number of seconds to wait between timer executions
+    timer_interval: conint(gt = 0) = 60
+
     #: The field manager name to use for server-side apply
     easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
 
