@@ -20,6 +20,7 @@ rules:
     resourceNames:
       - clustertemplates.azimuth.stackhpc.com
       - clusters.azimuth.stackhpc.com
+      - apptemplates.azimuth.stackhpc.com
     verbs:
       - update
       - patch
