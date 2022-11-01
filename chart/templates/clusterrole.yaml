@@ -27,6 +27,7 @@ rules:
       - azimuth.stackhpc.com
     resources:
       - clustertemplates
+      - apptemplates
     verbs:
       - list
       - get
@@ -44,6 +45,7 @@ rules:
       - azimuth.stackhpc.com
     resources:
       - clusters/status
+      - apptemplates/status
     verbs:
       - "*"
   - apiGroups:
