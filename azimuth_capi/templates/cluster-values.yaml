@@ -1,5 +1,4 @@
-global:
-  cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
+cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"

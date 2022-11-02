@@ -3,9 +3,9 @@ from pydantic import Extra, Field, constr
 from kube_custom_resource import CustomResource, Scope, schema
 
 
-class ClusterTemplateGlobalValues(schema.BaseModel):
+class ClusterTemplateValues(schema.BaseModel):
     """
-    The global values used when deploying the Helm chart.
+    The values to use when deploying the Helm chart.
     """
     class Config:
         extra = Extra.allow
@@ -13,20 +13,6 @@ class ClusterTemplateGlobalValues(schema.BaseModel):
     kubernetes_version: constr(min_length = 1) = Field(
         ...,
         description = "The Kubernetes version that will be deployed."
-    )
-
-
-class ClusterTemplateValues(schema.BaseModel):
-    """
-    The values to use when deploying the Helm chart.
-    """
-    class Config:
-        fields = { "global_": "global" }
-        extra = Extra.allow
-
-    global_: ClusterTemplateGlobalValues = Field(
-        ...,
-        description = "The global values for the deployment."
     )
     machine_image_id: constr(min_length = 1) = Field(
         ...,
@@ -71,7 +57,7 @@ class ClusterTemplate(
         {
             "name": "Kubernetes Version",
             "type": "string",
-            "jsonPath": ".spec.values.global.kubernetesVersion",
+            "jsonPath": ".spec.values.kubernetesVersion",
         },
         {
             "name": "Deprecated",

@@ -233,7 +233,7 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
         if template.spec.deprecated:
             raise kopf.AdmissionError("specified cluster template is deprecated", code = 400)
         # The new template must not be a downgrade
-        template_vn = template.spec["values"]["global"]["kubernetesVersion"]
+        template_vn = template.spec["values"]["kubernetesVersion"]
         existing_vn = existing.get("status", {}).get("kubernetesVersion")
         if existing_vn and template_vn < existing_vn:
             raise kopf.AdmissionError("specified cluster template would be a downgrade", code = 400)
