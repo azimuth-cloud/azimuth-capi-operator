@@ -66,10 +66,6 @@ class AddonsSpec(schema.BaseModel):
         False,
         description = "Indicates if the Kubernetes dashboard should be enabled."
     )
-    cert_manager: bool = Field(
-        False,
-        description = "Indicates if cert-manager should be enabled."
-    )
     ingress: bool = Field(
         False,
         description = "Indicates if ingress should be enabled."
@@ -77,10 +73,6 @@ class AddonsSpec(schema.BaseModel):
     monitoring: bool = Field(
         False,
         description = "Indicates if monitoring should be enabled."
-    )
-    apps: bool = Field(
-        False,
-        description = "Indicates if Kubeapps should be enabled."
     )
 
 
@@ -176,12 +168,14 @@ class AddonPhase(str, schema.Enum):
     """
     The phase of an addon in the cluster.
     """
-    PENDING      = "Pending"
-    INSTALLING   = "Installing"
-    READY        = "Ready"
+    UNKNOWN = "Unknown"
+    PENDING = "Pending"
+    PREPARING = "Preparing"
+    DEPLOYED = "Deployed"
+    FAILED = "Failed"
+    INSTALLING = "Installing"
+    UPGRADING = "Upgrading"
     UNINSTALLING = "Uninstalling"
-    FAILED       = "Failed"
-    UNKNOWN      = "Unknown"
 
 
 class NodeRole(str, schema.Enum):

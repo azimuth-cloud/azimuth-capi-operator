@@ -3,7 +3,6 @@ apiVersion: zenith.stackhpc.com/v1alpha1
 kind: Reservation
 metadata:
   name: {{ name }}
-  namespace: {{ namespace }}
   labels:
     app.kubernetes.io/managed-by: azimuth-capi-operator
   annotations:
@@ -23,7 +22,6 @@ apiVersion: zenith.stackhpc.com/v1alpha1
 kind: Client
 metadata:
   name: {{ name }}
-  namespace: {{ namespace }}
   labels:
     app.kubernetes.io/managed-by: azimuth-capi-operator
 spec:

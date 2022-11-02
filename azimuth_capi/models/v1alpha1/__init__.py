@@ -1,3 +1,4 @@
+from .app_template import *
 from .cluster_template import *
 from .cluster import *
 

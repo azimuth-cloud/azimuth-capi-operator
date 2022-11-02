@@ -1,7 +1,6 @@
 aiohttp==3.8.3
 aiosignal==1.2.0
-anyio==3.6.1
-asn1crypto==1.5.1
+anyio==3.6.2
 async-timeout==4.0.2
 attrs==22.1.0
 certifi==2022.9.24
@@ -24,7 +23,7 @@ MarkupSafe==2.1.1
 multidict==6.0.2
 pycparser==2.21
 pydantic==1.10.2
-pyhelm3 @ git+https://github.com/stackhpc/pyhelm3.git@5308bd1ed0705db973345879d35d74ad5bf5dd66
+pyhelm3 @ git+https://github.com/stackhpc/pyhelm3.git@ff7f72aac7ba3efe78969ab47ce7d154162404f5
 python-json-logger==2.0.4
 PyYAML==6.0
 rfc3986==1.5.0

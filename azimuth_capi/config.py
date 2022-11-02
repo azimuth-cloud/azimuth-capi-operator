@@ -56,26 +56,10 @@ class CAPIHelmConfig(Section):
     #: The name of the CAPI Helm chart to use to deploy clusters
     chart_name: constr(min_length = 1) = "openstack-cluster"
     #: The version of the CAPI Helm chart to use to deploy clusters
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.179"
+    chart_version: SemVerVersion = "0.1.0-dev.0.main.191"
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
-
-
-class KubeappsConfig(Section):
-    """
-    Configuration for the Kubeapps installation on workload clusters.
-    """
-    #: The repository containing the kubeapps Helm chart
-    chart_repository: AnyHttpUrl = "https://charts.bitnami.com/bitnami"
-    #: The name of the kubeapps Helm chart
-    chart_name: constr(min_length = 1) = "kubeapps"
-    #: The version of the kubeapps Helm chart to use
-    chart_version: SemVerVersion = "~7.7.4"
-    #: The release namespace for kubeapps installations
-    release_namespace: constr(min_length = 1) = "kubeapps"
-    # The values to use for the release
-    release_values: t.Dict[str, t.Any] = Field(default_factory = dict)
 
 
 class ZenithConfig(Section):
@@ -104,7 +88,6 @@ class ZenithConfig(Section):
     #: Icon URLs for built-in services
     kubernetes_dashboard_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
     monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
-    kubeapps_icon_url: AnyHttpUrl = "https://user-images.githubusercontent.com/642657/153432175-b4aefccc-b94d-4373-b471-7afa02575a4b.png"
 
     #: The API version to use when watching Zenith resources on target clusters
     api_version: constr(regex = r"^[a-z0-9.-]+/[a-z0-9]+$") = "zenith.stackhpc.com/v1alpha1"
@@ -194,6 +177,9 @@ class Configuration(BaseConfiguration):
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
 
+    #: The number of seconds to wait between timer executions
+    timer_interval: conint(gt = 0) = 60
+
     #: The field manager name to use for server-side apply
     easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
 
@@ -205,9 +191,6 @@ class Configuration(BaseConfiguration):
 
     #: The CAPI Helm configuration
     capi_helm: CAPIHelmConfig = Field(default_factory = CAPIHelmConfig)
-
-    #: Configuration for the Kubeapps release
-    kubeapps: KubeappsConfig = Field(default_factory = KubeappsConfig)
 
     #: Configuration for Zenith support
     zenith: ZenithConfig = Field(default_factory = ZenithConfig)
