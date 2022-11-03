@@ -283,7 +283,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
         operator_resources = await zenith_operator_resources(name, namespace, secret)
         for resource in operator_resources:
             kopf.adopt(resource, instance.dict(by_alias = True))
-            await ekclient.apply_object(resource)
+            await ekclient.apply_object(resource, force = True)
     # Patch the labels to include the cluster template
     # This is used by the admission webhook to search for clusters using a template in
     # order to prevent deletion of cluster templates that are in use
