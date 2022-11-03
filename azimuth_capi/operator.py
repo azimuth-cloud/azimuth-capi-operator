@@ -738,9 +738,9 @@ async def reconcile_app_template(instance, param, **kwargs):
     chart_versions = chart_versions[:instance.spec.keep_versions]
     if not chart_versions:
         raise kopf.PermanentError("no versions matching constraint")
-    next_label = None
-    next_logo = None
-    next_description = None
+    next_label = instance.status.label
+    next_logo = instance.status.logo
+    next_description = instance.status.description
     next_versions = []
     # For each version, we need to make sure we have a values schema and optionally a UI schema
     for chart_version in chart_versions:
