@@ -624,7 +624,7 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                     service_status
                 )
                 # If the addon has the Helm chart label, store the service
-                if "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
+                if addon and "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
                     cluster_services[service_name] = service_status
             await ekclusterstatus.json_patch(
                 name,
@@ -653,7 +653,7 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                             service_name,
                             service_status
                         )
-                        if "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
+                        if addon and "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
                             await ekclusterstatus.patch(
                                 name,
                                 {
