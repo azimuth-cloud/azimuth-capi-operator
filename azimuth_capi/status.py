@@ -297,14 +297,18 @@ def addon_deleted(cluster, obj):
     cluster.status.addons.pop(component, None)
 
 
-def remove_unknown_addons(cluster, addons):
+def reset_addons(cluster, addons):
     """
-    Given the current set of addons, remove any unknown addons from the status.
+    Given the current set of addons, reset the addon status.
     """
+    # Remove any unknown addons
     current = set(a["metadata"]["labels"]["capi.stackhpc.com/component"] for a in addons)
     known = set(cluster.status.addons.keys())
     for component in known - current:
         cluster.status.addons.pop(component)
+    # Make sure the status is accurate for all the addons we have
+    for addon in addons:
+        addon_updated(cluster, addon)
 
 
 def finalise(cluster):

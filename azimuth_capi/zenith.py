@@ -181,7 +181,7 @@ def zenith_client_values(enabled, name, namespace, **kwargs):
         return {
             "addons": {
                 "custom": {
-                    f"{name}-client": {
+                    f"{name}-client-proxy": {
                         "kind": "Manifests",
                         "spec": {
                             "namespace": namespace,
