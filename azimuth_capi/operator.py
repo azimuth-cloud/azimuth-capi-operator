@@ -355,7 +355,7 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     ekaddons = ekclient.api("addons.stackhpc.com/v1alpha1")
     ekhelmreleases = await ekaddons.resource("helmreleases")
     ekmanifests = await ekaddons.resource("manifests")
-    status.reset_addons(
+    status.remove_unknown_addons(
         instance,
         [
             addon
