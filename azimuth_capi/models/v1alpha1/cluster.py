@@ -241,6 +241,14 @@ class AddonStatus(schema.BaseModel):
         description = "The revision of the addon."
     )
 
+    @validator("phase", pre = True, always = True)
+    def convert_phase(cls, v):
+        # Convert the old Ready phase to Deployed
+        if isinstance(v, str) and v == "Ready":
+            return AddonPhase.DEPLOYED.value
+        else:
+            return v
+
 
 class ServiceStatus(schema.BaseModel):
     """

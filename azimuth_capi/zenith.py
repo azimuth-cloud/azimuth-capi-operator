@@ -178,17 +178,18 @@ def zenith_client_values(enabled, name, namespace, **kwargs):
     Returns the Helm values required to launch a Zenith client for the specified service.
     """
     if enabled:
+        full_name = f"{name}-client"
         return {
             "addons": {
                 "custom": {
-                    f"{name}-client": {
+                    full_name: {
                         "kind": "Manifests",
                         "spec": {
                             "namespace": namespace,
                             "manifests": {
                                 "zenith-client.yaml": default_loader.loads(
                                     "zenith-client.yaml",
-                                    name = name,
+                                    name = full_name,
                                     **kwargs
                                 ),
                             },
