@@ -221,6 +221,7 @@ async def zenith_values(client, cluster, addons):
             mitm_proxy_auth_inject_service_account = {
                 "clusterRoleName": "cluster-admin",
             },
+            label = "Kubernetes Dashboard",
             icon_url = settings.zenith.kubernetes_dashboard_icon_url
         ),
         zenith_client_values(
