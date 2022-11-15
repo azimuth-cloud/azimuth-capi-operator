@@ -230,7 +230,7 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
             raise
     if not existing or existing.spec["templateName"] != template.metadata.name:
         # The new template must not be deprecated
-        if template.spec.deprecated:
+        if template.spec.get("deprecated", False):
             raise kopf.AdmissionError("specified cluster template is deprecated", code = 400)
         # The new template must not be a downgrade
         template_vn = template.spec["values"]["kubernetesVersion"]
