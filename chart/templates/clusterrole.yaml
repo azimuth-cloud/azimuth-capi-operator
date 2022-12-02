@@ -114,6 +114,14 @@ rules:
       - jobs
     verbs:
       - "*"
+  # We also need to be able to manipulate Azimuth identity objects
+  - apiGroups:
+      - identity.azimuth.stackhpc.com
+    resources:
+      - realms
+      - clientregistrationtokens
+    verbs:
+      - "*"
   # In addition, we need to be able to watch individual machine objects
   - apiGroups:
       - infrastructure.cluster.x-k8s.io
