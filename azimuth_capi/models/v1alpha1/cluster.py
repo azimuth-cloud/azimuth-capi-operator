@@ -5,6 +5,8 @@ from pydantic import Extra, Field, AnyHttpUrl, constr, validator
 
 from kube_custom_resource import CustomResource, schema
 
+from ...config import settings
+
 
 class NodeGroupSpec(schema.BaseModel):
     """
@@ -92,6 +94,10 @@ class ClusterSpec(schema.BaseModel):
         ...,
         description = "The name of the secret containing the cloud credentials."
     )
+    zenith_identity_realm_name: t.Optional[constr(min_length = 1)] = Field(
+        None,
+        description = "The name of the Azimuth identity realm to use for Zenith services."
+    )
     autohealing: bool = Field(
         True,
         description = "Indicates if auto-healing should be enabled."
@@ -108,6 +114,12 @@ class ClusterSpec(schema.BaseModel):
         default_factory = AddonsSpec,
         description = "Describes the optional addons that should be enabled for the cluster."
     )
+
+    @validator("zenith_identity_realm_name", always = True)
+    def validate_zenith_identity_realm_name(cls, v):
+        if settings.zenith.enabled and not v:
+            raise ValueError("required when Zenith is enabled")
+        return v
 
 
 class ClusterPhase(str, schema.Enum):

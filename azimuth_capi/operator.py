@@ -210,6 +210,22 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
             )
         else:
             raise
+    # The Zenith identity realm must exist if Zenith is enabled
+    if settings.zenith.enabled:
+        ekresource = await ekclient.api(settings.identity.api_version).resource("realms")
+        try:
+            _ = await ekresource.fetch(
+                spec.zenith_identity_realm_name,
+                namespace = namespace
+            )
+        except ApiError as exc:
+            if exc.status_code == 404:
+                raise kopf.AdmissionError(
+                    "specified identity realm does not exist",
+                    code = 400
+                )
+            else:
+                raise
     # The specified template must exist
     ekresource = await ekresource_for_model(api.ClusterTemplate)
     try:
@@ -245,13 +261,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
     """
-    # Make sure that the secret exists
-    ekresource = await ekclient.api("v1").resource("secrets")
-    secret = await ekresource.fetch(
-        instance.spec.cloud_credentials_secret_name,
-        namespace = namespace
-    )
-    # Then fetch the template
+    # Fetch the referenced template
     ekresource = await ekresource_for_model(api.ClusterTemplate)
     template = api.ClusterTemplate.parse_obj(await ekresource.fetch(instance.spec.template_name))
     # Generate the Helm values for the release
@@ -266,7 +276,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
             await zenith_values(ekclient, instance, instance.spec.addons)
         )
     # Use Helm to install or upgrade the release
-    _ = await helm_client.install_or_upgrade_release(
+    _ = await helm_client.ensure_release(
         name,
         await helm_client.get_chart(
             settings.capi_helm.chart_name,
@@ -280,7 +290,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     )
     # Ensure that a Zenith operator instance exists for the cluster
     if settings.zenith.enabled:
-        operator_resources = await zenith_operator_resources(name, namespace, secret)
+        operator_resources = await zenith_operator_resources(ekclient, instance)
         for resource in operator_resources:
             kopf.adopt(resource, instance.dict(by_alias = True))
             await ekclient.apply_object(resource, force = True)

@@ -112,21 +112,19 @@ async def zenith_apiserver_values(client, cluster):
                 version = settings.zenith.chart_version
             ),
             "zenith-apiserver",
-            mergeconcat(
-                settings.zenith.apiserver_defaults,
-                {
-                    "zenithClient": {
-                        # Use the SSH private key from the secret
-                        # The secret data is already base64-encoded
-                        "sshPrivateKeyData": apiserver_secret.data["id_ed25519"],
-                        # Specify the SSHD host and port from our configuration
-                        "server": {
-                            "host": settings.zenith.sshd_host,
-                            "port": settings.zenith.sshd_port,
-                        },
+            settings.zenith.apiserver_defaults,
+            {
+                "zenithClient": {
+                    # Use the SSH private key from the secret
+                    # The secret data is already base64-encoded
+                    "sshPrivateKeyData": apiserver_secret.data["id_ed25519"],
+                    # Specify the SSHD host and port from our configuration
+                    "server": {
+                        "host": settings.zenith.sshd_host,
+                        "port": settings.zenith.sshd_port,
                     },
-                }
-            ),
+                },
+            },
             namespace = "kube-system"
         )
     )
@@ -243,16 +241,45 @@ async def zenith_values(client, cluster, addons):
     )
 
 
-async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
+async def zenith_operator_resources(client, cluster):
     """
     Returns the resources required to enable the Zenith operator for the given cluster.
     """
-    # The project ID for the cluster is automatically injected as a Zenith auth param
-    # for all clients created by the operator unless auth is explicitly skipped
-    clouds_b64 = cloud_credentials_secret.data["clouds.yaml"]
-    clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
-    project_id = clouds["clouds"]["openstack"]["auth"]["project_id"]
-    client = HelmClient(
+    # Get the identity realm that we are using for Zenith auth
+    # This is checked by the validating webhook, so we don't need error checking here
+    realm_name = cluster.spec.zenith_identity_realm_name
+    realms = await client.api(settings.identity.api_version).resource("realms")
+    realm = await realms.fetch(realm_name, namespace = cluster.metadata.namespace)
+    # Wait for the realm to become ready, as we need the issuer URL
+    if realm.get("status", {}).get("phase", "Unknown") != "Ready":
+        raise kopf.TemporaryError(f"realm '{realm_name}' is not ready")
+    # Ensure that a client registration token exists for the cluster
+    token_name = f"{cluster.metadata.name}-zenith-operator"
+    tokens = await client.api(settings.identity.api_version).resource("clientregistrationtokens")
+    try:
+        token = await tokens.fetch(token_name, namespace = cluster.metadata.namespace)
+    except ApiError as exc:
+        if exc.status_code != 404:
+            raise
+        token_data = {
+            "metadata": {
+                "name": token_name,
+                "labels": {
+                    "app.kubernetes.io/managed-by": "azimuth-capi-operator",
+                    "capi.stackhpc.com/cluster": cluster.metadata.name,
+                },
+            },
+            "spec": {
+                "realmName": realm.metadata.name,
+                "tokenSecretName": f"{token_name}-token",
+                "tokenExpiration": settings.identity.client_registration_token_expiration,
+                "tokenClientCount": settings.identity.client_registration_token_client_count,
+            },
+        }
+        kopf.adopt(token_data, cluster.dict())
+        token = await tokens.create(token_data, namespace = cluster.metadata.namespace)
+    # Template the resources for the operator
+    helm_client = HelmClient(
         default_timeout = settings.helm_client.default_timeout,
         executable = settings.helm_client.executable,
         history_max_revisions = settings.helm_client.history_max_revisions,
@@ -260,30 +287,32 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
         unpack_directory = settings.helm_client.unpack_directory
     )
     return list(
-        await client.template_resources(
-            await client.get_chart(
+        await helm_client.template_resources(
+            await helm_client.get_chart(
                 "zenith-operator",
                 repo = settings.zenith.chart_repository,
                 version = settings.zenith.chart_version
             ),
-            name,
-            mergeconcat(
-                settings.zenith.operator_defaults,
-                {
-                    "kubeconfigSecret": {
-                        "name": f"{name}-kubeconfig",
-                        "key": "value",
-                    },
-                    "config": {
-                        "registrarAdminUrl": settings.zenith.registrar_admin_url,
-                        "sshdHost": settings.zenith.sshd_host,
-                        "sshdPort": settings.zenith.sshd_port,
-                        "defaultAuthParams": {
-                            "tenancy-id": project_id,
-                        },
-                    },
-                }
-            ),
-            namespace = namespace
+            cluster.metadata.name,
+            settings.zenith.operator_defaults,
+            {
+                "kubeconfigSecret": {
+                    "name": f"{cluster.metadata.name}-kubeconfig",
+                    "key": "value",
+                },
+                # Use the secret from the token
+                "oidcClientRegistrationTokenSecret": {
+                    "name": token["spec"]["tokenSecretName"],
+                },
+                "config": {
+                    "registrarAdminUrl": settings.zenith.registrar_admin_url,
+                    "sshdHost": settings.zenith.sshd_host,
+                    "sshdPort": settings.zenith.sshd_port,
+                    "defaultAuthType": "oidc",
+                    # Use the OIDC issuer URL from the realm
+                    "defaultOidcIssuer": realm["status"]["oidcIssuerUrl"],
+                },
+            },
+            namespace = cluster.metadata.namespace
         )
     )

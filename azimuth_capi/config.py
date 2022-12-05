@@ -78,7 +78,7 @@ class ZenithConfig(Section):
     #: The version of the charts to use
     #: When changing this, be aware that the operator may depend on the layout of
     #: the Helm values at a particular version
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.168"
+    chart_version: SemVerVersion = "0.1.0-dev.0.feature-oidc-callout.183"
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -155,6 +155,22 @@ class WebhookConfiguration(Section):
         return v
 
 
+class IdentityConfig(Section):
+    """
+    Configuration for the Azimuth identity support.
+    """
+    #: The API version to use for Azimuth identity resources.
+    api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
+    #: The expiration for client registration tokens issued to Zenith operator instances, in seconds
+    #: Defaults to 10 years so that, for all reasonable clusters, the token never expires
+    client_registration_token_expiration: conint(gt = 0) = 315360000
+    #: The number of clients that client registration tokens issued to Zenith operator
+    #: instances are permitted to create
+    #: Defaults to one million clients so that, for all reasonable clusters, the operator
+    #: is able to create as many clients as are required
+    client_registration_token_client_count: conint(gt = 0) = 1000000
+
+
 class Configuration(BaseConfiguration):
     """
     Top-level configuration model.
@@ -194,6 +210,9 @@ class Configuration(BaseConfiguration):
 
     #: Configuration for Zenith support
     zenith: ZenithConfig = Field(default_factory = ZenithConfig)
+
+    #: Configuration for Azimuth identity support
+    identity: IdentityConfig = Field(default_factory = IdentityConfig)
 
 
 settings = Configuration()
