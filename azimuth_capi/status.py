@@ -93,9 +93,7 @@ def _reconcile_cluster_phase(cluster):
     elif _any_addon_has_phase(
         cluster,
         AddonPhase.PENDING,
-        AddonPhase.PREPARING,
-        AddonPhase.INSTALLING,
-        AddonPhase.UPGRADING,
+        AddonPhase.RECONCILING,
         AddonPhase.UNINSTALLING
     ):
         cluster.status.phase = ClusterPhase.RECONCILING
@@ -111,6 +109,7 @@ def _reconcile_cluster_phase(cluster):
         ) or
         _any_addon_has_phase(
             cluster,
+            AddonPhase.UNHEALTHY,
             AddonPhase.FAILED,
             AddonPhase.UNKNOWN
         )
@@ -285,7 +284,6 @@ def addon_updated(cluster, obj):
     status = obj.get("status", {})
     cluster.status.addons[component] = AddonStatus(
         phase = status.get("phase", AddonPhase.UNKNOWN.value),
-        revision = status.get("revision", 0)
     )
 
 

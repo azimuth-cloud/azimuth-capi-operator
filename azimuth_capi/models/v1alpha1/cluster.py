@@ -170,12 +170,12 @@ class AddonPhase(str, schema.Enum):
     """
     UNKNOWN = "Unknown"
     PENDING = "Pending"
-    PREPARING = "Preparing"
-    DEPLOYED = "Deployed"
-    FAILED = "Failed"
-    INSTALLING = "Installing"
-    UPGRADING = "Upgrading"
+    RECONCILING = "Reconciling"
+    READY = "Ready"
+    SUSPENDED = "Suspended"
     UNINSTALLING = "Uninstalling"
+    UNHEALTHY = "Unhealthy"
+    FAILED = "Failed"
 
 
 class NodeRole(str, schema.Enum):
@@ -236,18 +236,15 @@ class AddonStatus(schema.BaseModel):
         AddonPhase.UNKNOWN.value,
         description = "The phase of the addon."
     )
-    revision: schema.conint(ge = 0) = Field(
-        0,
-        description = "The revision of the addon."
-    )
 
     @validator("phase", pre = True, always = True)
     def convert_phase(cls, v):
-        # Convert the old Ready phase to Deployed
-        if isinstance(v, str) and v == "Ready":
-            return AddonPhase.DEPLOYED.value
-        else:
+        if isinstance(v, AddonPhase):
             return v
+        try:
+            return AddonPhase(v)
+        except ValueError:
+            return AddonPhase.UNKNOWN
 
 
 class ServiceStatus(schema.BaseModel):
