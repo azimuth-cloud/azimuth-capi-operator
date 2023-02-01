@@ -320,7 +320,7 @@ def addon_deleted(cluster, obj):
     cluster.status.services = {
         k: v
         for k, v in cluster.status.services.items()
-        if v.provided_by == provided_by_ref
+        if v.provided_by != provided_by_ref
     }
 
 
