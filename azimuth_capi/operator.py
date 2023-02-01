@@ -14,14 +14,14 @@ import yaml
 
 from easykube import Configuration, ApiError
 from kube_custom_resource import CustomResourceRegistry
-from pyhelm3 import Client as HelmClient, errors as helm_errors
+from pyhelm3 import Client as HelmClient
 
 from . import models, semver, status
 from .config import settings
 from .models import v1alpha1 as api
 from .template import default_loader
-from .utils import mergeconcat
-from .zenith import zenith_values, zenith_operator_resources
+from .utils import argo_application, mergeconcat, yaml_dump
+from .zenith import zenith_values, zenith_operator_app_source
 
 
 logger = logging.getLogger(__name__)
@@ -241,7 +241,7 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
 
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
-async def on_cluster_create(instance, name, namespace, patch, **kwargs):
+async def on_cluster_create(instance: api.Cluster, name, namespace, patch, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
     """
@@ -254,10 +254,69 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     # Then fetch the template
     ekresource = await ekresource_for_model(api.ClusterTemplate)
     template = api.ClusterTemplate.parse_obj(await ekresource.fetch(instance.spec.template_name))
+    # Work out what the name of the cluster will be in Argo
+    # To ensure uniqueness we include the first 8 characters of the cluster UID
+    argo_cluster_name = settings.argocd.cluster_name_template.format(
+        namespace = namespace,
+        name = name,
+        # In order to ensure uniqueness, we include the first 8 characters of the UID
+        # Otherwise, ns-bob/cluster-1 and ns/bob-cluster-1 make the same app name
+        id = instance.metadata.uid[:8]
+    )
+    # Create an Argo project to hold everything related to this cluster
+    project = await ekclient.apply_object(
+        {
+            "apiVersion": settings.argocd.api_version,
+            "kind": "AppProject",
+            "metadata": {
+                "name": argo_cluster_name,
+                "namespace": settings.argocd.namespace,
+                "labels": {
+                    "app.kubernetes.io/managed-by": "azimuth-capi-operator",
+                },
+                "annotations": {
+                    # The annotation is used to identify the associated cluster
+                    # when an event is observed for the Argo application
+                    f"{settings.annotation_prefix}/owner-reference": (
+                        f"{settings.api_group}:"
+                        f"{api.Cluster._meta.plural_name}:"
+                        f"{namespace}:"
+                        f"{name}"
+                    ),
+                },
+            },
+            "spec": {
+                # Allow the project to deploy any resource from any repo
+                "sourceRepos": [
+                    "*",
+                ],
+                "clusterResourceWhitelist": [
+                    {
+                        "group": "*",
+                        "kind": "*",
+                    },
+                ],
+                # TODO: Restrict the project to in-cluster + target cluster
+                "destinations": [
+                    {
+                        "server": "*",
+                        "namespace": "*",
+                    },
+                ],
+            },
+        },
+        force = True
+    )
     # Generate the Helm values for the release
     helm_values = mergeconcat(
         settings.capi_helm.default_values,
         template.spec.values.dict(by_alias = True),
+        # Add an annotation to the cluster so that the addons go into our Argo project
+        {
+            "clusterAnnotations": {
+                "addons.stackhpc.com/project": argo_cluster_name,
+            },
+        },
         default_loader.load("cluster-values.yaml", spec = instance.spec, settings = settings)
     )
     if settings.zenith.enabled:
@@ -265,25 +324,94 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
             helm_values,
             await zenith_values(ekclient, instance, instance.spec.addons)
         )
-    # Use Helm to install or upgrade the release
-    _ = await helm_client.install_or_upgrade_release(
-        name,
-        await helm_client.get_chart(
-            settings.capi_helm.chart_name,
-            repo = settings.capi_helm.chart_repository,
-            version = settings.capi_helm.chart_version
+    # We use the "app-of-apps" pattern to manage the cluster, addons and Zenith operator
+    # as separate apps within a master app
+    # See https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern
+    # This also may allow us to use sync waves to remove the addons before deleting the cluster
+    # https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
+    # So split the Helm values into those for the cluster and those for the addons
+    helm_values_addons = helm_values.pop("addons", {})
+    helm_values["addons"] = {"enabled": False}
+    # Start with the application for the cluster infrastructure
+    applications = [
+        argo_application(
+            f"{project.metadata.name}-infra",
+            instance,
+            project,
+            {
+                # "repoURL": settings.capi_helm.chart_repository,
+                # "chart": settings.capi_helm.infra_chart_name,
+                # "targetRevision": settings.capi_helm.chart_version,
+                "repoURL": "https://github.com/stackhpc/capi-helm-charts.git",
+                "path": "charts/openstack-cluster",
+                "targetRevision": "feature/argo-apps",
+                "helm": {
+                    "releaseName": name,
+                    "values": yaml_dump(helm_values),
+                },
+            }
         ),
-        helm_values,
-        namespace = namespace,
-        # The target namespace already exists, because the cluster is in it
-        create_namespace = False
+    ]
+    # Apply the defaults from the openstack-cluster in CAPI Helm charts
+    helm_values_addons = mergeconcat(
+        {
+            "enabled": True,
+            "openstack": {
+                "enabled": True,
+            },
+        },
+        helm_values_addons
     )
-    # Ensure that a Zenith operator instance exists for the cluster
+    # Add the application for the addons if required
+    if helm_values_addons.pop("enabled"):
+        applications.append(
+            argo_application(
+                f"{project.metadata.name}-addons",
+                instance,
+                project,
+                {
+                    # "repoURL": settings.capi_helm.chart_repository,
+                    # "chart": settings.capi_helm.addons_chart_name,
+                    # "targetRevision": settings.capi_helm.chart_version,
+                    "repoURL": "https://github.com/stackhpc/capi-helm-charts.git",
+                    "path": "charts/cluster-addons",
+                    "targetRevision": "feature/argo-apps",
+                    "helm": {
+                        "releaseName": name,
+                        "values": yaml_dump(helm_values_addons),
+                    },
+                }
+            )
+        )
+    # Add the Argo application for the Zenith operator if required
     if settings.zenith.enabled:
-        operator_resources = await zenith_operator_resources(name, namespace, secret)
-        for resource in operator_resources:
-            kopf.adopt(resource, instance.dict(by_alias = True))
-            await ekclient.apply_object(resource, force = True)
+        applications.append(
+            argo_application(
+                f"{project.metadata.name}-zenith-operator",
+                instance,
+                project,
+                zenith_operator_app_source(instance, secret)
+            )
+        )
+    # Apply the app-of-apps application using the raw chart
+    await ekclient.apply_object(
+        argo_application(
+            project.metadata.name,
+            instance,
+            project,
+            {
+                "repoURL": "https://charts.helm.sh/incubator",
+                "chart": "raw",
+                "targetRevision": "0.2.5",
+                "helm": {
+                    "releaseName": name,
+                    "values": yaml_dump({ "resources": applications }),
+                },
+            },
+            settings.argocd.namespace
+        ),
+        force = True
+    )
     # Patch the labels to include the cluster template
     # This is used by the admission webhook to search for clusters using a template in
     # order to prevent deletion of cluster templates that are in use
@@ -292,23 +420,53 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
 
 
 @model_handler(api.Cluster, kopf.on.delete)
-async def on_cluster_delete(name, namespace, **kwargs):
+async def on_cluster_delete(instance: api.Cluster, name, namespace, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
-    # Delete the corresponding Helm release
+    argo_cluster_name = settings.argocd.cluster_name_template.format(
+        namespace = namespace,
+        name = name,
+        id = instance.metadata.uid[:8]
+    )
+    ekargo = ekclient.api(settings.argocd.api_version)
+    # Delete the Argo app associated with the cluster and wait for it to be gone
+    ekapps = await ekargo.resource("applications")
     try:
-        await helm_client.uninstall_release(name, namespace = namespace)
-    except helm_errors.ReleaseNotFoundError:
-        pass
-    # Wait until the associated CAPI cluster no longer exists
-    ekresource = await ekclient.api(CLUSTER_API_VERSION).resource("clusters")
-    cluster, stream = await ekresource.watch_one(name, namespace = namespace)
-    if cluster:
-        async with stream as events:
-            async for event in events:
-                if event["type"] == "DELETED":
-                    break
+        app = await ekapps.fetch(argo_cluster_name, namespace = settings.argocd.namespace)
+    except ApiError as exc:
+        if exc.status_code != 404:
+            raise
+    else:
+        if not app.metadata.get("deletionTimestamp"):
+            await ekapps.delete(app.metadata.name, namespace = app.metadata.namespace)
+        raise kopf.TemporaryError("waiting for cluster app to delete", delay = 5)
+    # Delete the Argo project associated with the cluster and wait for it to be gone
+    ekappprojects = await ekargo.resource("appprojects")
+    try:
+        project = await ekappprojects.fetch(
+            argo_cluster_name,
+            namespace = settings.argocd.namespace
+        )
+    except ApiError as exc:
+        if exc.status_code != 404:
+            raise
+    else:
+        if not project.metadata.get("deletionTimestamp"):
+            await ekappprojects.delete(
+                project.metadata.name,
+                namespace = project.metadata.namespace
+            )
+        raise kopf.TemporaryError("waiting for cluster project to delete", delay = 5)
+    # Make sure that the Cluster API cluster is gone
+    ekclusters = await ekclient.api(CLUSTER_API_VERSION).resource("clusters")
+    try:
+        await ekclusters.fetch(name, namespace = namespace)
+    except ApiError as exc:
+        if exc.status_code != 404:
+            raise
+    else:
+        raise kopf.TemporaryError("waiting for cluster to delete", delay = 5)
 
 
 @model_handler(api.Cluster, kopf.on.resume)
@@ -492,84 +650,90 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):
         status.kubeconfig_secret_updated(cluster, body)
 
 
-async def annotate_addon_for_reservation(
-    cluster_name,
-    cluster_namespace,
-    reservation,
-    service_name,
-    service_status = None
-):
+async def annotate_addon_for_reservation(reservation, reservation_deleted = False):
     """
     Annotates the addon for the reservation, if one exists, with information
     about the reservation.
     """
-    # If the reservation is not part of a Helm release, it isn't part of an addon
-    annotations = reservation["metadata"].get("annotations", {})
-    release_namespace = annotations.get("meta.helm.sh/release-namespace")
-    release_name = annotations.get("meta.helm.sh/release-name")
-    if not release_namespace or not release_name:
+    # Bail early if we can
+    # We will only make changes for reservations that are being deleted or are Ready
+    if (
+        not reservation_deleted and
+        reservation.get("status", {}).get("phase", "Unknown") != "Ready"
+    ):
         return
-    # Search the addons for the one that produced the release
-    labels = {
-        "addons.stackhpc.com/cluster": cluster_name,
-        "addons.stackhpc.com/release-namespace": release_namespace,
-        "addons.stackhpc.com/release-name": release_name,
-    }
-    ekaddons = ekclient.api("addons.stackhpc.com/v1alpha1")
-    ekresource = await ekaddons.resource("helmreleases")
-    addon = await ekresource.first(labels = labels, namespace = cluster_namespace)
-    if not addon:
-        ekresource = await ekaddons.resource("manifests")
-        addon = await ekresource.first(labels = labels, namespace = cluster_namespace)
-    if not addon:
+    # If the reservation is not part of an Argo application, it isn't part of an addon
+    reservation_annotations = reservation["metadata"].get("annotations", {})
+    tracking_id = reservation_annotations.get(settings.argocd.tracking_id_annotation)
+    if not tracking_id:
         return
-    # Add the service to the services annotation for the addon
+    # Get the Argo app name from the tracking ID and try to find it
+    ekapps = await ekclient.api(settings.argocd.api_version).resource("applications")
+    app_name, _ = tracking_id.split(":", maxsplit = 1)
+    try:
+        app = await ekapps.fetch(app_name, namespace = settings.argocd.namespace)
+    except ApiError as exc:
+        if exc.status_code == 404:
+            return
+        else:
+            raise
+    # See if the Argo app has an owner reference to an addon
+    owner_ref = (
+        app["metadata"]
+            .get("annotations", {})
+            .get("addons.stackhpc.com/owner-reference")
+    )
+    if not owner_ref:
+        return
+    # Fetch the addon that produced the Argo app
+    api_group, plural_name, namespace, name = owner_ref.split(":")
+    ekaddons = await ekclient.api_preferred_version(api_group)
+    ekresource = await ekaddons.resource(plural_name)
+    try:
+        addon = await ekresource.fetch(name, namespace = namespace)
+    except ApiError as exc:
+        if exc.status_code == 404:
+            return
+        else:
+            raise
+    # Get the service name for the reservation
+    reservation_name = reservation["metadata"]["name"]
+    reservation_namespace = reservation["metadata"]["namespace"]
+    service_name = (
+        reservation_name
+        if reservation_name.startswith(reservation_namespace)
+        else f"{reservation_namespace}-{reservation_name}"
+    )
+    # Update the services for the addon to reflect the reservation
     # Note that this function will not run concurrently for two reservations on the same
     # cluster, so this is a safe operation
     annotations = addon.metadata.get("annotations", {})
     services = json.loads(annotations.get("azimuth.stackhpc.com/services", "{}"))
-    if service_status:
-        services[service_name] = service_status.dict()
+    if not reservation_deleted:
+        # If the reservation is in the ready state, update the service
+        services[service_name] = dict(
+            fqdn = reservation["status"]["fqdn"],
+            label = reservation_annotations.get(
+                "azimuth.stackhpc.com/service-label",
+                # If no label is specified, derive one from the name
+                " ".join(word.capitalize() for word in reservation_name.split("-"))
+            ),
+            icon_url = reservation_annotations.get("azimuth.stackhpc.com/service-icon-url"),
+            description = reservation_annotations.get("azimuth.stackhpc.com/service-description")
+        )
     else:
+        # If the reservation was deleted, remove the service
         services.pop(service_name, None)
-    return await ekresource.patch(
+    await ekresource.patch(
         addon.metadata.name,
         {
             "metadata": {
                 "annotations": {
                     "azimuth.stackhpc.com/services": json.dumps(services),
-                }
-            }
+                },
+            },
         },
         namespace = addon.metadata.namespace
-    )
-
-
-def get_service_name(reservation):
-    """
-    Returns the service name for the reservation.
-    """
-    name = reservation["metadata"]["name"]
-    namespace = reservation["metadata"]["namespace"]
-    return name if name.startswith(namespace) else f"{namespace}-{name}"
-
-
-def get_service_status(reservation):
-    """
-    Returns the service status for the given reservation.
-    """
-    annotations = reservation["metadata"].get("annotations", {})
-    # If no label is specified, derive one from the name
-    if "azimuth.stackhpc.com/service-label" in annotations:
-        label = annotations["azimuth.stackhpc.com/service-label"]
-    else:
-        name = reservation["metadata"]["name"]
-        label = " ".join(word.capitalize() for word in name.split("-"))
-    return api.ServiceStatus(
-        fqdn = reservation["status"]["fqdn"],
-        label = label.strip(),
-        icon_url = annotations.get("azimuth.stackhpc.com/service-icon-url"),
-        description = annotations.get("azimuth.stackhpc.com/service-description")
     )
 
 
@@ -602,87 +766,19 @@ async def monitor_cluster_services(name, namespace, **kwargs):
             .from_kubeconfig_data(kubeconfig_data, json_encoder = pydantic_encoder)
             .async_client(default_field_manager = settings.easykube_field_manager)
     )
-    ekclusterstatus = await ekresource_for_model(api.Cluster, "status")
     async with ekclient_target:
         try:
             ekzenithapi = ekclient_target.api(settings.zenith.api_version)
             ekzenithreservations = await ekzenithapi.resource("reservations")
             initial, events = await ekzenithreservations.watch_list(all_namespaces = True)
-            # The initial reservations represent the current known state of the services
-            # So we rebuild and replace the full service state for the cluster
-            cluster_services = {}
             for reservation in initial:
-                if reservation.get("status", {}).get("phase", "Unknown") != "Ready":
-                    continue
-                service_name = get_service_name(reservation)
-                service_status = get_service_status(reservation)
-                addon = await annotate_addon_for_reservation(
-                    name,
-                    namespace,
-                    reservation,
-                    service_name,
-                    service_status
-                )
-                # If the addon has the Helm chart label, store the service
-                if addon and "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
-                    cluster_services[service_name] = service_status
-            await ekclusterstatus.json_patch(
-                name,
-                [
-                    {
-                        "op": "replace",
-                        "path": "/status/services",
-                        "value": cluster_services,
-                    },
-                ],
-                namespace = namespace
-            )
+                await annotate_addon_for_reservation(reservation)
             # For subsequent events, we just need to patch the state of the specified service
             async for event in events:
                 event_type, reservation = event["type"], event.get("object")
                 if not reservation:
                     continue
-                service_name = get_service_name(reservation)
-                if event_type in {"ADDED", "MODIFIED"}:
-                    if reservation.get("status", {}).get("phase", "Unknown") == "Ready":
-                        service_status = get_service_status(reservation)
-                        addon = await annotate_addon_for_reservation(
-                            name,
-                            namespace,
-                            reservation,
-                            service_name,
-                            service_status
-                        )
-                        if addon and "capi.stackhpc.com/cluster" in addon.metadata.get("labels", {}):
-                            await ekclusterstatus.patch(
-                                name,
-                                {
-                                    "status": {
-                                        "services": {
-                                            service_name: service_status,
-                                        },
-                                    },
-                                },
-                                namespace = namespace
-                            )
-                elif event_type == "DELETED":
-                    service_name = get_service_name(reservation)
-                    await ekclusterstatus.json_patch(
-                        name,
-                        [
-                            {
-                                "op": "remove",
-                                "path": f"/status/services/{service_name}",
-                            },
-                        ],
-                        namespace = namespace
-                    )
-                    await annotate_addon_for_reservation(
-                        name,
-                        namespace,
-                        reservation,
-                        service_name
-                    )
+                await annotate_addon_for_reservation(reservation, event_type == "DELETED")
         except (ApiError, ssl.SSLCertVerificationError) as exc:
             # These are expected, recoverable errors that we can retry
             raise kopf.TemporaryError(str(exc))

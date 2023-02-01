@@ -251,6 +251,10 @@ class ServiceStatus(schema.BaseModel):
     """
     The status of a service in the cluster.
     """
+    provided_by: t.Optional[constr(min_length = 1)] = Field(
+        None,
+        description = "The identifier of the addon that provided the service."
+    )
     fqdn: constr(min_length = 1) = Field(
         ...,
         description = "The FQDN of the service."

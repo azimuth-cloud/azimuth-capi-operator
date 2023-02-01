@@ -1,3 +1,4 @@
+import json
 import logging
 
 from .models.v1alpha1 import (
@@ -9,6 +10,7 @@ from .models.v1alpha1 import (
     NodeRole,
     NodeStatus,
     AddonStatus,
+    ServiceStatus
 )
 
 
@@ -285,6 +287,26 @@ def addon_updated(cluster, obj):
     cluster.status.addons[component] = AddonStatus(
         phase = status.get("phase", AddonPhase.UNKNOWN.value),
     )
+    # Get the provided by reference for this addon
+    provided_by_ref = f"{obj['kind'].lower()}/{obj['metadata']['name']}"
+    # Extract the services for the addon
+    annotations = obj.get("metadata", {}).get("annotations", {})
+    services = json.loads(annotations.get("azimuth.stackhpc.com/services", "{}"))
+    # Get the names of the services that are owner by this addon
+    known_services = {
+        k
+        for k, v in cluster.status.services.items()
+        if v.provided_by == provided_by_ref
+    }
+    # Update the current services
+    for name, service in services.items():
+        cluster.status.services[name] = ServiceStatus(
+            provided_by = provided_by_ref,
+            **service
+        )
+    # Remove any known services that are not present
+    for name in known_services.difference(services.keys()):
+        cluster.status.services.pop(name, None)
 
 
 def addon_deleted(cluster, obj):
@@ -293,6 +315,13 @@ def addon_deleted(cluster, obj):
     """
     component = obj["metadata"]["labels"]["capi.stackhpc.com/component"]
     cluster.status.addons.pop(component, None)
+    # When an addon is deleted, remove all the services that are provided by it
+    provided_by_ref = f"{obj['kind'].lower()}/{obj['metadata']['name']}"
+    cluster.status.services = {
+        k: v
+        for k, v in cluster.status.services.items()
+        if v.provided_by == provided_by_ref
+    }
 
 
 def remove_unknown_addons(cluster, addons):
@@ -303,6 +332,13 @@ def remove_unknown_addons(cluster, addons):
     known = set(cluster.status.addons.keys())
     for component in known - current:
         cluster.status.addons.pop(component)
+    # Also remove services that don't belong to the known addons
+    refs = { f"{a['kind'].lower()}/{a['metadata']['name']}" for a in addons }
+    cluster.status.services = {
+        k: v
+        for k, v in cluster.status.services.items()
+        if v.provided_by in refs
+    }
 
 
 def finalise(cluster):

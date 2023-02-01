@@ -47,16 +47,39 @@ class HelmClientConfiguration(Section):
     unpack_directory: t.Optional[str] = None
 
 
+class ArgoCDConfiguration(Section):
+    """
+    Configuration for the Argo CD integration.
+    """
+    #: The API version to use for Argo
+    api_version: constr(min_length = 1) = "argoproj.io/v1alpha1"
+    #: The namespace that Argo CD is running in
+    namespace: constr(min_length = 1) = "argocd"
+    #: The cluster to target for Argo applications for clusters
+    target_cluster: constr(min_length = 1) = "in-cluster"
+    #: The template to use for naming cluster resources in Argo
+    cluster_name_template: constr(min_length = 1) = "kubecluster-{namespace}-{name}-{id}"
+    #: Indicates whether to use self-healing for cluster applications
+    self_heal_cluster_apps: bool = True
+    #: The finalizer indicating that an application should wait for resources to be deleted
+    resource_deletion_finalizer: constr(min_length = 1) = "resources-finalizer.argocd.argoproj.io"
+    #: The tracking-id annotation to look for that identifies a resource
+    #: as being part of an Argo application
+    tracking_id_annotation: constr(min_length = 1) = "argocd.argoproj.io/tracking-id"
+
+
 class CAPIHelmConfig(Section):
     """
     Configuration for the CAPI Helm chart used to deploy clusters.
     """
     #: The repository containing the CAPI Helm charts
     chart_repository: AnyHttpUrl = "https://stackhpc.github.io/capi-helm-charts"
-    #: The name of the CAPI Helm chart to use to deploy clusters
-    chart_name: constr(min_length = 1) = "openstack-cluster"
-    #: The version of the CAPI Helm chart to use to deploy clusters
+    #: The version of the CAPI Helm charts to use
     chart_version: SemVerVersion = "0.1.1-dev.0.main.2"
+    #: The name of the CAPI Helm chart to use to deploy cluster infrastructure
+    infra_chart_name: constr(min_length = 1) = "openstack-cluster"
+    #: The name of the CAPI Helm chart to use to deploy addons
+    addons_chart_name: constr(min_length = 1) = "cluster-addons"
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -182,6 +205,9 @@ class Configuration(BaseConfiguration):
 
     #: The field manager name to use for server-side apply
     easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
+
+    #: The Argo CD configuration
+    argocd: ArgoCDConfiguration = Field(default_factory = ArgoCDConfiguration)
 
     #: The Helm client configuration
     helm_client: HelmClientConfiguration = Field(default_factory = HelmClientConfiguration)
