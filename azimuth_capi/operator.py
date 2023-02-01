@@ -241,6 +241,7 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
 
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
+@model_handler(api.Cluster, kopf.on.resume)
 async def on_cluster_create(instance: api.Cluster, name, namespace, patch, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
