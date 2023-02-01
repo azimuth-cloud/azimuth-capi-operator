@@ -75,11 +75,9 @@ class CAPIHelmConfig(Section):
     #: The repository containing the CAPI Helm charts
     chart_repository: AnyHttpUrl = "https://stackhpc.github.io/capi-helm-charts"
     #: The version of the CAPI Helm charts to use
-    chart_version: SemVerVersion = "0.1.1-dev.0.main.2"
-    #: The name of the CAPI Helm chart to use to deploy cluster infrastructure
-    infra_chart_name: constr(min_length = 1) = "openstack-cluster"
-    #: The name of the CAPI Helm chart to use to deploy addons
-    addons_chart_name: constr(min_length = 1) = "cluster-addons"
+    chart_version: SemVerVersion = "0.1.1-dev.0.main.124"
+    #: The name of the CAPI Helm chart to use to deploy clusters
+    chart_name: constr(min_length = 1) = "openstack-cluster"
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)

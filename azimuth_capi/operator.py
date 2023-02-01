@@ -106,12 +106,13 @@ async def ekresource_for_model(model, subresource = None):
     return await api.resource(resource)
 
 
-async def save_cluster_status(cluster):
+async def save_cluster_status(cluster, finalise = True):
     """
     Save the status of this addon using the given easykube client.
     """
-    # Make sure that the status is finalised before saving
-    status.finalise(cluster)
+    if finalise:
+        # Make sure that the status is finalised before saving
+        status.finalise(cluster)
     ekresource = await ekresource_for_model(api.Cluster, "status")
     data = await ekresource.replace(
         cluster.metadata.name,
@@ -239,13 +240,17 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
             raise kopf.AdmissionError("specified cluster template would be a downgrade", code = 400)
 
 
-@model_handler(api.Cluster, kopf.on.create)
-@model_handler(api.Cluster, kopf.on.update, field = "spec")
-@model_handler(api.Cluster, kopf.on.resume)
-async def on_cluster_create(instance: api.Cluster, name, namespace, patch, **kwargs):
+@model_handler(api.Cluster, kopf.on.create, param = "on-change")
+@model_handler(api.Cluster, kopf.on.update, field = "spec", param = "on-change")
+@model_handler(api.Cluster, kopf.on.resume, param = "on-resume")
+async def on_cluster_create(instance: api.Cluster, name, namespace, patch, param, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
     """
+    # If executing on a change event, we will always be reconciling
+    if param == "on-change" and instance.status.phase != api.ClusterPhase.RECONCILING:
+        instance.status.phase = api.ClusterPhase.RECONCILING
+        await save_cluster_status(instance, False)
     # Make sure that the secret exists
     ekresource = await ekclient.api("v1").resource("secrets")
     secret = await ekresource.fetch(
@@ -325,27 +330,18 @@ async def on_cluster_create(instance: api.Cluster, name, namespace, patch, **kwa
             helm_values,
             await zenith_values(ekclient, instance, instance.spec.addons)
         )
-    # We use the "app-of-apps" pattern to manage the cluster, addons and Zenith operator
-    # as separate apps within a master app
+    # We use the "app-of-apps" pattern to manage the cluster and Zenith operator as separate apps within a master app
+    # This makes managing the deletion of the cluster much easier as we just delete the app-of-apps
     # See https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern
-    # This also may allow us to use sync waves to remove the addons before deleting the cluster
-    # https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/
-    # So split the Helm values into those for the cluster and those for the addons
-    helm_values_addons = helm_values.pop("addons", {})
-    helm_values["addons"] = {"enabled": False}
-    # Start with the application for the cluster infrastructure
     applications = [
         argo_application(
             f"{project.metadata.name}-infra",
             instance,
             project,
             {
-                # "repoURL": settings.capi_helm.chart_repository,
-                # "chart": settings.capi_helm.infra_chart_name,
-                # "targetRevision": settings.capi_helm.chart_version,
-                "repoURL": "https://github.com/stackhpc/capi-helm-charts.git",
-                "path": "charts/openstack-cluster",
-                "targetRevision": "feature/argo-apps",
+                "repoURL": settings.capi_helm.chart_repository,
+                "chart": settings.capi_helm.chart_name,
+                "targetRevision": settings.capi_helm.chart_version,
                 "helm": {
                     "releaseName": name,
                     "values": yaml_dump(helm_values),
@@ -353,38 +349,6 @@ async def on_cluster_create(instance: api.Cluster, name, namespace, patch, **kwa
             }
         ),
     ]
-    # Apply the defaults from the openstack-cluster in CAPI Helm charts
-    helm_values_addons = mergeconcat(
-        {
-            "enabled": True,
-            "openstack": {
-                "enabled": True,
-            },
-        },
-        helm_values_addons
-    )
-    # Add the application for the addons if required
-    if helm_values_addons.pop("enabled"):
-        applications.append(
-            argo_application(
-                f"{project.metadata.name}-addons",
-                instance,
-                project,
-                {
-                    # "repoURL": settings.capi_helm.chart_repository,
-                    # "chart": settings.capi_helm.addons_chart_name,
-                    # "targetRevision": settings.capi_helm.chart_version,
-                    "repoURL": "https://github.com/stackhpc/capi-helm-charts.git",
-                    "path": "charts/cluster-addons",
-                    "targetRevision": "feature/argo-apps",
-                    "helm": {
-                        "releaseName": name,
-                        "values": yaml_dump(helm_values_addons),
-                    },
-                }
-            )
-        )
-    # Add the Argo application for the Zenith operator if required
     if settings.zenith.enabled:
         applications.append(
             argo_application(
@@ -394,7 +358,7 @@ async def on_cluster_create(instance: api.Cluster, name, namespace, patch, **kwa
                 zenith_operator_app_source(instance, secret)
             )
         )
-    # Apply the app-of-apps application using the raw chart
+    # Apply the app-of-apps application
     await ekclient.apply_object(
         argo_application(
             project.metadata.name,
@@ -425,6 +389,10 @@ async def on_cluster_delete(instance: api.Cluster, name, namespace, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
+    # Always transition into the deleting phase
+    if instance.status.phase != api.ClusterPhase.DELETING:
+        instance.status.phase = api.ClusterPhase.DELETING
+        await save_cluster_status(instance, False)
     argo_cluster_name = settings.argocd.cluster_name_template.format(
         namespace = namespace,
         name = name,
