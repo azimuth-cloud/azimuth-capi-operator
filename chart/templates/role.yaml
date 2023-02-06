@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  # This role needs to apply to the Argo CD namespace
+  namespace: {{ .Values.config | dig "argocd" "namespace" "argocd" }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+rules:
+  # This role allows us to manage projects and applications
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - appprojects
+      - applications
+    verbs:
+      - "*"

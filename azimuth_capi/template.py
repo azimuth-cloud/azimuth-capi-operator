@@ -17,7 +17,7 @@ class Loader:
         self.env.filters.update(
             mergeconcat = utils.mergeconcat,
             fromyaml = yaml.safe_load,
-            toyaml = yaml.safe_dump
+            toyaml = utils.yaml_dump
         )
 
     def loads(self, template, **params):

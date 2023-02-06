@@ -17,7 +17,7 @@ from pyhelm3 import Client as HelmClient
 
 from .config import settings
 from .template import default_loader
-from .utils import mergeconcat
+from .utils import mergeconcat, yaml_dump
 
 
 def b64encode(value):
@@ -153,7 +153,7 @@ async def zenith_apiserver_values(client, cluster):
                 "files": [
                     {
                         "path": "/etc/kubernetes/manifests/zenith-apiserver.yaml",
-                        "content": b64encode(yaml.safe_dump(pod)),
+                        "content": b64encode(yaml_dump(pod)),
                         "encoding": "base64",
                         "owner": "root:root",
                         "permissions": "0600",
@@ -243,47 +243,39 @@ async def zenith_values(client, cluster, addons):
     )
 
 
-async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
+def zenith_operator_app_source(cluster, cloud_credentials_secret):
     """
-    Returns the resources required to enable the Zenith operator for the given cluster.
+    Returns the source for the Argo app for the Zenith operator for the given cluster.
     """
     # The project ID for the cluster is automatically injected as a Zenith auth param
     # for all clients created by the operator unless auth is explicitly skipped
     clouds_b64 = cloud_credentials_secret.data["clouds.yaml"]
     clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
     project_id = clouds["clouds"]["openstack"]["auth"]["project_id"]
-    client = HelmClient(
-        default_timeout = settings.helm_client.default_timeout,
-        executable = settings.helm_client.executable,
-        history_max_revisions = settings.helm_client.history_max_revisions,
-        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-        unpack_directory = settings.helm_client.unpack_directory
-    )
-    return list(
-        await client.template_resources(
-            await client.get_chart(
-                "zenith-operator",
-                repo = settings.zenith.chart_repository,
-                version = settings.zenith.chart_version
-            ),
-            name,
-            mergeconcat(
-                settings.zenith.operator_defaults,
-                {
-                    "kubeconfigSecret": {
-                        "name": f"{name}-kubeconfig",
-                        "key": "value",
-                    },
-                    "config": {
-                        "registrarAdminUrl": settings.zenith.registrar_admin_url,
-                        "sshdHost": settings.zenith.sshd_host,
-                        "sshdPort": settings.zenith.sshd_port,
-                        "defaultAuthParams": {
-                            "tenancy-id": project_id,
+    return {
+        "repoURL": settings.zenith.chart_repository,
+        "chart": "zenith-operator",
+        "targetRevision": settings.zenith.chart_version,
+        "helm": {
+            "releaseName": cluster.metadata.name,
+            "values": yaml_dump(
+                mergeconcat(
+                    settings.zenith.operator_defaults,
+                    {
+                        "kubeconfigSecret": {
+                            "name": f"{cluster.metadata.name}-kubeconfig",
+                            "key": "value",
                         },
-                    },
-                }
+                        "config": {
+                            "registrarAdminUrl": settings.zenith.registrar_admin_url,
+                            "sshdHost": settings.zenith.sshd_host,
+                            "sshdPort": settings.zenith.sshd_port,
+                            "defaultAuthParams": {
+                                "tenancy-id": project_id,
+                            },
+                        },
+                    }
+                )
             ),
-            namespace = namespace
-        )
-    )
+        },
+    }
