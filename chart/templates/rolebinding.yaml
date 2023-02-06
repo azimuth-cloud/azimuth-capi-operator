@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  # This role needs to apply to the Argo CD namespace
+  namespace: {{ .Values.config | dig "argocd" "namespace" "argocd" }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+subjects:
+  # Target the service account in the release namespace
+  - kind: ServiceAccount
+    namespace: {{ .Release.Namespace }}
+    name: {{ include "azimuth-capi-operator.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "azimuth-capi-operator.fullname" . }}

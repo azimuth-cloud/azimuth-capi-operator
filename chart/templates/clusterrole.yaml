@@ -48,26 +48,15 @@ rules:
       - "*"
     verbs:
       - "*"
-  # We need to be able to manipulate all the objects that the CAPI Helm charts create
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-    verbs:
-      - "*"
-  - apiGroups:
-      - rbac.authorization.k8s.io
-    resources:
-      - roles
-      - rolebindings
-    verbs:
-      - "*"
+  # We need to be able to query Cluster API objects
   - apiGroups:
       - ""
     resources:
       - secrets
     verbs:
-      - "*"
+      - list
+      - get
+      - watch
   - apiGroups:
       - cluster.x-k8s.io
     resources:
@@ -76,49 +65,40 @@ rules:
       - machines
       - machinehealthchecks
     verbs:
-      - "*"
+      - list
+      - get
+      - watch
   - apiGroups:
       - bootstrap.cluster.x-k8s.io
     resources:
       - kubeadmconfigtemplates
     verbs:
-      - "*"
+      - list
+      - get
+      - watch
   - apiGroups:
       - controlplane.cluster.x-k8s.io
     resources:
       - kubeadmcontrolplanes
     verbs:
-      - "*"
+      - list
+      - get
+      - watch
   - apiGroups:
       - infrastructure.cluster.x-k8s.io
     resources:
       - openstackclusters
       - openstackmachinetemplates
+      - openstackmachines
     verbs:
-      - "*"
+      - list
+      - get
+      - watch
   - apiGroups:
       - addons.stackhpc.com
     resources:
-      - "*"
-    verbs:
-      - "*"
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-    verbs:
-      - "*"
-  - apiGroups:
-      - batch
-    resources:
-      - jobs
-    verbs:
-      - "*"
-  # In addition, we need to be able to watch individual machine objects
-  - apiGroups:
-      - infrastructure.cluster.x-k8s.io
-    resources:
-      - openstackmachines
+      - helmreleases
+      - manifests
     verbs:
       - list
       - get
