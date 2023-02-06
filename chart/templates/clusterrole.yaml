@@ -48,15 +48,14 @@ rules:
       - "*"
     verbs:
       - "*"
-  # We need to be able to query Cluster API objects
+  # We need to be able to manipulate secrets
   - apiGroups:
       - ""
     resources:
       - secrets
     verbs:
-      - list
-      - get
-      - watch
+      - "*"
+  # We need to be able to query Cluster API objects
   - apiGroups:
       - cluster.x-k8s.io
     resources:
