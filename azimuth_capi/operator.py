@@ -374,6 +374,60 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     await save_cluster_status(instance)
 
 
+@model_handler(api.Cluster, kopf.on.resume)
+@model_handler(api.Cluster, kopf.on.update, field = "status.services")
+async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
+    """
+    Executed whenever the cluster services change.
+    """
+    # When the cluster services change, we need to update the platform for the cluster
+    # to reflect the current state of the services
+    # First, we need to find the realm to use
+    ekrealms = await ekclient.api(settings.identity.api_version).resource("realms")
+    if instance.spec.zenith_identity_realm_name:
+        # If the cluster specifies a realm, use it
+        try:
+            realm = await ekrealms.fetch(
+                instance.spec.zenith_identity_realm_name,
+                namespace = instance.metadata.namespace
+            )
+        except ApiError as exc:
+            if exc.status_code == 404:
+                raise kopf.TemporaryError(
+                    f"Could not find identity realm '{instance.spec.zenith_identity_realm_name}'"
+                )
+            else:
+                raise
+    else:
+        # Otherwise, try to discover a realm in the namespace
+        realm = await ekrealms.first(namespace = instance.metadata.namespace)
+        if not realm:
+            raise kopf.TemporaryError("No identity realm available to use")
+    # Create/update the associated platform with the cluster services
+    platform = {
+        "apiVersion": settings.identity.api_version,
+        "kind": "Platform",
+        "metadata": {
+            "name": settings.identity.cluster_platform_name_template.format(
+                cluster_name = instance.metadata.name,
+            ),
+            "namespace": instance.metadata.namespace,
+        },
+        "spec": {
+            "realmName": realm.metadata.name,
+            "zenithServices": {
+                name: {
+                    "subdomain": service.subdomain,
+                    "fqdn": service.fqdn,
+                }
+                for name, service in instance.status.services.items()
+            },
+        },
+    }
+    kopf.adopt(platform, instance.dict())
+    await ekclient.apply_object(platform, force = True)
+
+
 def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", **kwargs):
     """
     Decorator that registers a function as updating the Azimuth cluster state in response
@@ -566,6 +620,7 @@ def get_service_status(reservation):
         name = reservation["metadata"]["name"]
         label = " ".join(word.capitalize() for word in name.split("-"))
     return api.ServiceStatus(
+        subdomain = reservation["status"]["subdomain"],
         fqdn = reservation["status"]["fqdn"],
         label = label.strip(),
         icon_url = annotations.get("azimuth.stackhpc.com/service-icon-url"),

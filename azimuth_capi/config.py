@@ -67,7 +67,11 @@ class ZenithConfig(Section):
     Configuration for Zenith support.
     """
     #: The admin URL of the Zenith registrar
+    #: This is given to the Zenith operator for a cluster
     registrar_admin_url: t.Optional[AnyHttpUrl] = None
+    #: The internal admin URL of the Zenith registrar
+    #: By default, this is the same as the registrar_admin_url
+    registrar_admin_url_internal: t.Optional[AnyHttpUrl] = None
     #: The host for the Zenith SSHD service
     sshd_host: t.Optional[constr(min_length = 1)] = None
     #: The port for the Zenith SSHD service
@@ -104,12 +108,29 @@ class ZenithConfig(Section):
             )
         return values
 
+    @validator("registrar_admin_url_internal", always = True)
+    def default_registrar_admin_url_internal(cls, v, values):
+        """
+        Sets the default internal registrar admin URL.
+        """
+        return v or values.get("registrar_admin_url")
+
     @property
     def enabled(self):
         """
         Indicates if Zenith support is enabled.
         """
         return bool(self.registrar_admin_url)
+
+
+class IdentityConfig(Section):
+    """
+    Configuration for the Azimuth identity support.
+    """
+    #: The API version to use for Azimuth identity resources
+    api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
+    #: The template to use for cluster platform names
+    cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
 
 
 class WebhookConfiguration(Section):
@@ -194,6 +215,9 @@ class Configuration(BaseConfiguration):
 
     #: Configuration for Zenith support
     zenith: ZenithConfig = Field(default_factory = ZenithConfig)
+
+    #: Configuration for Azimuth identity support
+    identity: IdentityConfig = Field(default_factory = IdentityConfig)
 
 
 settings = Configuration()
