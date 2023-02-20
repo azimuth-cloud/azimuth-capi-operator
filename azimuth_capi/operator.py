@@ -374,60 +374,6 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     await save_cluster_status(instance)
 
 
-@model_handler(api.Cluster, kopf.on.resume)
-@model_handler(api.Cluster, kopf.on.update, field = "status.services")
-async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
-    """
-    Executed whenever the cluster services change.
-    """
-    # When the cluster services change, we need to update the platform for the cluster
-    # to reflect the current state of the services
-    # First, we need to find the realm to use
-    ekrealms = await ekclient.api(settings.identity.api_version).resource("realms")
-    if instance.spec.zenith_identity_realm_name:
-        # If the cluster specifies a realm, use it
-        try:
-            realm = await ekrealms.fetch(
-                instance.spec.zenith_identity_realm_name,
-                namespace = instance.metadata.namespace
-            )
-        except ApiError as exc:
-            if exc.status_code == 404:
-                raise kopf.TemporaryError(
-                    f"Could not find identity realm '{instance.spec.zenith_identity_realm_name}'"
-                )
-            else:
-                raise
-    else:
-        # Otherwise, try to discover a realm in the namespace
-        realm = await ekrealms.first(namespace = instance.metadata.namespace)
-        if not realm:
-            raise kopf.TemporaryError("No identity realm available to use")
-    # Create/update the associated platform with the cluster services
-    platform = {
-        "apiVersion": settings.identity.api_version,
-        "kind": "Platform",
-        "metadata": {
-            "name": settings.identity.cluster_platform_name_template.format(
-                cluster_name = instance.metadata.name,
-            ),
-            "namespace": instance.metadata.namespace,
-        },
-        "spec": {
-            "realmName": realm.metadata.name,
-            "zenithServices": {
-                name: {
-                    "subdomain": service.subdomain,
-                    "fqdn": service.fqdn,
-                }
-                for name, service in instance.status.services.items()
-            },
-        },
-    }
-    kopf.adopt(platform, instance.dict())
-    await ekclient.apply_object(platform, force = True)
-
-
 def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", **kwargs):
     """
     Decorator that registers a function as updating the Azimuth cluster state in response
@@ -509,7 +455,7 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):
         status.machine_updated(cluster, body, infra_machine)
 
 
-@on_managed_object_event("addons.stackhpc.com/v1alpha1", "helmreleases")
+@on_managed_object_event("addons.stackhpc.com", "helmreleases")
 async def on_helmrelease_event(cluster, type, body, **kwargs):
     """
     Executes on events for HelmRelease addons.
@@ -520,7 +466,7 @@ async def on_helmrelease_event(cluster, type, body, **kwargs):
         status.addon_updated(cluster, body)
 
 
-@on_managed_object_event("addons.stackhpc.com/v1alpha1", "manifests")
+@on_managed_object_event("addons.stackhpc.com", "manifests")
 async def on_manifests_event(cluster, type, body, **kwargs):
     """
     Executes on events for Manifests addons.
@@ -544,6 +490,108 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):
     """
     if type != "DELETED" and name.endswith("-kubeconfig"):
         status.kubeconfig_secret_updated(cluster, body)
+
+
+async def find_realm(cluster: api.Cluster):
+    """
+    Return the identity realm for the given cluster.
+    """
+    ekrealms = await ekclient.api(settings.identity.api_version).resource("realms")
+    if cluster.spec.zenith_identity_realm_name:
+        # If the cluster specifies a realm, use it
+        try:
+            return await ekrealms.fetch(
+                cluster.spec.zenith_identity_realm_name,
+                namespace = cluster.metadata.namespace
+            )
+        except ApiError as exc:
+            if exc.status_code == 404:
+                raise kopf.TemporaryError(
+                    f"Could not find identity realm '{cluster.spec.zenith_identity_realm_name}'"
+                )
+            else:
+                raise
+    else:
+        # Otherwise, try to discover a realm in the namespace
+        realm = await ekrealms.first(namespace = cluster.metadata.namespace)
+        if realm:
+            return realm
+        else:
+            raise kopf.TemporaryError("No identity realm available to use")
+
+
+@model_handler(api.Cluster, kopf.on.resume)
+@model_handler(api.Cluster, kopf.on.update, field = "status.services")
+async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
+    """
+    Executed whenever the cluster services change.
+    """
+    realm = await find_realm(instance)
+    platform = {
+        "apiVersion": settings.identity.api_version,
+        "kind": "Platform",
+        "metadata": {
+            "name": settings.identity.cluster_platform_name_template.format(
+                cluster_name = instance.metadata.name,
+            ),
+            "namespace": instance.metadata.namespace,
+        },
+        "spec": {
+            "realmName": realm.metadata.name,
+            "zenithServices": {
+                name: {
+                    "subdomain": service.subdomain,
+                    "fqdn": service.fqdn,
+                }
+                for name, service in instance.status.services.items()
+            },
+        },
+    }
+    kopf.adopt(platform, instance.dict())
+    await ekclient.apply_object(platform, force = True)
+
+
+@on_managed_object_event(
+    "addons.stackhpc.com",
+    "helmreleases",
+    # Use the label applied by the addon operator to locate the corresponding cluster
+    cluster_label = "addons.stackhpc.com/cluster",
+    # This label is only present on Helm releases that correspond to Azimuth platforms
+    labels = { "azimuth.stackhpc.com/app-template": kopf.PRESENT }
+)
+async def on_kubernetes_app_event(cluster, type, name, namespace, body, annotations, **kwargs):
+    """
+    Executes on events for HelmRelease addons that are labelled as representing an Azimuth app.
+    """
+    if type == "DELETED":
+        return
+    realm = await find_realm(cluster)
+    services_annotation = annotations.get("azimuth.stackhpc.com/services")
+    if services_annotation:
+        services = json.loads(services_annotation)
+    else:
+        services = {}
+    platform = {
+        "apiVersion": settings.identity.api_version,
+        "kind": "Platform",
+        "metadata": {
+            "name": settings.identity.app_platform_name_template.format(app_name = name),
+            "namespace": namespace,
+        },
+        "spec": {
+            "realmName": realm.metadata.name,
+            "zenithServices": {
+                name: {
+                    "subdomain": service["subdomain"],
+                    "fqdn": service["fqdn"],
+                }
+                for name, service in services.items()
+            },
+        },
+    }
+    # The platform should be owned by the HelmRelease
+    kopf.adopt(platform, body)
+    await ekclient.apply_object(platform, force = True)
 
 
 async def annotate_addon_for_reservation(

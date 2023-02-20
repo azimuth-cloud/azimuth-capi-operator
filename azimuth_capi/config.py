@@ -131,6 +131,8 @@ class IdentityConfig(Section):
     api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
     #: The template to use for cluster platform names
     cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
+    #: The template to use for app platform names
+    app_platform_name_template: constr(min_length = 1) = "kubeapp-{app_name}"
 
 
 class WebhookConfiguration(Section):
