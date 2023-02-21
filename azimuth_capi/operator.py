@@ -559,39 +559,57 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
     # This label is only present on Helm releases that correspond to Azimuth platforms
     labels = { "azimuth.stackhpc.com/app-template": kopf.PRESENT }
 )
-async def on_kubernetes_app_event(cluster, type, name, namespace, body, annotations, **kwargs):
+async def on_kubernetes_app_event(
+    cluster,
+    type,
+    name,
+    namespace,
+    body,
+    annotations,
+    logger,
+    **kwargs
+):
     """
     Executes on events for HelmRelease addons that are labelled as representing an Azimuth app.
     """
     if type == "DELETED":
         return
-    realm = await find_realm(cluster)
-    services_annotation = annotations.get("azimuth.stackhpc.com/services")
-    if services_annotation:
-        services = json.loads(services_annotation)
-    else:
-        services = {}
-    platform = {
-        "apiVersion": settings.identity.api_version,
-        "kind": "Platform",
-        "metadata": {
-            "name": settings.identity.app_platform_name_template.format(app_name = name),
-            "namespace": namespace,
-        },
-        "spec": {
-            "realmName": realm.metadata.name,
-            "zenithServices": {
-                name: {
-                    "subdomain": service["subdomain"],
-                    "fqdn": service["fqdn"],
-                }
-                for name, service in services.items()
-            },
-        },
-    }
-    # The platform should be owned by the HelmRelease
-    kopf.adopt(platform, body)
-    await ekclient.apply_object(platform, force = True)
+    # kopf does not retry events, but we need to make sure that this is retried until it succeeds
+    while True:
+        try:
+            realm = await find_realm(cluster)
+            services_annotation = annotations.get("azimuth.stackhpc.com/services")
+            if services_annotation:
+                services = json.loads(services_annotation)
+            else:
+                services = {}
+            platform = {
+                "apiVersion": settings.identity.api_version,
+                "kind": "Platform",
+                "metadata": {
+                    "name": settings.identity.app_platform_name_template.format(app_name = name),
+                    "namespace": namespace,
+                },
+                "spec": {
+                    "realmName": realm.metadata.name,
+                    "zenithServices": {
+                        name: {
+                            "subdomain": service["subdomain"],
+                            "fqdn": service["fqdn"],
+                        }
+                        for name, service in services.items()
+                    },
+                },
+            }
+            # The platform should be owned by the HelmRelease
+            kopf.adopt(platform, body)
+            await ekclient.apply_object(platform, force = True)
+        except kopf.TemporaryError as exc:
+            logger.error(f"{str(exc)} - retrying")
+        except Exception:
+            logger.exception("Exception while updating platform - retrying")
+        else:
+            break
 
 
 async def annotate_addon_for_reservation(
