@@ -123,3 +123,18 @@ rules:
       - list
       - get
       - watch
+  # We also need to be able to find realms and manipulate platforms
+  - apiGroups:
+      - identity.azimuth.stackhpc.com
+    resources:
+      - realms
+    verbs:
+      - list
+      - get
+      - watch
+  - apiGroups:
+      - identity.azimuth.stackhpc.com
+    resources:
+      - platforms
+    verbs:
+      - "*"

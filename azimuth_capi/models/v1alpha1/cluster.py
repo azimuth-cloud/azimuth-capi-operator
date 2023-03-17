@@ -92,6 +92,13 @@ class ClusterSpec(schema.BaseModel):
         ...,
         description = "The name of the secret containing the cloud credentials."
     )
+    zenith_identity_realm_name: t.Optional[constr(min_length = 1)] = Field(
+        None,
+        description = (
+            "The name of the Azimuth identity realm to use for Zenith services. "
+            "If not given then the first discovered realm in the namespace is used."
+        )
+    )
     autohealing: bool = Field(
         True,
         description = "Indicates if auto-healing should be enabled."
@@ -254,6 +261,10 @@ class ServiceStatus(schema.BaseModel):
     """
     The status of a service in the cluster.
     """
+    subdomain: constr(min_length = 1) = Field(
+        ...,
+        description = "The subdomain of the service."
+    )
     fqdn: constr(min_length = 1) = Field(
         ...,
         description = "The FQDN of the service."
