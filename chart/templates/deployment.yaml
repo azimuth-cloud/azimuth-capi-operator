@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: {{ include "azimuth-capi-operator.fullname" . }}
   labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+  annotations:
+    # Trigger a rollout when the certificate changes
+    secret.reloader.stakater.com/reload: {{ include "azimuth-capi-operator.fullname" . }}-cert
 spec:
   # Allow only one replica at once with the recreate strategy in order to avoid races
   replicas: 1

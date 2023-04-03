@@ -5,3 +5,10 @@ type: application
 # The version and appVersion are updated by the chart build script
 version: 0.1.0
 appVersion: main
+
+# Use stakater/reloader to reload when certificates change
+dependencies:
+  - name: reloader
+    repository: https://stakater.github.io/stakater-charts
+    version: v1.0.18
+    condition: reloader.enabled

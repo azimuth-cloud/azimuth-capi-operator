@@ -32,3 +32,12 @@ affinity: {}
 
 # Tolerations for operator pods
 tolerations: []
+
+# Settings for the stakater reloader
+# https://github.com/stakater/Reloader
+reloader:
+  enabled: true
+  reloader:
+    watchGlobally: false
+    reloadOnCreate: true
+    syncAfterRestart: true
