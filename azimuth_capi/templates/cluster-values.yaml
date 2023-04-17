@@ -1,17 +1,5 @@
 cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
-{% if spec.external_network_id or spec.network_id %}
-clusterNetworking:
-{% if spec.external_network_id %}
-  externalNetworkId: {{ spec.external_network_id }}
-{% endif %}
-{% if spec.network_id %}
-  internalNetwork:
-    networkFilter:
-      id: {{ spec.network_id }}
-{% endif %}
-{% endif %}
-
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
   healthCheck:

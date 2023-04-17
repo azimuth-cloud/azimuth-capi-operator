@@ -103,14 +103,6 @@ class ClusterSpec(schema.BaseModel):
         True,
         description = "Indicates if auto-healing should be enabled."
     )
-    external_network_id: t.Optional[constr(min_length = 1)] = Field(
-        None,
-        description = "The ID of the external network to use."
-    )
-    network_id: t.Optional[constr(min_length = 1)] = Field(
-        None,
-        description = "The ID of the network to use for cluster nodes."
-    )
     control_plane_machine_size: constr(min_length = 1) = Field(
         ...,
         description = "The name of the size to use for control plane machines."
