@@ -41,3 +41,174 @@ reloader:
     watchGlobally: false
     reloadOnCreate: true
     syncAfterRestart: true
+
+# Settings for kube-state-metrics
+metrics:
+  enabled: false
+  # Use a custom build until https://github.com/kubernetes/kube-state-metrics/pull/2048 is in a release
+  image:
+    registry: ghcr.io/stackhpc
+    tag: v2.8.2-stackhpc.1
+  rbac:
+    create: true
+    extraRules:
+      - apiGroups:
+          - azimuth.stackhpc.com
+        resources:
+          - apptemplates
+          - clustertemplates
+          - clusters
+        verbs:
+          - list
+          - watch
+          - get
+  prometheus:
+    monitor:
+      enabled: false
+      honorLabels: true
+  # Disable all the default collectors
+  collectors: []
+  # Configure kube-state-metrics to report on our custom resources
+  extraArgs:
+    - --custom-resource-state-config
+    - |
+        kind: CustomResourceStateMetrics
+        spec:
+          resources:
+            - groupVersionKind:
+                group: azimuth.stackhpc.com
+                version: v1alpha1
+                kind: ClusterTemplate
+              metricNamePrefix: azimuth_kube_clustertemplate
+              labelsFromPath:
+                template_name: [metadata, name]
+              metrics:
+                - name: kube_version
+                  help: "Kubernetes version for the template"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        kube_version: [spec, values, kubernetesVersion]
+                - name: deprecated
+                  help: "Indicates whether the template is deprecated"
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [spec, deprecated]
+                      nilIsZero: true
+
+            - groupVersionKind:
+                group: azimuth.stackhpc.com
+                version: v1alpha1
+                kind: AppTemplate
+              metricNamePrefix: azimuth_kube_apptemplate
+              labelsFromPath:
+                template_name: [metadata, name]
+              metrics:
+                - name: last_sync
+                  help: "The time of the last sync for the app template"
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [status, lastSync]
+                      nilIsZero: true
+                - name: version
+                  help: "The time of the last sync for the app template"
+                  each:
+                    type: Info
+                    info:
+                      path: [status, versions]
+                      labelsFromPath:
+                        version: [name]
+
+            - groupVersionKind:
+                group: azimuth.stackhpc.com
+                version: v1alpha1
+                kind: Cluster
+              metricNamePrefix: azimuth_kube_cluster
+              labelsFromPath:
+                cluster_namespace: [metadata, namespace]
+                cluster_name: [metadata, name]
+              metrics:
+                - name: template
+                  help: "Cluster template"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        template: [spec, templateName]
+                - name: kube_version
+                  help: "The Kubernetes version of the cluster"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        kube_version: [status, kubernetesVersion]
+                - name: phase
+                  help: "Cluster phase"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        phase: [status, phase]
+                - name: networking_phase
+                  help: "Cluster networking phase"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        phase: [status, networkingPhase]
+                - name: control_plane_phase
+                  help: "Cluster control plane phase"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        phase: [status, controlPlanePhase]
+                - name: node_count
+                  help: "Cluster node count"
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [status, nodeCount]
+                      nilIsZero: true
+                - name: node_phase
+                  help: "Cluster node phase"
+                  each:
+                    type: Info
+                    info:
+                      path: [status, nodes]
+                      labelFromKey: node
+                      labelsFromPath:
+                        role: [role]
+                        group: [nodeGroup]
+                        phase: [phase]
+                - name: node_kubelet_version
+                  help: "Cluster node kubelet version"
+                  each:
+                    type: Info
+                    info:
+                      path: [status, nodes]
+                      labelFromKey: node
+                      labelsFromPath:
+                        role: [role]
+                        group: [nodeGroup]
+                        kubelet_version: [kubeletVersion]
+                - name: addon_count
+                  help: "Cluster addon count"
+                  each:
+                    type: Gauge
+                    gauge:
+                      path: [status, addonCount]
+                      nilIsZero: true
+                - name: addon_phase
+                  help: "Cluster addon phase"
+                  each:
+                    type: Info
+                    info:
+                      path: [status, addons]
+                      labelFromKey: addon
+                      labelsFromPath:
+                        phase: [phase]
+    - --custom-resource-state-only=true
