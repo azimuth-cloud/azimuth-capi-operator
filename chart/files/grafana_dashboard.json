@@ -320,7 +320,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_phase)",
+          "expr": "sum by(phase) (azimuth_kube_cluster_phase{phase=~\".+\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -503,7 +503,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_networking_phase)",
+          "expr": "sum by(phase) (azimuth_kube_cluster_networking_phase{phase=~\".+\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -954,7 +954,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_control_plane_phase)",
+          "expr": "sum by(phase) (azimuth_kube_cluster_control_plane_phase{phase=~\".+\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1160,7 +1160,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_node_phase) or vector(0)",
+          "expr": "sum(azimuth_kube_cluster_node_phase{phase=~\".+\"}) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1373,7 +1373,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_node_phase)",
+          "expr": "sum by(phase) (azimuth_kube_cluster_node_phase{phase=~\".+\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1672,7 +1672,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_addon_phase) or vector(0)",
+          "expr": "sum(azimuth_kube_cluster_addon_phase{phase=~\".+\"}) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1885,7 +1885,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_addon_phase)",
+          "expr": "sum by(phase) (azimuth_kube_cluster_addon_phase{phase=~\".+\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -2253,7 +2253,7 @@
           "refId": "A"
         }
       ],
-      "title": "Cluster template",
+      "title": "Clusters by template",
       "type": "timeseries"
     },
     {
@@ -2340,7 +2340,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(template) (azimuth_kube_cluster_template * on(template) label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) > 0",
+          "expr": "sum by(template) (azimuth_kube_cluster_template * on(template) group_left() label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) > 0",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -2470,7 +2470,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_template * on(template) label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) or vector(0)",
+          "expr": "sum(azimuth_kube_cluster_template * on(template) group_left() label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"

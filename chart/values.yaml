@@ -68,6 +68,8 @@ metrics:
           - watch
           - get
   prometheus:
+    rules:
+      enabled: true
     monitor:
       enabled: true
       honorLabels: true

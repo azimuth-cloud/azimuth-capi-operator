@@ -1,0 +1,23 @@
+{{- if and .Values.metrics.enabled .Values.metrics.prometheus.rules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: azimuth-capi-operator.rules
+      rules:
+        - alert: AzimuthKubernetesClusterNotReady
+          expr: >-
+            sum by(cluster_namespace, cluster_name) (azimuth_kube_cluster_phase{phase!="Ready"}) > 0
+          for: 1h
+          annotations:
+            description: >-
+              Kubernetes cluster
+              {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
+              has been in a non-ready state for longer than one hour.
+            summary: Kubernetes cluster has been in a non-ready state for more than one hour.
+          labels:
+            severity: warning
+{{- end }}
