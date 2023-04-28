@@ -45,6 +45,11 @@ reloader:
 # Settings for kube-state-metrics
 metrics:
   enabled: false
+  # Configuration for the dashboard
+  dashboard:
+    enabled: true
+    labels:
+      grafana_dashboard: "1"
   # Use a custom build until https://github.com/kubernetes/kube-state-metrics/pull/2048 is in a release
   image:
     registry: ghcr.io/stackhpc
@@ -64,7 +69,7 @@ metrics:
           - get
   prometheus:
     monitor:
-      enabled: false
+      enabled: true
       honorLabels: true
   # Disable all the default collectors
   collectors: []
@@ -114,7 +119,7 @@ metrics:
                       path: [status, lastSync]
                       nilIsZero: true
                 - name: version
-                  help: "The time of the last sync for the app template"
+                  help: "The versions supported by each template"
                   each:
                     type: Info
                     info:
