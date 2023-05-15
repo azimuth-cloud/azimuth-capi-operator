@@ -67,6 +67,14 @@ metrics:
           - list
           - watch
           - get
+      - apiGroups:
+          - addons.stackhpc.com
+        resources:
+          - helmreleases
+        verbs:
+          - list
+          - watch
+          - get
   prometheus:
     rules:
       enabled: true
@@ -113,6 +121,14 @@ metrics:
               labelsFromPath:
                 template_name: [metadata, name]
               metrics:
+                - name: info
+                  help: "Basic info for the app template"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        chart_repo: [spec, chart, repo]
+                        chart_name: [spec, chart, name]
                 - name: last_sync
                   help: "The time of the last sync for the app template"
                   each:
@@ -120,6 +136,13 @@ metrics:
                     gauge:
                       path: [status, lastSync]
                       nilIsZero: true
+                - name: latest_version
+                  help: "The latest version for the template"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        version: [status, versions, "0", name]
                 - name: version
                   help: "The versions supported by each template"
                   each:
@@ -218,4 +241,34 @@ metrics:
                       labelFromKey: addon
                       labelsFromPath:
                         phase: [phase]
+
+            - groupVersionKind:
+                group: addons.stackhpc.com
+                version: v1alpha1
+                kind: HelmRelease
+              metricNamePrefix: azimuth_kube_app
+              labelsFromPath:
+                app_namespace: [metadata, namespace]
+                app_name: [metadata, name]
+                app_template: [metadata, labels, "azimuth.stackhpc.com/app-template"]
+                target_cluster: [spec, clusterName]
+              metrics:
+                - name: info
+                  help: "Information about the app"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        target_namespace: [spec, targetNamespace]
+                        release_name: [spec, releaseName]
+                        chart_repo: [spec, chart, repo]
+                        chart_name: [spec, chart, name]
+                        chart_version: [spec, chart, version]
+                - name: phase
+                  help: "App phase"
+                  each:
+                    type: Info
+                    info:
+                      labelsFromPath:
+                        phase: [status, phase]
     - --custom-resource-state-only=true

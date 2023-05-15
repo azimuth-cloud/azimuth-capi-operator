@@ -1,0 +1,14 @@
+{{- if and .Values.metrics.enabled .Values.metrics.dashboard.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}-dashboards
+  labels:
+    {{- include "azimuth-capi-operator.labels" . | nindent 4 }}
+    {{- toYaml .Values.metrics.dashboard.labels | nindent 4 }}
+data:
+  azimuth_capi_operator_clusters_dashboard.json: |
+    {{- .Files.Get "files/clusters_dashboard.json" | nindent 4 }}
+  azimuth_capi_operator_apps_dashboard.json: |
+    {{- .Files.Get "files/apps_dashboard.json" | nindent 4 }}
+{{- end }}

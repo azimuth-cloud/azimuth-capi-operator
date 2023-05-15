@@ -10,7 +10,7 @@ spec:
       rules:
         - alert: AzimuthKubernetesClusterNotReady
           expr: >-
-            sum by(cluster_namespace, cluster_name) (azimuth_kube_cluster_phase{phase!="Ready"}) > 0
+            sum(azimuth_kube_cluster_phase{phase!="Ready"}) by(cluster_namespace, cluster_name) > 0
           for: 1h
           annotations:
             description: >-
@@ -18,6 +18,19 @@ spec:
               {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
               has been in a non-ready state for longer than one hour.
             summary: Kubernetes cluster has been in a non-ready state for more than one hour.
+          labels:
+            severity: warning
+
+        - alert: AzimuthKubernetesAppNotDeployed
+          expr: >-
+            sum(azimuth_kube_app_phase{app_template=~".+",phase!="Deployed"}) by (app_namespace, app_name) > 0
+          for: 1h
+          annotations:
+            description: >-
+              Kubernetes app
+              {{ "{{" }} $labels.app_namespace {{ "}}" }}/{{ "{{" }} $labels.app_name {{ "}}" }}
+              has taken more than one hour to deploy.
+            summary: Kubernetes app has taken more than one hour to deploy.
           labels:
             severity: warning
 {{- end }}

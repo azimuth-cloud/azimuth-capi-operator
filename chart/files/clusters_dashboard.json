@@ -1,32 +1,4 @@
 {
-  "__inputs": [],
-  "__elements": {},
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "9.3.6"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "1.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "stat",
-      "name": "Stat",
-      "version": ""
-    },
-    {
-      "type": "panel",
-      "id": "timeseries",
-      "name": "Time series",
-      "version": ""
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -49,10 +21,9 @@
       }
     ]
   },
-  "editable": true,
+  "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -81,6 +52,7 @@
             "mode": "fixed"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -122,9 +94,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_template) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_template) by(cluster_namespace, cluster_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -320,7 +294,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_phase{phase=~\".+\"})",
+          "expr": "sum(topk(1, azimuth_kube_cluster_phase{phase=~\".+\"}) by(cluster_namespace, cluster_name)) by(phase)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -503,13 +477,13 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_networking_phase{phase=~\".+\"})",
+          "expr": "sum(topk(1, azimuth_kube_cluster_template) by(cluster_namespace, cluster_name)) by(cluster_namespace)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Networking phase",
+      "title": "Clusters by namespace",
       "type": "timeseries"
     },
     {
@@ -524,6 +498,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -569,9 +544,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_phase{phase=\"Ready\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_phase{phase=\"Ready\"}) by(cluster_namespace, cluster_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -589,6 +566,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -634,9 +612,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_phase{phase=~\"Unhealthy|Failed|Unknown\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_phase{phase=~\"Unhealthy|Failed|Unknown\"}) by(cluster_namespace, cluster_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -726,7 +706,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(kube_version) (azimuth_kube_cluster_kube_version)",
+          "expr": "sum(topk(1, azimuth_kube_cluster_kube_version) by(cluster_namespace, cluster_name)) by(kube_version)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -954,7 +934,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_control_plane_phase{phase=~\".+\"})",
+          "expr": "sum(topk(1, azimuth_kube_cluster_control_plane_phase{phase=~\".+\"}) by(cluster_namespace, cluster_name)) by(phase)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -975,6 +955,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1020,9 +1001,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_control_plane_phase{phase=\"Ready\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_control_plane_phase{phase=\"Ready\"}) by(cluster_namespace, cluster_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1040,6 +1023,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1085,9 +1069,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_control_plane_phase{phase=~\"Unhealthy|Failed|Unknown\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_control_plane_phase{phase=~\"Unhealthy|Failed|Unknown\"}) by(cluster_namespace, cluster_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1119,6 +1105,7 @@
             "mode": "fixed"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1160,9 +1147,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_node_phase{phase=~\".+\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_node_phase{phase=~\".+\"}) by(cluster_namespace, cluster_name, node))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1373,7 +1362,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_node_phase{phase=~\".+\"})",
+          "expr": "sum(topk(1, azimuth_kube_cluster_node_phase{phase=~\".+\"}) by(cluster_namespace, cluster_name, node)) by(phase)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1465,7 +1454,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(kubelet_version) (azimuth_kube_cluster_node_kubelet_version)",
+          "expr": "sum(topk(1, azimuth_kube_cluster_node_kubelet_version) by(cluster_namespace, cluster_name, node)) by(kubelet_version)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1486,6 +1475,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1531,9 +1521,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_node_phase{phase=\"Ready\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_node_phase{phase=\"Ready\"}) by(cluster_namespace, cluster_name, node))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1551,6 +1543,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1596,9 +1589,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_node_phase{phase=~\"Unhealthy|Failed|Unknown\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_node_phase{phase=~\"Unhealthy|Failed|Unknown\"}) by(cluster_namespace, cluster_name, node))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1615,7 +1610,7 @@
       },
       "id": 29,
       "panels": [],
-      "title": "Addons overview",
+      "title": "Addons Overview",
       "type": "row"
     },
     {
@@ -1631,6 +1626,7 @@
             "mode": "fixed"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1672,9 +1668,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_addon_phase{phase=~\".+\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_addon_phase{phase=~\".+\"}) by(cluster_namespace, cluster_name, addon))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1885,7 +1883,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(phase) (azimuth_kube_cluster_addon_phase{phase=~\".+\"})",
+          "expr": "sum(topk(1, azimuth_kube_cluster_addon_phase{phase=~\".+\"}) by(cluster_namespace, cluster_name, addon)) by(phase)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1906,6 +1904,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1951,9 +1950,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_addon_phase{phase=\"Deployed\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_addon_phase{phase=\"Deployed\"}) by(cluster_namespace, cluster_name, addon))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -1971,6 +1972,7 @@
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2016,9 +2018,11 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_node_phase{phase=~\"Failed|Unknown\"}) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_node_phase{phase=~\"Failed|Unknown\"}) by(cluster_namespace, cluster_name, addon))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -2035,7 +2039,7 @@
       },
       "id": 35,
       "panels": [],
-      "title": "Cluster templates",
+      "title": "Cluster Templates Overview",
       "type": "row"
     },
     {
@@ -2051,6 +2055,7 @@
             "mode": "fixed"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2065,7 +2070,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
+        "w": 6,
         "x": 0,
         "y": 26
       },
@@ -2092,76 +2097,15 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_clustertemplate_kube_version) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_clustertemplate_kube_version) by(template_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
       "title": "Cluster templates",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "$datasource"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "text",
-            "mode": "fixed"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 3,
-        "x": 3,
-        "y": 26
-      },
-      "id": 37,
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "9.3.6",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "count(azimuth_kube_apptemplate_last_sync) or vector(0)",
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "App templates",
       "type": "stat"
     },
     {
@@ -2247,7 +2191,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(template) (azimuth_kube_cluster_template)",
+          "expr": "sum(topk(1, azimuth_kube_cluster_template) by(cluster_namespace, cluster_name)) by(template)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -2298,6 +2242,7 @@
           },
           "mappings": [],
           "min": 0,
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2340,13 +2285,13 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by(template) (azimuth_kube_cluster_template * on(template) group_left() label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) > 0",
+          "expr": "sum(topk(1, azimuth_kube_cluster_template * on(instance, template) group_left() label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) by(cluster_namespace, cluster_name)) by(template)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Clusters running deprecated templates",
+      "title": "Clusters using deprecated templates",
       "type": "timeseries"
     },
     {
@@ -2354,6 +2299,7 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
+      "description": "Number of cluster templates that are marked as deprecated.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2405,13 +2351,15 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_clustertemplate_deprecated) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_clustertemplate_deprecated) by(template_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Deprecated cluster templates",
+      "title": "Deprecated templates",
       "type": "stat"
     },
     {
@@ -2419,12 +2367,14 @@
         "type": "prometheus",
         "uid": "$datasource"
       },
+      "description": "Number of clusters that are using a deprecated template.",
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
+          "noValue": "0",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2470,14 +2420,1180 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(azimuth_kube_cluster_template * on(template) group_left() label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) or vector(0)",
+          "exemplar": false,
+          "expr": "sum(topk(1, azimuth_kube_cluster_template * on(instance, template) group_left() label_replace(azimuth_kube_clustertemplate_deprecated, \"template\", \"$1\", \"template_name\", \"(.+)\")) by(cluster_namespace, cluster_name))",
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Clusters running deprecated templates",
+      "title": "Deprecated clusters",
       "type": "stat"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 56,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "color-background-solid",
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "template_name"
+                },
+                "properties": [
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "kube_version"
+                },
+                "properties": [
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bool_yes_no"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "transparent",
+                          "value": null
+                        },
+                        {
+                          "color": "#EAB839",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B"
+                },
+                "properties": [
+                  {
+                    "id": "noValue",
+                    "value": "0"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 33
+          },
+          "id": 58,
+          "options": {
+            "footer": {
+              "enablePagination": true,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true
+          },
+          "pluginVersion": "9.3.6",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "topk(1, azimuth_kube_clustertemplate_kube_version * on(instance, template_name) group_left() azimuth_kube_clustertemplate_deprecated) by(template_name)",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_replace(count(topk(1, azimuth_kube_cluster_template) by(cluster_namespace, cluster_name)) by(template), \"template_name\", \"$1\", \"template\", \"(.+)\")",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "B"
+            }
+          ],
+          "title": "Cluster Templates",
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "template_name",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time 1": true,
+                  "Time 2": true,
+                  "container": true,
+                  "customresource_group": true,
+                  "customresource_kind": true,
+                  "customresource_version": true,
+                  "endpoint": true,
+                  "instance": true,
+                  "job": true,
+                  "namespace": true,
+                  "pod": true,
+                  "service": true,
+                  "template": true
+                },
+                "indexByName": {
+                  "Time 1": 14,
+                  "Time 2": 15,
+                  "Value #A": 2,
+                  "Value #B": 3,
+                  "container": 4,
+                  "customresource_group": 5,
+                  "customresource_kind": 6,
+                  "customresource_version": 7,
+                  "endpoint": 8,
+                  "instance": 9,
+                  "job": 10,
+                  "kube_version": 1,
+                  "namespace": 11,
+                  "pod": 12,
+                  "service": 13,
+                  "template": 16,
+                  "template_name": 0
+                },
+                "renameByName": {
+                  "Value": "Deprecated?",
+                  "Value #A": "Deprecated?",
+                  "Value #B": "Cluster Count",
+                  "kube_version": "Kubernetes Version",
+                  "template_name": "Name"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Cluster Template Details",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "id": 44,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "color-background-solid",
+                "filterable": false,
+                "inspect": false,
+                "minWidth": 100
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "phase"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "Deleting": {
+                            "color": "super-light-red",
+                            "index": 3
+                          },
+                          "Failed": {
+                            "color": "semi-dark-red",
+                            "index": 5
+                          },
+                          "Ready": {
+                            "color": "green",
+                            "index": 2
+                          },
+                          "Reconciling": {
+                            "color": "blue",
+                            "index": 0
+                          },
+                          "Unhealthy": {
+                            "color": "orange",
+                            "index": 4
+                          },
+                          "Upgrading": {
+                            "color": "purple",
+                            "index": 1
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "networking_phase"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "Deleting": {
+                            "color": "super-light-red",
+                            "index": 3
+                          },
+                          "Failed": {
+                            "color": "semi-dark-red",
+                            "index": 4
+                          },
+                          "Pending": {
+                            "color": "super-light-yellow",
+                            "index": 0
+                          },
+                          "Provisioned": {
+                            "color": "green",
+                            "index": 2
+                          },
+                          "Provisioning": {
+                            "color": "blue",
+                            "index": 1
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "control_plane_phase"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "Deleting": {
+                            "color": "super-light-red",
+                            "index": 5
+                          },
+                          "Failed": {
+                            "color": "semi-dark-red",
+                            "index": 7
+                          },
+                          "Pending": {
+                            "color": "super-light-yellow",
+                            "index": 0
+                          },
+                          "Ready": {
+                            "color": "green",
+                            "index": 4
+                          },
+                          "ScalingDown": {
+                            "color": "light-blue",
+                            "index": 2
+                          },
+                          "ScalingUp": {
+                            "color": "semi-dark-blue",
+                            "index": 1
+                          },
+                          "Unhealthy": {
+                            "color": "orange",
+                            "index": 6
+                          },
+                          "Upgrading": {
+                            "color": "purple",
+                            "index": 3
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Cluster"
+                },
+                "properties": [
+                  {
+                    "id": "custom.minWidth",
+                    "value": 300
+                  },
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #D"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "bool_yes_no"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "transparent",
+                          "value": null
+                        },
+                        {
+                          "color": "orange",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "template"
+                },
+                "properties": [
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "kube_version"
+                },
+                "properties": [
+                  {
+                    "id": "custom.filterable",
+                    "value": true
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 43
+          },
+          "id": 46,
+          "options": {
+            "footer": {
+              "enablePagination": true,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": []
+          },
+          "pluginVersion": "9.3.6",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_join(topk(1, azimuth_kube_cluster_template * on(instance, cluster_namespace, cluster_name) group_left(kube_version) azimuth_kube_cluster_kube_version * on(instance, cluster_namespace, cluster_name) group_left(phase) azimuth_kube_cluster_phase * on(instance, cluster_namespace, cluster_name) group_left(networking_phase) label_replace(azimuth_kube_cluster_networking_phase, \"networking_phase\", \"$1\", \"phase\", \"(.+)\") * on(instance, cluster_namespace, cluster_name) group_left(control_plane_phase) label_replace(azimuth_kube_cluster_control_plane_phase, \"control_plane_phase\", \"$1\", \"phase\", \"(.+)\")) by(cluster_namespace, cluster_name), \"cluster\", \"/\", \"cluster_namespace\", \"cluster_name\")",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_join(topk(1, azimuth_kube_cluster_node_count) by(cluster_namespace, cluster_name), \"cluster\", \"/\", \"cluster_namespace\", \"cluster_name\")",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "B"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_join(topk(1, azimuth_kube_cluster_addon_count) by(cluster_namespace, cluster_name), \"cluster\", \"/\", \"cluster_namespace\", \"cluster_name\")",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "C"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_join(topk(1, label_replace(azimuth_kube_cluster_template, \"template_name\", \"$1\", \"template\", \"(.+)\") * on(instance, template_name) group_left() azimuth_kube_clustertemplate_deprecated) by(cluster_namespace, cluster_name), \"cluster\", \"/\", \"cluster_namespace\", \"cluster_name\")",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "D"
+            }
+          ],
+          "title": "Clusters",
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "cluster",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time 1": true,
+                  "Time 2": true,
+                  "Time 3": true,
+                  "Time 4": true,
+                  "Value": true,
+                  "Value #A": true,
+                  "Value #B": false,
+                  "__name__ 1": true,
+                  "__name__ 2": true,
+                  "cluster_name": true,
+                  "cluster_name 1": true,
+                  "cluster_name 2": true,
+                  "cluster_name 3": true,
+                  "cluster_name 4": true,
+                  "cluster_namespace": true,
+                  "cluster_namespace 1": true,
+                  "cluster_namespace 2": true,
+                  "cluster_namespace 3": true,
+                  "cluster_namespace 4": true,
+                  "container": true,
+                  "container 1": true,
+                  "container 2": true,
+                  "container 3": true,
+                  "container 4": true,
+                  "customresource_group": true,
+                  "customresource_group 1": true,
+                  "customresource_group 2": true,
+                  "customresource_group 3": true,
+                  "customresource_group 4": true,
+                  "customresource_kind": true,
+                  "customresource_kind 1": true,
+                  "customresource_kind 2": true,
+                  "customresource_kind 3": true,
+                  "customresource_kind 4": true,
+                  "customresource_version": true,
+                  "customresource_version 1": true,
+                  "customresource_version 2": true,
+                  "customresource_version 3": true,
+                  "customresource_version 4": true,
+                  "endpoint": true,
+                  "endpoint 1": true,
+                  "endpoint 2": true,
+                  "endpoint 3": true,
+                  "endpoint 4": true,
+                  "instance": true,
+                  "instance 1": true,
+                  "instance 2": true,
+                  "instance 3": true,
+                  "instance 4": true,
+                  "job": true,
+                  "job 1": true,
+                  "job 2": true,
+                  "job 3": true,
+                  "job 4": true,
+                  "namespace": true,
+                  "namespace 1": true,
+                  "namespace 2": true,
+                  "namespace 3": true,
+                  "namespace 4": true,
+                  "pod": true,
+                  "pod 1": true,
+                  "pod 2": true,
+                  "pod 3": true,
+                  "pod 4": true,
+                  "service": true,
+                  "service 1": true,
+                  "service 2": true,
+                  "service 3": true,
+                  "service 4": true,
+                  "template 1": false,
+                  "template 2": true,
+                  "template_name": true
+                },
+                "indexByName": {
+                  "Time 1": 9,
+                  "Time 2": 23,
+                  "Time 3": 37,
+                  "Time 4": 51,
+                  "Value #A": 22,
+                  "Value #B": 7,
+                  "Value #C": 8,
+                  "Value #D": 2,
+                  "__name__ 1": 24,
+                  "__name__ 2": 38,
+                  "cluster": 0,
+                  "cluster_name 1": 10,
+                  "cluster_name 2": 25,
+                  "cluster_name 3": 39,
+                  "cluster_name 4": 52,
+                  "cluster_namespace 1": 11,
+                  "cluster_namespace 2": 26,
+                  "cluster_namespace 3": 40,
+                  "cluster_namespace 4": 53,
+                  "container 1": 12,
+                  "container 2": 27,
+                  "container 3": 41,
+                  "container 4": 54,
+                  "control_plane_phase": 6,
+                  "customresource_group 1": 13,
+                  "customresource_group 2": 28,
+                  "customresource_group 3": 42,
+                  "customresource_group 4": 55,
+                  "customresource_kind 1": 14,
+                  "customresource_kind 2": 29,
+                  "customresource_kind 3": 43,
+                  "customresource_kind 4": 56,
+                  "customresource_version 1": 15,
+                  "customresource_version 2": 30,
+                  "customresource_version 3": 44,
+                  "customresource_version 4": 57,
+                  "endpoint 1": 16,
+                  "endpoint 2": 31,
+                  "endpoint 3": 45,
+                  "endpoint 4": 58,
+                  "instance 1": 17,
+                  "instance 2": 32,
+                  "instance 3": 46,
+                  "instance 4": 59,
+                  "job 1": 18,
+                  "job 2": 33,
+                  "job 3": 47,
+                  "job 4": 60,
+                  "kube_version": 3,
+                  "namespace 1": 19,
+                  "namespace 2": 34,
+                  "namespace 3": 48,
+                  "namespace 4": 61,
+                  "networking_phase": 5,
+                  "phase": 4,
+                  "pod 1": 20,
+                  "pod 2": 35,
+                  "pod 3": 49,
+                  "pod 4": 62,
+                  "service 1": 21,
+                  "service 2": 36,
+                  "service 3": 50,
+                  "service 4": 63,
+                  "template 1": 1,
+                  "template 2": 64,
+                  "template_name": 65
+                },
+                "renameByName": {
+                  "Value #B": "Node Count",
+                  "Value #C": "Addon Count",
+                  "Value #D": "Deprecated?",
+                  "cluster": "Cluster",
+                  "cluster_name": "",
+                  "cluster_namespace": "",
+                  "container": "",
+                  "control_plane_phase": "Control Plane",
+                  "kube_version": "Kubernetes Version",
+                  "networking_phase": "Networking",
+                  "phase": "Phase",
+                  "template": "Cluster Template",
+                  "template 1": "Template"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Cluster Details",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 48,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "color-background-solid",
+                "filterable": true,
+                "inspect": false,
+                "minWidth": 100
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cluster"
+                },
+                "properties": [
+                  {
+                    "id": "custom.minWidth",
+                    "value": 300
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "node"
+                },
+                "properties": [
+                  {
+                    "id": "custom.minWidth",
+                    "value": 300
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "phase"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "Deleted": {
+                            "color": "light-red",
+                            "index": 4
+                          },
+                          "Deleting": {
+                            "color": "super-light-red",
+                            "index": 3
+                          },
+                          "Failed": {
+                            "color": "semi-dark-red",
+                            "index": 6
+                          },
+                          "Pending": {
+                            "color": "super-light-yellow",
+                            "index": 0
+                          },
+                          "Provisioning": {
+                            "color": "blue",
+                            "index": 1
+                          },
+                          "Ready": {
+                            "color": "green",
+                            "index": 2
+                          },
+                          "Unhealthy": {
+                            "color": "orange",
+                            "index": 5
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 43
+          },
+          "id": 50,
+          "options": {
+            "footer": {
+              "enablePagination": true,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Cluster"
+              },
+              {
+                "desc": false,
+                "displayName": "Node"
+              }
+            ]
+          },
+          "pluginVersion": "9.3.6",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_join(topk(1, azimuth_kube_cluster_node_phase * on(instance, cluster_namespace, cluster_name, node) group_left(kubelet_version) azimuth_kube_cluster_node_kubelet_version) by(cluster_namespace, cluster_name, node), \"cluster\", \"/\", \"cluster_namespace\", \"cluster_name\")",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Nodes",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Value": true,
+                  "cluster_name": true,
+                  "cluster_namespace": true,
+                  "container": true,
+                  "customresource_group": true,
+                  "customresource_kind": true,
+                  "customresource_version": true,
+                  "endpoint": true,
+                  "group": true,
+                  "instance": true,
+                  "job": true,
+                  "kubelet_version": false,
+                  "namespace": true,
+                  "pod": true,
+                  "role": true,
+                  "service": true
+                },
+                "indexByName": {
+                  "Time": 4,
+                  "Value": 19,
+                  "cluster": 0,
+                  "cluster_name": 5,
+                  "cluster_namespace": 6,
+                  "container": 7,
+                  "customresource_group": 8,
+                  "customresource_kind": 9,
+                  "customresource_version": 10,
+                  "endpoint": 11,
+                  "group": 12,
+                  "instance": 13,
+                  "job": 14,
+                  "kubelet_version": 2,
+                  "namespace": 15,
+                  "node": 1,
+                  "phase": 3,
+                  "pod": 16,
+                  "role": 17,
+                  "service": 18
+                },
+                "renameByName": {
+                  "cluster": "Cluster",
+                  "kubelet_version": "Kubelet Version",
+                  "node": "Node",
+                  "phase": "Phase"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Node Details",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 52,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "color-background-solid",
+                "filterable": true,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "cluster"
+                },
+                "properties": [
+                  {
+                    "id": "custom.minWidth",
+                    "value": 300
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "addon"
+                },
+                "properties": [
+                  {
+                    "id": "custom.width",
+                    "value": 250
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "phase"
+                },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "options": {
+                          "Deployed": {
+                            "color": "green",
+                            "index": 2
+                          },
+                          "Failed": {
+                            "color": "semi-dark-red",
+                            "index": 6
+                          },
+                          "Installing": {
+                            "color": "blue",
+                            "index": 3
+                          },
+                          "Pending": {
+                            "color": "super-light-yellow",
+                            "index": 0
+                          },
+                          "Preparing": {
+                            "color": "yellow",
+                            "index": 1
+                          },
+                          "Uninstalling": {
+                            "color": "super-light-red",
+                            "index": 5
+                          },
+                          "Upgrading": {
+                            "color": "purple",
+                            "index": 4
+                          }
+                        },
+                        "type": "value"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 44
+          },
+          "id": 54,
+          "options": {
+            "footer": {
+              "enablePagination": true,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Cluster"
+              },
+              {
+                "desc": false,
+                "displayName": "Addon"
+              }
+            ]
+          },
+          "pluginVersion": "9.3.6",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "label_join(topk(1, azimuth_kube_cluster_addon_phase) by(cluster_namespace, cluster_name, addon), \"cluster\", \"/\", \"cluster_namespace\", \"cluster_name\")",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "Addons",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Value": true,
+                  "__name__": true,
+                  "cluster_name": true,
+                  "cluster_namespace": true,
+                  "container": true,
+                  "customresource_group": true,
+                  "customresource_kind": true,
+                  "customresource_version": true,
+                  "endpoint": true,
+                  "instance": true,
+                  "job": true,
+                  "namespace": true,
+                  "pod": true,
+                  "service": true
+                },
+                "indexByName": {
+                  "Time": 3,
+                  "Value": 17,
+                  "__name__": 4,
+                  "addon": 1,
+                  "cluster": 0,
+                  "cluster_name": 5,
+                  "cluster_namespace": 6,
+                  "container": 7,
+                  "customresource_group": 8,
+                  "customresource_kind": 9,
+                  "customresource_version": 10,
+                  "endpoint": 11,
+                  "instance": 12,
+                  "job": 13,
+                  "namespace": 14,
+                  "phase": 2,
+                  "pod": 15,
+                  "service": 16
+                },
+                "renameByName": {
+                  "addon": "Addon",
+                  "cluster": "Cluster",
+                  "phase": "Phase"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Addon Details",
+      "type": "row"
     }
   ],
   "refresh": "30s",
@@ -2488,7 +3604,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "Prometheus",
           "value": "Prometheus"
         },
@@ -2515,6 +3631,6 @@
   "timezone": "utc",
   "title": "Azimuth / Kubernetes clusters",
   "uid": "iOWRPVy4k",
-  "version": 6,
+  "version": 25,
   "weekStart": ""
 }
