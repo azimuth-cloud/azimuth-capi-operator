@@ -1,4 +1,5 @@
 import datetime as dt
+import ipaddress
 import typing as t
 
 from pydantic import Extra, Field, AnyHttpUrl, constr, validator
@@ -69,6 +70,10 @@ class AddonsSpec(schema.BaseModel):
     ingress: bool = Field(
         False,
         description = "Indicates if ingress should be enabled."
+    )
+    ingress_controller_load_balancer_ip: t.Optional[ipaddress.IPv4Address] = Field(
+        None,
+        description = "The IP address to use for the ingress controller load balancer."
     )
     monitoring: bool = Field(
         False,
