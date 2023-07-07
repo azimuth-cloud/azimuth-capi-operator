@@ -30,7 +30,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Labels for a chart-level resource.
 */}}
 {{- define "azimuth-capi-operator.labels" -}}
-helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | lower | trunc 63 | trimSuffix "-" }}
+helm.sh/chart: {{
+  printf "%s-%s" .Chart.Name .Chart.Version |
+    replace "+" "_" |
+    lower |
+    trunc 63 |
+    trimSuffix "-" |
+    trimSuffix "_" |
+    trimSuffix "."
+}}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
