@@ -2,7 +2,7 @@ import datetime as dt
 import ipaddress
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, conint, constr, validator
+from pydantic import Extra, Field, AnyHttpUrl, constr, validator
 
 from kube_custom_resource import CustomResource, schema
 
@@ -19,7 +19,7 @@ class NodeGroupSpec(schema.BaseModel):
         ...,
         description = "The name of the size to use for the machines in the node group."
     )
-    root_volume_size: conint(ge = 0) = Field(
+    root_volume_size: schema.conint(ge = 0) = Field(
         0,
         description = (
             "The root volume size to use for machines in the node group. "
@@ -86,15 +86,15 @@ class AddonsSpec(schema.BaseModel):
         False,
         description = "Indicates if monitoring should be enabled."
     )
-    monitoring_alertmanager_volume_size: conint(gt = 0) = Field(
+    monitoring_alertmanager_volume_size: schema.conint(gt = 0) = Field(
         10,
         description = "The size of the Alertmanager volume size in GB."
     )
-    monitoring_prometheus_volume_size: conint(gt = 0) = Field(
+    monitoring_prometheus_volume_size: schema.conint(gt = 0) = Field(
         10,
         description = "The size of the Prometheus volume size in GB."
     )
-    monitoring_loki_volume_size: conint(gt = 0) = Field(
+    monitoring_loki_volume_size: schema.conint(gt = 0) = Field(
         10,
         description = "The size of the Loki volume size in GB."
     )
@@ -135,7 +135,7 @@ class ClusterSpec(schema.BaseModel):
         True,
         description = "Indicates whether the control plane should be HA or not."
     )
-    control_plane_root_volume_size: conint(ge = 0) = Field(
+    control_plane_root_volume_size: schema.conint(ge = 0) = Field(
         0,
         description = (
             "The root volume size to use for control plane machines. "
