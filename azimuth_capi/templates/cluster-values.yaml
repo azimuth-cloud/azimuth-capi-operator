@@ -50,3 +50,30 @@ addons:
 {% endif %}
   monitoring:
     enabled: {{ "true" if spec.addons.monitoring else "false" }}
+{% if spec.addons.monitoring %}
+    kubePrometheusStack:
+      release:
+        values:
+          alertmanager:
+            alertmanagerSpec:
+              storage:
+                volumeClaimTemplate:
+                  spec:
+                    resources:
+                      requests:
+                        storage: {{ spec.addons.monitoring_alertmanager_volume_size }}Gi
+          prometheus:
+            prometheusSpec:
+              storageSpec:
+                volumeClaimTemplate:
+                  spec:
+                    resources:
+                      requests:
+                        storage: {{ spec.addons.monitoring_prometheus_volume_size }}Gi
+    lokiStack:
+      release:
+        values:
+          loki:
+            persistence:
+              size: {{ spec.addons.monitoring_loki_volume_size }}Gi
+{% endif %}
