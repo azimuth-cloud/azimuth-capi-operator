@@ -2,7 +2,7 @@ import datetime as dt
 import ipaddress
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr, validator
+from pydantic import Extra, Field, AnyHttpUrl, conint, constr, validator
 
 from kube_custom_resource import CustomResource, schema
 
@@ -18,6 +18,13 @@ class NodeGroupSpec(schema.BaseModel):
     machine_size: constr(min_length = 1) = Field(
         ...,
         description = "The name of the size to use for the machines in the node group."
+    )
+    root_volume_size: conint(ge = 0) = Field(
+        0,
+        description = (
+            "The root volume size to use for machines in the node group. "
+            "If not given, the root disk from the flavor will be used."
+        )
     )
     autoscale: bool = Field(
         False,
@@ -115,6 +122,13 @@ class ClusterSpec(schema.BaseModel):
     ha_control_plane: bool = Field(
         True,
         description = "Indicates whether the control plane should be HA or not."
+    )
+    control_plane_root_volume_size: conint(ge = 0) = Field(
+        0,
+        description = (
+            "The root volume size to use for control plane machines. "
+            "If not given, the root disk from the flavor will be used."
+        )
     )
     node_groups: t.List[NodeGroupSpec] = Field(
         default_factory = list,
