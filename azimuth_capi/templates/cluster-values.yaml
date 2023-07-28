@@ -1,6 +1,11 @@
 cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
 controlPlane:
+{% if spec.ha_control_plane %}
+  machineCount: 3
+{% else %}
+  machineCount: 1
+{% endif %}
   machineFlavor: "{{ spec.control_plane_machine_size }}"
   healthCheck:
     enabled: {{ "true" if spec.autohealing else "false" }}

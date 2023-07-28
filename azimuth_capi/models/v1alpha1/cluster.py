@@ -112,6 +112,10 @@ class ClusterSpec(schema.BaseModel):
         ...,
         description = "The name of the size to use for control plane machines."
     )
+    ha_control_plane: bool = Field(
+        True,
+        description = "Indicates whether the control plane should be HA or not."
+    )
     node_groups: t.List[NodeGroupSpec] = Field(
         default_factory = list,
         description = "The node groups for the cluster."
