@@ -86,6 +86,18 @@ class AddonsSpec(schema.BaseModel):
         False,
         description = "Indicates if monitoring should be enabled."
     )
+    monitoring_alertmanager_volume_size: conint(gt = 0) = Field(
+        10,
+        description = "The size of the Alertmanager volume size in GB."
+    )
+    monitoring_prometheus_volume_size: conint(gt = 0) = Field(
+        10,
+        description = "The size of the Prometheus volume size in GB."
+    )
+    monitoring_loki_volume_size: conint(gt = 0) = Field(
+        10,
+        description = "The size of the Loki volume size in GB."
+    )
 
 
 class ClusterSpec(schema.BaseModel):
