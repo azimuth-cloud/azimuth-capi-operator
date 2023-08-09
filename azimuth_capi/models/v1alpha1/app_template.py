@@ -1,11 +1,11 @@
 import datetime as dt
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr, validator
+from pydantic import Extra, Field, AnyHttpUrl, constr
 
 from kube_custom_resource import CustomResource, Scope, schema
 
-from ...semver import SEMVER_VERSION_REGEX, SEMVER_RANGE_REGEX
+from easysemver import SEMVER_VERSION_REGEX, SEMVER_RANGE_REGEX
 
 
 #: Type for a SemVer version
