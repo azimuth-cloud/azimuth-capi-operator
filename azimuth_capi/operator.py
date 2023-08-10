@@ -13,10 +13,11 @@ import pydantic
 import yaml
 
 from easykube import Configuration, ApiError
+import easysemver
 from kube_custom_resource import CustomResourceRegistry
 from pyhelm3 import Client as HelmClient, errors as helm_errors
 
-from . import models, semver, status
+from . import models, status
 from .config import settings
 from .models import v1alpha1 as api
 from .template import default_loader
@@ -845,14 +846,14 @@ async def reconcile_app_template(instance, param, **kwargs):
         response.raise_for_status()
     # Get the available versions for the chart that match our constraint, sorted
     # with the most recent first
-    version_range = semver.Range(instance.spec.version_range)
+    version_range = easysemver.Range(instance.spec.version_range)
     chart_versions = sorted(
         (
             v
             for v in yaml.safe_load(response.text)["entries"][instance.spec.chart.name]
-            if semver.Version(v["version"]) in version_range
+            if easysemver.Version(v["version"]) in version_range
         ),
-        key = lambda v: semver.Version(v["version"]),
+        key = lambda v: easysemver.Version(v["version"]),
         reverse = True
     )
     # Throw away any versions that we aren't keeping

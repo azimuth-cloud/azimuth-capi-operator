@@ -1,28 +1,24 @@
-import re
 import typing as t
 
 from pydantic import Field, AnyHttpUrl, FilePath, conint, constr, root_validator, validator
 
 from configomatic import Configuration as BaseConfiguration, Section, LoggingConfiguration
 
+from easysemver import Version
+
 
 class SemVerVersion(str):
     """
     Type for a string that is a valid SemVer version.
     """
-    REGEX = re.compile(r"^[0-9]+.[0-9]+.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$")
-
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
 
     @classmethod
     def validate(cls, v):
-        if not isinstance(v, str):
-            raise TypeError('string required')
-        if cls.REGEX.fullmatch(v) is None:
-            raise ValueError('invalid semver format')
-        return cls(v)
+        # Just use the validation from easysemver, then convert to a string
+        return cls(Version(v))
 
     def __repr__(self):
         return f'{self.__class__.__name__}({super().__repr__()})'
