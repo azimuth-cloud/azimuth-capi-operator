@@ -243,15 +243,10 @@ async def zenith_values(client, cluster, addons):
     )
 
 
-async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
+async def zenith_operator_resources(name, namespace):
     """
     Returns the resources required to enable the Zenith operator for the given cluster.
     """
-    # The project ID for the cluster is automatically injected as a Zenith auth param
-    # for all clients created by the operator unless auth is explicitly skipped
-    clouds_b64 = cloud_credentials_secret.data["clouds.yaml"]
-    clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
-    project_id = clouds["clouds"]["openstack"]["auth"]["project_id"]
     client = HelmClient(
         default_timeout = settings.helm_client.default_timeout,
         executable = settings.helm_client.executable,
@@ -278,9 +273,6 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
                         "registrarAdminUrl": settings.zenith.registrar_admin_url,
                         "sshdHost": settings.zenith.sshd_host,
                         "sshdPort": settings.zenith.sshd_port,
-                        "defaultAuthParams": {
-                            "tenancy-id": project_id,
-                        },
                     },
                 }
             ),

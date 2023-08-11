@@ -17,7 +17,7 @@ import easysemver
 from kube_custom_resource import CustomResourceRegistry
 from pyhelm3 import Client as HelmClient, errors as helm_errors
 
-from . import models, status
+from . import external_resources, models, status
 from .config import settings
 from .models import v1alpha1 as api
 from .template import default_loader
@@ -246,12 +246,6 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
     """
-    # Make sure that the secret exists
-    ekresource = await ekclient.api("v1").resource("secrets")
-    secret = await ekresource.fetch(
-        instance.spec.cloud_credentials_secret_name,
-        namespace = namespace
-    )
     # Then fetch the template
     ekresource = await ekresource_for_model(api.ClusterTemplate)
     template = api.ClusterTemplate.parse_obj(await ekresource.fetch(instance.spec.template_name))
@@ -281,7 +275,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     )
     # Ensure that a Zenith operator instance exists for the cluster
     if settings.zenith.enabled:
-        operator_resources = await zenith_operator_resources(name, namespace, secret)
+        operator_resources = await zenith_operator_resources(name, namespace)
         for resource in operator_resources:
             kopf.adopt(resource, instance.dict(by_alias = True))
             await ekclient.apply_object(resource, force = True)
@@ -293,7 +287,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
 
 
 @model_handler(api.Cluster, kopf.on.delete)
-async def on_cluster_delete(name, namespace, **kwargs):
+async def on_cluster_delete(instance, name, namespace, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
@@ -302,14 +296,24 @@ async def on_cluster_delete(name, namespace, **kwargs):
         await helm_client.uninstall_release(name, namespace = namespace)
     except helm_errors.ReleaseNotFoundError:
         pass
+    # Ensure that any external resources, e.g. loadbalancers, have been removed
+    # To do this, we need to pass the cloud credential
+    ekresource = await ekclient.api("v1").resource("secrets")
+    cloud_credentials_secret = await ekresource.fetch(
+        instance.spec.cloud_credentials_secret_name,
+        namespace = namespace
+    )
+    await external_resources.delete_resources(instance, cloud_credentials_secret)
     # Wait until the associated CAPI cluster no longer exists
     ekresource = await ekclient.api(CLUSTER_API_VERSION).resource("clusters")
-    cluster, stream = await ekresource.watch_one(name, namespace = namespace)
-    if cluster:
-        async with stream as events:
-            async for event in events:
-                if event["type"] == "DELETED":
-                    break
+    try:
+        _ = await ekresource.fetch(name, namespace = namespace)
+    except ApiError as exc:
+        # 404 is the status that we want
+        if exc.status_code != 404:
+            raise
+    else:
+        raise kopf.TemporaryError("waiting for CAPI cluster to be deleted", delay = 5)
 
 
 @model_handler(api.Cluster, kopf.on.resume)
