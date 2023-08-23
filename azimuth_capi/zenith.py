@@ -243,7 +243,7 @@ async def zenith_values(client, cluster, addons):
     )
 
 
-async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
+async def zenith_operator_resources(instance, cloud_credentials_secret):
     """
     Returns the resources required to enable the Zenith operator for the given cluster.
     """
@@ -266,12 +266,15 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
                 repo = settings.zenith.chart_repository,
                 version = settings.zenith.chart_version
             ),
-            name,
+            instance.metadata.name,
             mergeconcat(
                 settings.zenith.operator_defaults,
                 {
                     "kubeconfigSecret": {
-                        "name": f"{name}-kubeconfig",
+                        "name": (
+                            instance.status.kubeconfig_secret_name or
+                            f"{instance.status.helm_release_name}-kubeconfig"
+                        ),
                         "key": "value",
                     },
                     "config": {
@@ -284,6 +287,6 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
                     },
                 }
             ),
-            namespace = namespace
+            namespace = instance.metadata.namespace
         )
     )

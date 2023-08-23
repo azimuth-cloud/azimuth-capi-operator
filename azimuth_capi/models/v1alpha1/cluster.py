@@ -333,6 +333,10 @@ class ClusterStatus(schema.BaseModel):
         None,
         description = "The name of the secret containing the kubeconfig file, if known."
     )
+    helm_release_name: t.Optional[str] = Field(
+        None,
+        description = "The name of the Helm release for the cluster."
+    )
     phase: ClusterPhase = Field(
         ClusterPhase.UNKNOWN.value,
         description = "The overall phase of the cluster."
