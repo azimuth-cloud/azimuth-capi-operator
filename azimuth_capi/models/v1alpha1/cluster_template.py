@@ -1,3 +1,5 @@
+import typing as t
+
 from pydantic import Extra, Field, constr
 
 from kube_custom_resource import CustomResource, Scope, schema
@@ -38,6 +40,10 @@ class ClusterTemplateSpec(schema.BaseModel):
             "Brief description of the capabilities of clusters deployed "
             "using the template."
         )
+    )
+    tags: t.List[constr(min_length = 1)] = Field(
+        default_factory = list,
+        description = "Tags for the cluster."
     )
     values: ClusterTemplateValues = Field(
         ...,
