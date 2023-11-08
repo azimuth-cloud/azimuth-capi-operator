@@ -2,7 +2,7 @@ import datetime as dt
 import ipaddress
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr, validator
+from pydantic import Field, field_validator, ValidationInfo
 
 from kube_custom_resource import CustomResource, schema
 
@@ -11,11 +11,11 @@ class NodeGroupSpec(schema.BaseModel):
     """
     The spec for a group of homogeneous nodes in the cluster.
     """
-    name: constr(min_length = 1) = Field(
+    name: schema.constr(min_length = 1) = Field(
         ...,
         description = "The name of the node group."
     )
-    machine_size: constr(min_length = 1) = Field(
+    machine_size: schema.constr(min_length = 1) = Field(
         ...,
         description = "The name of the size to use for the machines in the node group."
     )
@@ -30,37 +30,43 @@ class NodeGroupSpec(schema.BaseModel):
         False,
         description = "Whether the node group should autoscale or not."
     )
-    count: t.Optional[schema.conint(ge = 0)] = Field(
+    count: schema.Optional[schema.conint(ge = 0)] = Field(
         None,
-        description = "The fixed number of nodes in the node group when not autoscaling."
+        description = "The fixed number of nodes in the node group when not autoscaling.",
+        validate_default = True
     )
-    min_count: t.Optional[schema.conint(ge = 1)] = Field(
+    min_count: schema.Optional[schema.conint(ge = 1)] = Field(
         None,
-        description = "The minimum number of nodes in the node group when autoscaling."
+        description = "The minimum number of nodes in the node group when autoscaling.",
+        validate_default = True
     )
-    max_count: t.Optional[schema.conint(ge = 1)] = Field(
+    max_count: schema.Optional[schema.conint(ge = 1)] = Field(
         None,
-        description = "The maximum number of nodes in the node group when autoscaling."
+        description = "The maximum number of nodes in the node group when autoscaling.",
+        validate_default = True
     )
 
-    @validator("count", always = True)
-    def check_count_required(cls, v, values, **kwargs):
-        if not values["autoscale"] and v is None:
+    @field_validator("count")
+    @classmethod
+    def check_count_required(cls, v, info: ValidationInfo):
+        if not info.data["autoscale"] and v is None:
             raise ValueError("must be given for a non-autoscaled node group")
         return v
 
-    @validator("min_count", always = True)
-    def check_min_count_required(cls, v, values, **kwargs):
-        if values["autoscale"] and v is None:
+    @field_validator("min_count")
+    @classmethod
+    def check_min_count_required(cls, v, info: ValidationInfo):
+        if info.data["autoscale"] and v is None:
             raise ValueError("must be given for an autoscaled node group")
         return v
 
-    @validator("max_count", always = True)
-    def check_max_count_required(cls, v, values, **kwargs):
-        if values["autoscale"]:
+    @field_validator("max_count")
+    @classmethod
+    def check_max_count_required(cls, v, info: ValidationInfo):
+        if info.data["autoscale"]:
             if v is None:
                 raise ValueError("must be given for an autoscaled node group")
-            min_count = values["min_count"]
+            min_count = info.data.get("min_count")
             if min_count and v < min_count:
                 raise ValueError("must be greater than or equal to the minimum count")
         return v
@@ -78,7 +84,7 @@ class AddonsSpec(schema.BaseModel):
         False,
         description = "Indicates if ingress should be enabled."
     )
-    ingress_controller_load_balancer_ip: t.Optional[ipaddress.IPv4Address] = Field(
+    ingress_controller_load_balancer_ip: schema.Optional[ipaddress.IPv4Address] = Field(
         None,
         description = "The IP address to use for the ingress controller load balancer."
     )
@@ -104,19 +110,19 @@ class ClusterSpec(schema.BaseModel):
     """
     The spec for an Azimuth cluster.
     """
-    label: constr(min_length = 1) = Field(
+    label: schema.constr(min_length = 1) = Field(
         ...,
         description = "The human-readable name of the cluster."
     )
-    template_name: constr(min_length = 1) = Field(
+    template_name: schema.constr(min_length = 1) = Field(
         ...,
         description = "The name of the template to use."
     )
-    cloud_credentials_secret_name: constr(min_length = 1) = Field(
+    cloud_credentials_secret_name: schema.constr(min_length = 1) = Field(
         ...,
         description = "The name of the secret containing the cloud credentials."
     )
-    zenith_identity_realm_name: t.Optional[constr(min_length = 1)] = Field(
+    zenith_identity_realm_name: schema.Optional[schema.constr(min_length = 1)] = Field(
         None,
         description = (
             "The name of the Azimuth identity realm to use for Zenith services. "
@@ -127,7 +133,7 @@ class ClusterSpec(schema.BaseModel):
         True,
         description = "Indicates if auto-healing should be enabled."
     )
-    control_plane_machine_size: constr(min_length = 1) = Field(
+    control_plane_machine_size: schema.constr(min_length = 1) = Field(
         ...,
         description = "The name of the size to use for control plane machines."
     )
@@ -241,11 +247,11 @@ class NodeStatus(schema.BaseModel):
         NodePhase.UNKNOWN.value,
         description = "The phase of the node."
     )
-    size: t.Optional[constr(min_length = 1)] = Field(
+    size: schema.Optional[schema.constr(min_length = 1)] = Field(
         None,
         description = "The name of the size of the machine."
     )
-    ip: t.Optional[str] = Field(
+    ip: schema.Optional[str] = Field(
         None,
         description = "The internal IP address of the node."
     )
@@ -253,18 +259,18 @@ class NodeStatus(schema.BaseModel):
         default_factory = list,
         description = "The IP addresses of the node."
     )
-    kubelet_version: t.Optional[str] = Field(
+    kubelet_version: schema.Optional[str] = Field(
         None,
         description = "The kubelet version of the node."
     )
-    node_group: t.Optional[str] = Field(
+    node_group: schema.Optional[str] = Field(
         None,
         description = (
             "The node group that the node belongs to. "
             "Only used for worker nodes."
         )
     )
-    created: t.Optional[dt.datetime] = Field(
+    created: schema.Optional[dt.datetime] = Field(
         None,
         description = "The datetime at which the node was created."
     )
@@ -283,53 +289,42 @@ class AddonStatus(schema.BaseModel):
         description = "The revision of the addon."
     )
 
-    @validator("phase", pre = True, always = True)
-    def convert_phase(cls, v):
-        # Convert the old Ready phase to Deployed
-        if isinstance(v, str) and v == "Ready":
-            return AddonPhase.DEPLOYED.value
-        else:
-            return v
-
 
 class ServiceStatus(schema.BaseModel):
     """
     The status of a service in the cluster.
     """
-    subdomain: constr(min_length = 1) = Field(
+    subdomain: schema.constr(min_length = 1) = Field(
         ...,
         description = "The subdomain of the service."
     )
-    fqdn: constr(min_length = 1) = Field(
+    fqdn: schema.constr(min_length = 1) = Field(
         ...,
         description = "The FQDN of the service."
     )
-    label: constr(min_length = 1) = Field(
+    label: schema.constr(min_length = 1) = Field(
         ...,
         description = "A human-readable label for the service."
     )
-    icon_url: t.Optional[AnyHttpUrl] = Field(
+    icon_url: schema.Optional[schema.AnyHttpUrl] = Field(
         None,
         description = "A URL to an icon for the service."
     )
-    description: t.Optional[str] = Field(
+    description: schema.Optional[str] = Field(
         None,
         description = "A brief description of the service."
     )
 
 
-class ClusterStatus(schema.BaseModel):
+class ClusterStatus(schema.BaseModel, extra = "allow"):
     """
     The status of the cluster.
     """
-    class Config:
-        extra = Extra.allow
-
-    kubernetes_version: t.Optional[str] = Field(
+    kubernetes_version: schema.Optional[str] = Field(
         None,
         description = "The Kubernetes version of the cluster, if known."
     )
-    kubeconfig_secret_name: t.Optional[str] = Field(
+    kubeconfig_secret_name: schema.Optional[str] = Field(
         None,
         description = "The name of the secret containing the kubeconfig file, if known."
     )

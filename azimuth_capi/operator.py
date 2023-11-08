@@ -119,7 +119,7 @@ async def save_cluster_status(cluster):
         {
             # Include the resource version for optimistic concurrency
             "metadata": { "resourceVersion": cluster.metadata.resource_version },
-            "status": cluster.status.dict(exclude_defaults = True),
+            "status": cluster.status.model_dump(exclude_defaults = True),
         },
         namespace = cluster.metadata.namespace
     )
@@ -136,7 +136,7 @@ def model_handler(model, register_fn, /, include_instance = True, **kwargs):
         @functools.wraps(func)
         async def handler(**handler_kwargs):
             if include_instance and "instance" not in handler_kwargs:
-                handler_kwargs["instance"] = model.parse_obj(handler_kwargs["body"])
+                handler_kwargs["instance"] = model.model_validate(handler_kwargs["body"])
             try:
                 return await func(**handler_kwargs)
             except ApiError as exc:
@@ -162,7 +162,7 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
     """
     if operation in {"CREATE", "UPDATE"}:
         try:
-            spec = api.ClusterTemplateSpec.parse_obj(spec)
+            spec = api.ClusterTemplateSpec.model_validate(spec)
         except pydantic.ValidationError as exc:
             raise kopf.AdmissionError(str(exc), code = 400)
     elif operation == "DELETE":
@@ -193,7 +193,7 @@ async def validate_cluster(name, namespace, spec, operation, **kwargs):
     if operation not in {"CREATE", "UPDATE"}:
         return
     try:
-        spec = api.ClusterSpec.parse_obj(spec)
+        spec = api.ClusterSpec.model_validate(spec)
     except pydantic.ValidationError as exc:
         raise kopf.AdmissionError(str(exc), code = 400)
     # The credentials secret must exist
@@ -254,11 +254,11 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     )
     # Then fetch the template
     ekresource = await ekresource_for_model(api.ClusterTemplate)
-    template = api.ClusterTemplate.parse_obj(await ekresource.fetch(instance.spec.template_name))
+    template = api.ClusterTemplate.model_validate(await ekresource.fetch(instance.spec.template_name))
     # Generate the Helm values for the release
     helm_values = mergeconcat(
         settings.capi_helm.default_values,
-        template.spec.values.dict(by_alias = True),
+        template.spec.values.model_dump(by_alias = True),
         default_loader.load("cluster-values.yaml", spec = instance.spec, settings = settings)
     )
     if settings.zenith.enabled:
@@ -283,7 +283,7 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
     if settings.zenith.enabled:
         operator_resources = await zenith_operator_resources(name, namespace, secret)
         for resource in operator_resources:
-            kopf.adopt(resource, instance.dict(by_alias = True))
+            kopf.adopt(resource, instance.model_dump(by_alias = True))
             await ekclient.apply_object(resource, force = True)
     # Patch the labels to include the cluster template
     # This is used by the admission webhook to search for clusters using a template in
@@ -391,7 +391,7 @@ def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", 
             # kopf retry logic does not apply to events
             while True:
                 try:
-                    cluster = api.Cluster.parse_obj(
+                    cluster = api.Cluster.model_validate(
                         await ekclusters.fetch(
                             inner["labels"][cluster_label],
                             namespace = inner["namespace"]
@@ -548,7 +548,7 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
             },
         },
     }
-    kopf.adopt(platform, instance.dict())
+    kopf.adopt(platform, instance.model_dump())
     await ekclient.apply_object(platform, force = True)
 
 
@@ -650,7 +650,7 @@ async def annotate_addon_for_reservation(
     annotations = addon.metadata.get("annotations", {})
     services = json.loads(annotations.get("azimuth.stackhpc.com/services", "{}"))
     if service_status:
-        services[service_name] = service_status.dict()
+        services[service_name] = service_status.model_dump()
     else:
         services.pop(service_name, None)
     return await ekresource.patch(
@@ -926,6 +926,6 @@ async def reconcile_app_template(instance, param, **kwargs):
         {
             # Include the resource version for optimistic concurrency
             "metadata": { "resourceVersion": instance.metadata.resource_version },
-            "status": instance.status.dict(exclude_defaults = True),
+            "status": instance.status.model_dump(exclude_defaults = True),
         }
     )
