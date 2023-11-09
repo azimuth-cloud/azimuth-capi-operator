@@ -25,7 +25,7 @@ SemVerVersion = t.Annotated[str, StringConstraints(pattern = SEMVER_VERSION_REGE
 #: Type for a string that validates as a URL
 AnyHttpUrl = t.Annotated[
     str,
-    AfterValidator(lambda v: TypeAdapter(PyAnyHttpUrl).validate_python(v))
+    AfterValidator(lambda v: str(TypeAdapter(PyAnyHttpUrl).validate_python(v)))
 ]
 
 
@@ -83,7 +83,7 @@ class ZenithConfig(Section):
     #: The version of the charts to use
     #: When changing this, be aware that the operator may depend on the layout of
     #: the Helm values at a particular version
-    chart_version: SemVerVersion = "0.1.1-dev.0.feature-migrate-to-pydantic2.7"
+    chart_version: SemVerVersion = "0.1.1-dev.0.feature-migrate-to-pydantic2.9"
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
