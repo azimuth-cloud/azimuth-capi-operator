@@ -14,7 +14,7 @@ RUN pip install -U pip setuptools
 RUN pip install --no-deps --requirement /application/requirements.txt
 
 COPY . /application
-RUN pip install --no-deps -e /application
+RUN pip install --no-deps /application
 
 # install helm into venv
 ARG HELM_VERSION=v3.13.2
