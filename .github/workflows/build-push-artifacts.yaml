@@ -28,7 +28,7 @@ jobs:
             type=sha,prefix=
 
       - name: Build and push image
-        uses: stackhpc/github-actions/docker-multiarch-build-push@feature/scanning
+        uses: stackhpc/github-actions/docker-multiarch-build-push@master
         with:
           cache-key: azimuth-capi-operator
           context: .
@@ -36,6 +36,7 @@ jobs:
           push: true
           tags: ${{ steps.image-meta.outputs.tags }}
           labels: ${{ steps.image-meta.outputs.labels }}
+          sign_image: true
 
   build_push_chart:
     name: Build and push Helm chart
