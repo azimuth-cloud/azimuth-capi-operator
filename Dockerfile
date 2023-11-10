@@ -2,7 +2,7 @@ FROM ubuntu:jammy as build-image
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install --no-install-recommends python3.10-venv git -y && \
+    apt-get install --no-install-recommends python3.10-venv git curl -y && \
     rm -rf /var/lib/apt/lists/*
 
 # build into a venv we can copy across
