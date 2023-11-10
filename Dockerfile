@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9-slim-bookworm
 
 # Create the user that will be used to run the app
 ENV APP_UID 1001
@@ -16,7 +16,7 @@ RUN groupadd --gid $APP_GID $APP_GROUP && \
 
 # Install tini, which we will use to marshal the processes
 RUN apt-get update && \
-    apt-get install -y tini && \
+    apt-get install -y tini git curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Don't buffer stdout and stderr as it breaks realtime logging
@@ -41,6 +41,7 @@ RUN set -ex; \
 # Install dependencies
 # Doing this separately by copying only the requirements file enables better use of the build cache
 COPY ./requirements.txt /application/
+RUN pip install -U pip
 RUN pip install --no-deps --requirement /application/requirements.txt
 
 # Install the perftest package

@@ -28,7 +28,7 @@ jobs:
             type=sha,prefix=
 
       - name: Build and push image
-        uses: stackhpc/github-actions/docker-multiarch-build-push@master
+        uses: stackhpc/github-actions/docker-multiarch-build-push@feature/scanning
         with:
           cache-key: azimuth-capi-operator
           context: .
