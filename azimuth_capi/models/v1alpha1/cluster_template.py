@@ -1,22 +1,19 @@
 import typing as t
 
-from pydantic import Extra, Field, constr
+from pydantic import Field
 
 from kube_custom_resource import CustomResource, Scope, schema
 
 
-class ClusterTemplateValues(schema.BaseModel):
+class ClusterTemplateValues(schema.BaseModel, extra = "allow"):
     """
     The values to use when deploying the Helm chart.
     """
-    class Config:
-        extra = Extra.allow
-
-    kubernetes_version: constr(min_length = 1) = Field(
+    kubernetes_version: schema.constr(min_length = 1) = Field(
         ...,
         description = "The Kubernetes version that will be deployed."
     )
-    machine_image_id: constr(min_length = 1) = Field(
+    machine_image_id: schema.constr(min_length = 1) = Field(
         ...,
         description = "The ID of the image to use for cluster machines."
     )
@@ -26,7 +23,7 @@ class ClusterTemplateSpec(schema.BaseModel):
     """
     The spec of an Azimuth cluster template.
     """
-    label: constr(min_length = 1) = Field(
+    label: schema.constr(min_length = 1) = Field(
         ...,
         description = "The human-readable name of the template."
     )
@@ -34,14 +31,14 @@ class ClusterTemplateSpec(schema.BaseModel):
         False,
         description = "Indicates if this is a deprecated template."
     )
-    description: constr(min_length = 1) = Field(
+    description: schema.constr(min_length = 1) = Field(
         ...,
         description = (
             "Brief description of the capabilities of clusters deployed "
             "using the template."
         )
     )
-    tags: t.List[constr(min_length = 1)] = Field(
+    tags: t.List[schema.constr(min_length = 1)] = Field(
         default_factory = list,
         description = "Tags for the cluster."
     )

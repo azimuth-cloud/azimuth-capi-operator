@@ -79,7 +79,7 @@ async def ensure_zenith_secret(client, cluster, secret_name):
                 "id_ed25519.pub": public_key_text,
             },
         }
-        kopf.adopt(secret_data, cluster.dict(by_alias = True))
+        kopf.adopt(secret_data, cluster.model_dump(by_alias = True))
         return await eksecrets.create(secret_data, namespace = namespace)
     else:
         return await eksecrets.patch(

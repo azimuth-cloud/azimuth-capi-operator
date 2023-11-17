@@ -1,27 +1,32 @@
 import typing as t
 
-from pydantic import Field, AnyHttpUrl, FilePath, conint, constr, root_validator, validator
+from pydantic import (
+    TypeAdapter,
+    Field,
+    AfterValidator,
+    StringConstraints,
+    AnyHttpUrl as PyAnyHttpUrl,
+    FilePath,
+    conint,
+    constr,
+    model_validator,
+    field_validator,
+    ValidationInfo
+)
 
 from configomatic import Configuration as BaseConfiguration, Section, LoggingConfiguration
 
-from easysemver import Version
+from easysemver import SEMVER_VERSION_REGEX
 
 
-class SemVerVersion(str):
-    """
-    Type for a string that is a valid SemVer version.
-    """
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+#: Type for a string that validates as a SemVer version
+SemVerVersion = t.Annotated[str, StringConstraints(pattern = SEMVER_VERSION_REGEX)]
 
-    @classmethod
-    def validate(cls, v):
-        # Just use the validation from easysemver, then convert to a string
-        return cls(Version(v))
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({super().__repr__()})'
+#: Type for a string that validates as a URL
+AnyHttpUrl = t.Annotated[
+    str,
+    AfterValidator(lambda v: str(TypeAdapter(PyAnyHttpUrl).validate_python(v)))
+]
 
 
 class HelmClientConfiguration(Section):
@@ -67,7 +72,7 @@ class ZenithConfig(Section):
     registrar_admin_url: t.Optional[AnyHttpUrl] = None
     #: The internal admin URL of the Zenith registrar
     #: By default, this is the same as the registrar_admin_url
-    registrar_admin_url_internal: t.Optional[AnyHttpUrl] = None
+    registrar_admin_url_internal: t.Optional[AnyHttpUrl] = Field(None, validate_default = True)
     #: The host for the Zenith SSHD service
     sshd_host: t.Optional[constr(min_length = 1)] = None
     #: The port for the Zenith SSHD service
@@ -78,7 +83,7 @@ class ZenithConfig(Section):
     #: The version of the charts to use
     #: When changing this, be aware that the operator may depend on the layout of
     #: the Helm values at a particular version
-    chart_version: SemVerVersion = "0.1.0-dev.0.main.232"
+    chart_version: SemVerVersion = "0.1.1-dev.0.feature-migrate-to-pydantic2.9"
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -90,26 +95,27 @@ class ZenithConfig(Section):
     monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
 
     #: The API version to use when watching Zenith resources on target clusters
-    api_version: constr(regex = r"^[a-z0-9.-]+/[a-z0-9]+$") = "zenith.stackhpc.com/v1alpha1"
+    api_version: constr(pattern =r"^[a-z0-9.-]+/[a-z0-9]+$") = "zenith.stackhpc.com/v1alpha1"
 
-    @root_validator
-    def validate_zenith_enabled(cls, values):
+    @model_validator(mode = "after")
+    def validate_zenith_enabled(self):
         """
         Ensures that the SSHD host is set when the registrar URL is given.
         """
-        if bool(values.get("registrar_admin_url")) != bool(values.get("sshd_host")):
+        if bool(self.registrar_admin_url) != bool(self.sshd_host):
             raise ValueError(
                 "registrar_admin_url and sshd_host are both required to "
                 "enable Zenith support"
             )
-        return values
+        return self
 
-    @validator("registrar_admin_url_internal", always = True)
-    def default_registrar_admin_url_internal(cls, v, values):
+    @field_validator("registrar_admin_url_internal")
+    @classmethod
+    def default_registrar_admin_url_internal(cls, v, info: ValidationInfo):
         """
         Sets the default internal registrar admin URL.
         """
-        return v or values.get("registrar_admin_url")
+        return v or info.data.get("registrar_admin_url")
 
     @property
     def enabled(self):
@@ -140,49 +146,52 @@ class WebhookConfiguration(Section):
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
-    certfile: t.Optional[FilePath] = None
+    certfile: t.Optional[FilePath] = Field(None, validate_default = True)
     #: The path to the key for the TLS certificate
-    keyfile: t.Optional[FilePath] = None
+    keyfile: t.Optional[FilePath] = Field(None, validate_default = True)
     #: The host for the webhook server (required for self-signed certificate generation)
-    host: t.Optional[constr(min_length = 1)] = None
+    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = True)
 
-    @validator("certfile", always = True)
-    def validate_certfile(cls, v, values, **kwargs):
+    @field_validator("certfile")
+    @classmethod
+    def validate_certfile(cls, v, info: ValidationInfo):
         """
         Validate that certfile is specified when configs are not managed.
         """
-        if "managed" in values and not values["managed"] and v is None:
+        if not info.data.get("managed") and v is None:
             raise ValueError("required when webhook configurations are not managed")
         return v
 
-    @validator("keyfile", always = True)
-    def validate_keyfile(cls, v, values, **kwargs):
+    @field_validator("keyfile")
+    @classmethod
+    def validate_keyfile(cls, v, info: ValidationInfo):
         """
         Validate that keyfile is specified when certfile is present.
         """
-        if "certfile" in values and values["certfile"] is not None and v is None:
+        if info.data.get("certfile") is not None and v is None:
             raise ValueError("required when certfile is given")
         return v
 
-    @validator("host", always = True)
-    def validate_host(cls, v, values, **kwargs):
+    @field_validator("host")
+    @classmethod
+    def validate_host(cls, v, info: ValidationInfo):
         """
         Validate that host is specified when there is no certificate specified.
         """
-        if values.get("certfile") is None and v is None:
+        if info.data.get("certfile") is None and v is None:
             raise ValueError("required when certfile is not given")
         return v
 
 
-class Configuration(BaseConfiguration):
+class Configuration(
+    BaseConfiguration,
+    default_path = "/etc/azimuth/capi-operator.yaml",
+    path_env_var = "AZIMUTH_CAPI_CONFIG",
+    env_prefix = "AZIMUTH_CAPI"
+):
     """
     Top-level configuration model.
     """
-    class Config:
-        default_path = "/etc/azimuth/capi-operator.yaml"
-        path_env_var = "AZIMUTH_CAPI_CONFIG"
-        env_prefix = "AZIMUTH_CAPI"
-
     #: The logging configuration
     logging: LoggingConfiguration = Field(default_factory = LoggingConfiguration)
 

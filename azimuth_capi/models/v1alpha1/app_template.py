@@ -1,28 +1,22 @@
 import datetime as dt
 import typing as t
 
-from pydantic import Extra, Field, AnyHttpUrl, constr
+from pydantic import Field
 
 from kube_custom_resource import CustomResource, Scope, schema
 
 from easysemver import SEMVER_VERSION_REGEX, SEMVER_RANGE_REGEX
 
 
-#: Type for a SemVer version
-SemVerVersion = constr(regex = SEMVER_VERSION_REGEX)
-#: Type for a SemVer range
-SemVerRange = constr(regex = SEMVER_RANGE_REGEX)
-
-
 class AppTemplateChartSpec(schema.BaseModel):
     """
     The spec for a chart reference for a Kubernetes app template.
     """
-    repo: AnyHttpUrl = Field(
+    repo: schema.AnyHttpUrl = Field(
         ...,
         description = "The Helm repository that the chart is in."
     )
-    name: constr(regex = r"^[a-z0-9-]+$") = Field(
+    name: schema.constr(pattern =r"^[a-z0-9-]+$") = Field(
         ...,
         description = "The name of the chart."
     )
@@ -57,7 +51,7 @@ class AppTemplateSpec(schema.BaseModel):
             "If not given, the description from the Chart.yaml of the chart will be used."
         )
     )
-    version_range: SemVerRange = Field(
+    version_range: schema.constr(pattern = SEMVER_RANGE_REGEX) = Field(
         ">=0.0.0",
         description = (
             "The range of versions to make available. "
@@ -90,7 +84,7 @@ class AppTemplateVersion(schema.BaseModel):
     """
     The available versions for the app template.
     """
-    name: SemVerVersion = Field(
+    name: schema.constr(pattern = SEMVER_VERSION_REGEX) = Field(
         ...,
         description = "The name of the version."
     )
@@ -104,22 +98,19 @@ class AppTemplateVersion(schema.BaseModel):
     )
 
 
-class AppTemplateStatus(schema.BaseModel):
+class AppTemplateStatus(schema.BaseModel, extra = "allow"):
     """
     The status of the app template.
     """
-    class Config:
-        extra = Extra.allow
-
-    label: t.Optional[constr(min_length = 1)] = Field(
+    label: schema.Optional[schema.constr(min_length = 1)] = Field(
         None,
         description = "The human-readable label for the app template."
     )
-    logo: t.Optional[constr(min_length = 1)] = Field(
+    logo: schema.Optional[schema.constr(min_length = 1)] = Field(
         None,
         description = "The URL of the logo for the app template."
     )
-    description: t.Optional[constr(min_length = 1)] = Field(
+    description: schema.Optional[schema.constr(min_length = 1)] = Field(
         None,
         description = "A short description of the app template."
     )
@@ -127,7 +118,7 @@ class AppTemplateStatus(schema.BaseModel):
         default_factory = list,
         description = "The available versions for the app template."
     )
-    last_sync: t.Optional[dt.datetime] = Field(
+    last_sync: schema.Optional[dt.datetime] = Field(
         None,
         description = "The time that the last successful sync of versions took place."
     )
