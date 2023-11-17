@@ -52,12 +52,11 @@ class CAPIHelmConfig(Section):
     """
     Configuration for the CAPI Helm chart used to deploy clusters.
     """
-    #: The repository containing the CAPI Helm charts
-    chart_repository: AnyHttpUrl = "https://stackhpc.github.io/capi-helm-charts"
-    #: The name of the CAPI Helm chart to use to deploy clusters
-    chart_name: constr(min_length = 1) = "openstack-cluster"
-    #: The version of the CAPI Helm chart to use to deploy clusters
-    chart_version: SemVerVersion = "0.1.4"
+    #: The Helm chart repo, name and version to use for the CAPI Helm charts
+    #: By default, this points to a local chart that is baked into the Docker image
+    chart_name: constr(min_length = 1) = "/charts/openstack-cluster"
+    chart_repository: t.Optional[AnyHttpUrl] = None
+    chart_version: t.Optional[SemVerVersion] = None
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
@@ -78,12 +77,12 @@ class ZenithConfig(Section):
     #: The port for the Zenith SSHD service
     sshd_port: conint(gt = 0) = 22
 
-    #: The repository for the Zenith charts
-    chart_repository: AnyHttpUrl = "https://stackhpc.github.io/zenith"
-    #: The version of the charts to use
-    #: When changing this, be aware that the operator may depend on the layout of
-    #: the Helm values at a particular version
-    chart_version: SemVerVersion = "0.1.1-dev.0.feature-migrate-to-pydantic2.9"
+    #: The Zenith chart repository, version and names
+    #: By default, these point to local charts that are baked into the Docker image
+    apiserver_chart_name: constr(min_length = 1) = "/charts/zenith-apiserver"
+    operator_chart_name: constr(min_length = 1) = "/charts/zenith-operator"
+    chart_repository: t.Optional[AnyHttpUrl] = None
+    chart_version: t.Optional[SemVerVersion] = None
 
     #: Defaults for use with the apiserver chart
     apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
