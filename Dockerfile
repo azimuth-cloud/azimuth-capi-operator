@@ -56,8 +56,11 @@ RUN python3 -m venv /venv && \
 COPY requirements.txt /app/requirements.txt
 RUN /venv/bin/pip install --no-deps --requirement /app/requirements.txt
 
+# Jinja2 complains if this is installed the "regular" way
+# https://jinja.palletsprojects.com/en/3.1.x/api/#loaders
+# So we install here instead as an editable installation and also copy over the app directory
 COPY . /app
-RUN /venv/bin/pip install --no-deps /app
+RUN /venv/bin/pip install --no-deps -e /app
 
 
 FROM ubuntu:jammy
@@ -91,6 +94,7 @@ RUN apt-get update && \
 COPY --from=helm /usr/bin/helm /usr/bin/helm
 COPY --from=helm /charts /charts
 COPY --from=python-builder /venv /venv
+COPY --from=python-builder /app /app
 
 USER $APP_UID
 ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
