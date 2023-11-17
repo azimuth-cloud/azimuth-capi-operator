@@ -107,7 +107,7 @@ async def zenith_apiserver_values(client, cluster):
     resources = list(
         await client.template_resources(
             await client.get_chart(
-                "zenith-apiserver",
+                settings.zenith.apiserver_chart_name,
                 repo = settings.zenith.chart_repository,
                 version = settings.zenith.chart_version
             ),
@@ -262,7 +262,7 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
     return list(
         await client.template_resources(
             await client.get_chart(
-                "zenith-operator",
+                settings.zenith.operator_chart_name,
                 repo = settings.zenith.chart_repository,
                 version = settings.zenith.chart_version
             ),
