@@ -1,3 +1,4 @@
+---
 apiVersion: v2
 name: azimuth-capi-operator
 description: Helm chart for deploying the Azimuth CAPI operator.
@@ -10,7 +11,7 @@ dependencies:
   # stakater/reloader to reload when certificates change
   - name: reloader
     repository: https://stakater.github.io/stakater-charts
-    version: v1.0.18
+    version: 1.0.52
     condition: reloader.enabled
   # prometheus-community/kube-state-metrics to produce metrics on clusters
   - name: kube-state-metrics
