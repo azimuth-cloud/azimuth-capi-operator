@@ -22,11 +22,13 @@ jobs:
           - key: openstack-cluster
             path: ./.github/workflows/build-push-artifacts.yaml
             repository: stackhpc/capi-helm-charts
+            prereleases: "yes"
             version_jsonpath: env.OPENSTACK_CLUSTER_CHART_VERSION
 
           - key: zenith
             path: ./.github/workflows/build-push-artifacts.yaml
             repository: stackhpc/zenith
+            prereleases: "yes"
             version_jsonpath: env.ZENITH_CHART_VERSION
 
     name: ${{ matrix.key }}
@@ -39,7 +41,7 @@ jobs:
         uses: stackhpc/github-actions/github-latest-release@master
         with:
           repository: ${{ matrix.repository }}
-          tags: ${{ matrix.tags || 'no' }}
+          prereleases: ${{ matrix.prereleases || 'no' }}
 
       - name: Update dependency key
         uses: stackhpc/github-actions/config-update@master
