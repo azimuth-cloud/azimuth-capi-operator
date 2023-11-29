@@ -30,7 +30,7 @@ env:
   OPENSTACK_CLUSTER_CHART_VERSION: 0.1.6-rc.1
   # Zenith charts
   ZENITH_CHART_REPO: https://stackhpc.github.io/zenith
-  ZENITH_CHART_VERSION: 0.1.0
+  ZENITH_CHART_VERSION: 0.2.0-rc.1
   ZENITH_APISERVER_CHART_NAME: zenith-apiserver
   ZENITH_OPERATOR_CHART_NAME: zenith-operator
 
