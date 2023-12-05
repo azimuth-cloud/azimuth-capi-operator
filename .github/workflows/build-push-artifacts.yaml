@@ -27,7 +27,7 @@ env:
   # CAPI Helm chart
   OPENSTACK_CLUSTER_CHART_REPO: https://stackhpc.github.io/capi-helm-charts
   OPENSTACK_CLUSTER_CHART_NAME: openstack-cluster
-  OPENSTACK_CLUSTER_CHART_VERSION: 0.1.6-rc.1
+  OPENSTACK_CLUSTER_CHART_VERSION: 0.1.6
   # Zenith charts
   ZENITH_CHART_REPO: https://stackhpc.github.io/zenith
   ZENITH_CHART_VERSION: 0.2.0
