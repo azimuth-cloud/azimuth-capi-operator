@@ -186,7 +186,7 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
     include_instance = False,
     id = "validate-cluster"
 )
-async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
+async def validate_cluster(name, namespace, spec, operation, **kwargs):
     """
     Validates cluster objects.
     """
@@ -196,22 +196,6 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
         spec = api.ClusterSpec.model_validate(spec)
     except pydantic.ValidationError as exc:
         raise kopf.AdmissionError(str(exc), code = 400)
-    # The credentials secret must exist, unless the cluster is deleting
-    if not meta.get("deletionTimestamp"):
-        ekresource = await ekclient.api("v1").resource("secrets")
-        try:
-            _ = await ekresource.fetch(
-                spec.cloud_credentials_secret_name,
-                namespace = namespace
-            )
-        except ApiError as exc:
-            if exc.status_code == 404:
-                raise kopf.AdmissionError(
-                    "specified cloud credentials secret does not exist",
-                    code = 400
-                )
-            else:
-                raise
     # The specified template must exist
     ekresource = await ekresource_for_model(api.ClusterTemplate)
     try:
