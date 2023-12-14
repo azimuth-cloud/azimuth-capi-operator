@@ -4,3 +4,12 @@ Dockerfile
 # Exclude Python caches
 **/__pycache__
 *.egg-info
+
+# Ignore all other elements that aren't actually part of the build
+.dockerignore
+.github
+.gitignore
+.python-version
+chart
+CODEOWNERS
+tilt-component.yaml
