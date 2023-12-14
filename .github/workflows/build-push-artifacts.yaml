@@ -25,14 +25,9 @@ on:
 env:
   HELM_VERSION: v3.13.2
   # CAPI Helm chart
-  OPENSTACK_CLUSTER_CHART_REPO: https://stackhpc.github.io/capi-helm-charts
-  OPENSTACK_CLUSTER_CHART_NAME: openstack-cluster
   OPENSTACK_CLUSTER_CHART_VERSION: 0.1.6
   # Zenith charts
-  ZENITH_CHART_REPO: https://stackhpc.github.io/zenith
   ZENITH_CHART_VERSION: 0.2.0
-  ZENITH_APISERVER_CHART_NAME: zenith-apiserver
-  ZENITH_OPERATOR_CHART_NAME: zenith-operator
 
 jobs:
   build_push_images:
@@ -70,13 +65,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             HELM_VERSION=${{ env.HELM_VERSION }}
-            OPENSTACK_CLUSTER_CHART_REPO=${{ env.OPENSTACK_CLUSTER_CHART_REPO }}
-            OPENSTACK_CLUSTER_CHART_NAME=${{ env.OPENSTACK_CLUSTER_CHART_NAME }}
             OPENSTACK_CLUSTER_CHART_VERSION=${{ env.OPENSTACK_CLUSTER_CHART_VERSION }}
-            ZENITH_CHART_REPO=${{ env.ZENITH_CHART_REPO }}
             ZENITH_CHART_VERSION=${{ env.ZENITH_CHART_VERSION }}
-            ZENITH_APISERVER_CHART_NAME=${{ env.ZENITH_APISERVER_CHART_NAME }}
-            ZENITH_OPERATOR_CHART_NAME=${{ env.ZENITH_OPERATOR_CHART_NAME }}
           push: true
           tags: ${{ steps.image-meta.outputs.tags }}
           labels: ${{ steps.image-meta.outputs.labels }}
