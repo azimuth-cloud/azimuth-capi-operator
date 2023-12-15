@@ -23,7 +23,7 @@ on:
 
 # Variables controlling the dependencies that are baked in to the image
 env:
-  HELM_VERSION: v3.13.2
+  HELM_VERSION: v3.13.3
   # CAPI Helm chart
   OPENSTACK_CLUSTER_CHART_VERSION: 0.1.6
   # Zenith charts
