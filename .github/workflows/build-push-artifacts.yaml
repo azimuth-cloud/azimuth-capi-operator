@@ -27,7 +27,7 @@ env:
   # CAPI Helm chart
   OPENSTACK_CLUSTER_CHART_VERSION: 0.1.8
   # Zenith charts
-  ZENITH_CHART_VERSION: 0.3.0
+  ZENITH_CHART_VERSION: 0.3.1
 
 jobs:
   build_push_images:
