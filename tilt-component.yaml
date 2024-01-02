@@ -3,9 +3,4 @@ chart: ./chart
 images:
   azimuth-capi-operator:
     context: .
-    build_args:
-      HELM_VERSION: v3.13.2
-      # Use the latest stable version of the charts
-      OPENSTACK_CLUSTER_CHART_VERSION: ">=0.0.0"
-      ZENITH_CHART_VERSION: ">=0.0.0"
     chart_path: image

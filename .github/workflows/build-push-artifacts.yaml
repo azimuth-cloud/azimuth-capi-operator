@@ -21,14 +21,6 @@ on:
         description: The chart version that was published
         value: ${{ jobs.build_push_chart.outputs.chart-version }}
 
-# Variables controlling the dependencies that are baked in to the image
-env:
-  HELM_VERSION: v3.13.3
-  # CAPI Helm chart
-  OPENSTACK_CLUSTER_CHART_VERSION: 0.1.8
-  # Zenith charts
-  ZENITH_CHART_VERSION: 0.3.1
-
 jobs:
   build_push_images:
     name: Build and push images
@@ -63,10 +55,6 @@ jobs:
           cache-key: azimuth-capi-operator
           context: .
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            HELM_VERSION=${{ env.HELM_VERSION }}
-            OPENSTACK_CLUSTER_CHART_VERSION=${{ env.OPENSTACK_CLUSTER_CHART_VERSION }}
-            ZENITH_CHART_VERSION=${{ env.ZENITH_CHART_VERSION }}
           push: true
           tags: ${{ steps.image-meta.outputs.tags }}
           labels: ${{ steps.image-meta.outputs.labels }}

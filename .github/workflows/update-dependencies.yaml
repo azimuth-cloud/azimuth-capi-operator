@@ -15,21 +15,21 @@ jobs:
       matrix:
         include:
           - key: helm
-            path: ./.github/workflows/build-push-artifacts.yaml
+            path: ./Dockerfile
             repository: helm/helm
-            version_jsonpath: env.HELM_VERSION
+            version_jsonpath: HELM_VERSION
 
           - key: openstack-cluster
-            path: ./.github/workflows/build-push-artifacts.yaml
+            path: ./Dockerfile
             repository: stackhpc/capi-helm-charts
             prereleases: "yes"
-            version_jsonpath: env.OPENSTACK_CLUSTER_CHART_VERSION
+            version_jsonpath: OPENSTACK_CLUSTER_CHART_VERSION
 
           - key: zenith
-            path: ./.github/workflows/build-push-artifacts.yaml
+            path: ./Dockerfile
             repository: stackhpc/zenith
             prereleases: "yes"
-            version_jsonpath: env.ZENITH_CHART_VERSION
+            version_jsonpath: ZENITH_CHART_VERSION
 
     name: ${{ matrix.key }}
     steps:
