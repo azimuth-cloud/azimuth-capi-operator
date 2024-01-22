@@ -3,7 +3,7 @@ entries:
   azimuth-capi-operator:
   - apiVersion: v2
     appVersion: a3fe7eb
-    created: "2024-01-22T21:49:23.803305383Z"
+    created: "2024-01-22T21:49:43.417615651Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -23,7 +23,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-zenith.5
   - apiVersion: v2
     appVersion: 6d1ec13
-    created: "2024-01-22T21:49:23.800871787Z"
+    created: "2024-01-22T21:49:43.415160149Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -43,7 +43,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-zenith.3
   - apiVersion: v2
     appVersion: 72aacfe
-    created: "2024-01-22T21:49:23.797313604Z"
+    created: "2024-01-22T21:49:43.412683448Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -63,7 +63,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-reloader.9
   - apiVersion: v2
     appVersion: a48ac3a
-    created: "2024-01-22T21:49:23.794834382Z"
+    created: "2024-01-22T21:49:43.409128486Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -83,7 +83,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-reloader.8
   - apiVersion: v2
     appVersion: a3fe7eb
-    created: "2024-01-22T21:49:23.792368035Z"
+    created: "2024-01-22T21:49:43.406592816Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -103,7 +103,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-reloader.5
   - apiVersion: v2
     appVersion: 49b9d87
-    created: "2024-01-22T21:49:23.789768318Z"
+    created: "2024-01-22T21:49:43.404146582Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -123,7 +123,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-reloader.4
   - apiVersion: v2
     appVersion: a3fe7eb
-    created: "2024-01-22T21:49:23.786583581Z"
+    created: "2024-01-22T21:49:43.400821318Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -143,7 +143,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-kube-state-metrics.5
   - apiVersion: v2
     appVersion: 72aacfe
-    created: "2024-01-22T21:49:23.784081918Z"
+    created: "2024-01-22T21:49:43.39832499Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -163,7 +163,7 @@ entries:
     version: 0.3.2-dev.0.update-dependency-helm.9
   - apiVersion: v2
     appVersion: 00e455a
-    created: "2024-01-22T21:49:23.767936033Z"
+    created: "2024-01-22T21:49:43.381619137Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -183,7 +183,7 @@ entries:
     version: 0.3.2-dev.0.main.10
   - apiVersion: v2
     appVersion: 72aacfe
-    created: "2024-01-22T21:49:23.780811772Z"
+    created: "2024-01-22T21:49:43.395820949Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -203,7 +203,7 @@ entries:
     version: 0.3.2-dev.0.main.8
   - apiVersion: v2
     appVersion: 887c3df
-    created: "2024-01-22T21:49:23.778359551Z"
+    created: "2024-01-22T21:49:43.392440595Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -223,7 +223,7 @@ entries:
     version: 0.3.2-dev.0.main.7
   - apiVersion: v2
     appVersion: a3fe7eb
-    created: "2024-01-22T21:49:23.775921436Z"
+    created: "2024-01-22T21:49:43.389984683Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -243,7 +243,7 @@ entries:
     version: 0.3.2-dev.0.main.4
   - apiVersion: v2
     appVersion: 49b9d87
-    created: "2024-01-22T21:49:23.772992519Z"
+    created: "2024-01-22T21:49:43.387472005Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -263,7 +263,7 @@ entries:
     version: 0.3.2-dev.0.main.3
   - apiVersion: v2
     appVersion: 6d1ec13
-    created: "2024-01-22T21:49:23.7703373Z"
+    created: "2024-01-22T21:49:43.384027872Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -283,7 +283,7 @@ entries:
     version: 0.3.2-dev.0.main.2
   - apiVersion: v2
     appVersion: 11e570e
-    created: "2024-01-22T21:49:23.764760369Z"
+    created: "2024-01-22T21:49:43.377779134Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -303,7 +303,7 @@ entries:
     version: 0.3.2-dev.0.main.1
   - apiVersion: v2
     appVersion: 11e570e
-    created: "2024-01-22T21:49:23.762097967Z"
+    created: "2024-01-22T21:49:43.37532229Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -323,7 +323,7 @@ entries:
     version: 0.3.2-dev.0.feature-build-arg-defaults.2
   - apiVersion: v2
     appVersion: 00e455a
-    created: "2024-01-22T21:49:23.759716788Z"
+    created: "2024-01-22T21:49:43.372877489Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -343,7 +343,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-pydantic-core-2-16-1.11
   - apiVersion: v2
     appVersion: 00e455a
-    created: "2024-01-22T21:49:23.753933969Z"
+    created: "2024-01-22T21:49:43.36686752Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -363,7 +363,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-pydantic-core-2-16-0.11
   - apiVersion: v2
     appVersion: 72aacfe
-    created: "2024-01-22T21:49:23.756750659Z"
+    created: "2024-01-22T21:49:43.370389657Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -383,7 +383,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-pydantic-core-2-16-0.9
   - apiVersion: v2
     appVersion: 72aacfe
-    created: "2024-01-22T21:49:23.751490313Z"
+    created: "2024-01-22T21:49:43.364356756Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -403,7 +403,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-pydantic-core-2-15-0.9
   - apiVersion: v2
     appVersion: a3fe7eb
-    created: "2024-01-22T21:49:23.748197779Z"
+    created: "2024-01-22T21:49:43.360850623Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -423,7 +423,27 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-pydantic-core-2-15-0.5
   - apiVersion: v2
     appVersion: 00e455a
-    created: "2024-01-22T21:49:23.745799007Z"
+    created: "2024-01-22T21:49:43.358420038Z"
+    dependencies:
+    - condition: reloader.enabled
+      name: reloader
+      repository: https://stakater.github.io/stakater-charts
+      version: 1.0.63
+    - alias: metrics
+      condition: metrics.enabled
+      name: kube-state-metrics
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 5.16.0
+    description: Helm chart for deploying the Azimuth CAPI operator.
+    digest: 2d41a5b9b5a89591227c55499a3e488c5c7c2182becdabe4fdb0a0f283b7f95d
+    name: azimuth-capi-operator
+    type: application
+    urls:
+    - azimuth-capi-operator-0.3.2-dev.0.dependabot-pip-markupsafe-2-1-4.11.tgz
+    version: 0.3.2-dev.0.dependabot-pip-markupsafe-2-1-4.11
+  - apiVersion: v2
+    appVersion: 00e455a
+    created: "2024-01-22T21:49:43.355910025Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -443,7 +463,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-kopf-1-37-1.11
   - apiVersion: v2
     appVersion: a3fe7eb
-    created: "2024-01-22T21:49:23.743362605Z"
+    created: "2024-01-22T21:49:43.352545033Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -463,7 +483,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-jinja2-3-1-3.5
   - apiVersion: v2
     appVersion: 96e7259
-    created: "2024-01-22T21:49:23.740123173Z"
+    created: "2024-01-22T21:49:43.350122423Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -483,7 +503,7 @@ entries:
     version: 0.3.2-dev.0.dependabot-pip-attrs-23-2-0.1
   - apiVersion: v2
     appVersion: 96e7259
-    created: "2024-01-22T21:49:23.737728008Z"
+    created: "2024-01-22T21:49:43.34760693Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -503,7 +523,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 92807da
-    created: "2024-01-22T21:49:23.735325088Z"
+    created: "2024-01-22T21:49:43.344164166Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -523,7 +543,7 @@ entries:
     version: 0.3.1-dev.0.update-dependency-zenith.3
   - apiVersion: v2
     appVersion: 5ed8a04
-    created: "2024-01-22T21:49:23.731911084Z"
+    created: "2024-01-22T21:49:43.341756343Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -543,7 +563,7 @@ entries:
     version: 0.3.1-dev.0.update-dependency-reloader.1
   - apiVersion: v2
     appVersion: 92807da
-    created: "2024-01-22T21:49:23.729514647Z"
+    created: "2024-01-22T21:49:43.339313034Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -563,7 +583,7 @@ entries:
     version: 0.3.1-dev.0.update-dependency-openstack-cluster.3
   - apiVersion: v2
     appVersion: ee31408
-    created: "2024-01-22T21:49:23.727102621Z"
+    created: "2024-01-22T21:49:43.335974977Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -583,7 +603,7 @@ entries:
     version: 0.3.1-dev.0.update-dependency-kube-state-metrics.2
   - apiVersion: v2
     appVersion: 92807da
-    created: "2024-01-22T21:49:23.723783322Z"
+    created: "2024-01-22T21:49:43.333568507Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -603,7 +623,7 @@ entries:
     version: 0.3.1-dev.0.main.2
   - apiVersion: v2
     appVersion: ee31408
-    created: "2024-01-22T21:49:23.721377547Z"
+    created: "2024-01-22T21:49:43.331128554Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -623,7 +643,7 @@ entries:
     version: 0.3.1-dev.0.main.1
   - apiVersion: v2
     appVersion: 5ed8a04
-    created: "2024-01-22T21:49:23.718970751Z"
+    created: "2024-01-22T21:49:43.328157121Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -643,7 +663,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: b4e47da
-    created: "2024-01-22T21:49:23.715435996Z"
+    created: "2024-01-22T21:49:43.325514672Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -663,7 +683,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-zenith.13
   - apiVersion: v2
     appVersion: 77a9bc3
-    created: "2024-01-22T21:49:23.712945924Z"
+    created: "2024-01-22T21:49:43.323071383Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -683,7 +703,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-reloader.9
   - apiVersion: v2
     appVersion: 8aa6ef9
-    created: "2024-01-22T21:49:23.710493262Z"
+    created: "2024-01-22T21:49:43.320511999Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -703,7 +723,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-reloader.8
   - apiVersion: v2
     appVersion: abfa75a
-    created: "2024-01-22T21:49:23.707173113Z"
+    created: "2024-01-22T21:49:43.316938034Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -723,7 +743,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-reloader.3
   - apiVersion: v2
     appVersion: a540fbc
-    created: "2024-01-22T21:49:23.70477359Z"
+    created: "2024-01-22T21:49:43.314536292Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -743,7 +763,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-openstack-cluster.12
   - apiVersion: v2
     appVersion: 8c8cba5
-    created: "2024-01-22T21:49:23.702156658Z"
+    created: "2024-01-22T21:49:43.312055824Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -763,7 +783,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-helm.5
   - apiVersion: v2
     appVersion: abfa75a
-    created: "2024-01-22T21:49:23.698877445Z"
+    created: "2024-01-22T21:49:43.308669139Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -783,7 +803,7 @@ entries:
     version: 0.2.1-dev.0.update-dependency-helm.3
   - apiVersion: v2
     appVersion: 5ed8a04
-    created: "2024-01-22T21:49:23.677445662Z"
+    created: "2024-01-22T21:49:43.279893234Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -803,7 +823,7 @@ entries:
     version: 0.2.1-dev.0.main.13
   - apiVersion: v2
     appVersion: b4e47da
-    created: "2024-01-22T21:49:23.674566385Z"
+    created: "2024-01-22T21:49:43.275283735Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -823,7 +843,7 @@ entries:
     version: 0.2.1-dev.0.main.12
   - apiVersion: v2
     appVersion: a540fbc
-    created: "2024-01-22T21:49:23.672124152Z"
+    created: "2024-01-22T21:49:43.272618343Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -843,7 +863,7 @@ entries:
     version: 0.2.1-dev.0.main.11
   - apiVersion: v2
     appVersion: 7353abf
-    created: "2024-01-22T21:49:23.668943735Z"
+    created: "2024-01-22T21:49:43.27019404Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -863,7 +883,7 @@ entries:
     version: 0.2.1-dev.0.main.10
   - apiVersion: v2
     appVersion: 0ab941d
-    created: "2024-01-22T21:49:23.696478203Z"
+    created: "2024-01-22T21:49:43.306259002Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -883,7 +903,7 @@ entries:
     version: 0.2.1-dev.0.main.9
   - apiVersion: v2
     appVersion: 77a9bc3
-    created: "2024-01-22T21:49:23.693938589Z"
+    created: "2024-01-22T21:49:43.303759729Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -903,7 +923,7 @@ entries:
     version: 0.2.1-dev.0.main.8
   - apiVersion: v2
     appVersion: 8aa6ef9
-    created: "2024-01-22T21:49:23.690696428Z"
+    created: "2024-01-22T21:49:43.300301509Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -923,7 +943,7 @@ entries:
     version: 0.2.1-dev.0.main.7
   - apiVersion: v2
     appVersion: c7a0a88
-    created: "2024-01-22T21:49:23.688280705Z"
+    created: "2024-01-22T21:49:43.297815431Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -943,7 +963,7 @@ entries:
     version: 0.2.1-dev.0.main.6
   - apiVersion: v2
     appVersion: fc203d5
-    created: "2024-01-22T21:49:23.685135749Z"
+    created: "2024-01-22T21:49:43.294929479Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -963,7 +983,7 @@ entries:
     version: 0.2.1-dev.0.main.5
   - apiVersion: v2
     appVersion: 8c8cba5
-    created: "2024-01-22T21:49:23.682646018Z"
+    created: "2024-01-22T21:49:43.288700555Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -983,7 +1003,7 @@ entries:
     version: 0.2.1-dev.0.main.4
   - apiVersion: v2
     appVersion: 8819f6f
-    created: "2024-01-22T21:49:23.680254861Z"
+    created: "2024-01-22T21:49:43.284314427Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1003,7 +1023,7 @@ entries:
     version: 0.2.1-dev.0.main.3
   - apiVersion: v2
     appVersion: 29614bc
-    created: "2024-01-22T21:49:23.666536487Z"
+    created: "2024-01-22T21:49:43.266754741Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1023,7 +1043,7 @@ entries:
     version: 0.2.1-dev.0.main.1
   - apiVersion: v2
     appVersion: abfa75a
-    created: "2024-01-22T21:49:23.664129741Z"
+    created: "2024-01-22T21:49:43.2643208Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1043,7 +1063,7 @@ entries:
     version: 0.2.1-dev.0.feature-tilt-component.3
   - apiVersion: v2
     appVersion: e5380c3
-    created: "2024-01-22T21:49:23.660869493Z"
+    created: "2024-01-22T21:49:43.261919609Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1063,7 +1083,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-yarl-1-9-4.1
   - apiVersion: v2
     appVersion: 29614bc
-    created: "2024-01-22T21:49:23.65845908Z"
+    created: "2024-01-22T21:49:43.25860053Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1083,7 +1103,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-typing-extensions-4-9-0.2
   - apiVersion: v2
     appVersion: 77a9bc3
-    created: "2024-01-22T21:49:23.656081488Z"
+    created: "2024-01-22T21:49:43.256158644Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1103,7 +1123,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-pydantic-core-2-14-6.9
   - apiVersion: v2
     appVersion: 8aa6ef9
-    created: "2024-01-22T21:49:23.652947309Z"
+    created: "2024-01-22T21:49:43.253657277Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1123,7 +1143,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-pydantic-core-2-14-6.8
   - apiVersion: v2
     appVersion: 7353abf
-    created: "2024-01-22T21:49:23.650534672Z"
+    created: "2024-01-22T21:49:43.250165Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1143,7 +1163,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-pydantic-2-5-3.11
   - apiVersion: v2
     appVersion: 8aa6ef9
-    created: "2024-01-22T21:49:23.648132724Z"
+    created: "2024-01-22T21:49:43.247733864Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1163,7 +1183,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-httpx-0-26-0.8
   - apiVersion: v2
     appVersion: fc203d5
-    created: "2024-01-22T21:49:23.644976936Z"
+    created: "2024-01-22T21:49:43.24525565Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1183,7 +1203,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-frozenlist-1-4-1.6
   - apiVersion: v2
     appVersion: c7a0a88
-    created: "2024-01-22T21:49:23.642582953Z"
+    created: "2024-01-22T21:49:43.241750392Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1203,7 +1223,7 @@ entries:
     version: 0.2.1-dev.0.dependabot-pip-anyio-4-2-0.7
   - apiVersion: v2
     appVersion: e5380c3
-    created: "2024-01-22T21:49:23.640178141Z"
+    created: "2024-01-22T21:49:43.239298738Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1223,7 +1243,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: cfa276a
-    created: "2024-01-22T21:49:23.636948492Z"
+    created: "2024-01-22T21:49:43.235328603Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1243,7 +1263,7 @@ entries:
     version: 0.2.0-rc.1.update-dependency-zenith.2
   - apiVersion: v2
     appVersion: 2fb5db2
-    created: "2024-01-22T21:49:23.634545332Z"
+    created: "2024-01-22T21:49:43.232868452Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1263,7 +1283,7 @@ entries:
     version: 0.2.0-rc.1.update-dependency-zenith.1
   - apiVersion: v2
     appVersion: cfa276a
-    created: "2024-01-22T21:49:23.632106776Z"
+    created: "2024-01-22T21:49:43.230485195Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1283,7 +1303,7 @@ entries:
     version: 0.2.0-rc.1.update-dependency-openstack-cluster.2
   - apiVersion: v2
     appVersion: 2fb5db2
-    created: "2024-01-22T21:49:23.628615618Z"
+    created: "2024-01-22T21:49:43.228017661Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1303,7 +1323,7 @@ entries:
     version: 0.2.0-rc.1.update-dependency-openstack-cluster.1
   - apiVersion: v2
     appVersion: cfa276a
-    created: "2024-01-22T21:49:23.623784762Z"
+    created: "2024-01-22T21:49:43.22214575Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1323,7 +1343,7 @@ entries:
     version: 0.2.0-rc.1.main.1
   - apiVersion: v2
     appVersion: 2fb5db2
-    created: "2024-01-22T21:49:23.620381953Z"
+    created: "2024-01-22T21:49:43.218772514Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1343,7 +1363,7 @@ entries:
     version: 0.2.0-rc.1.fix-credential-secret-error.1
   - apiVersion: v2
     appVersion: 2fb5db2
-    created: "2024-01-22T21:49:23.62619753Z"
+    created: "2024-01-22T21:49:43.224576425Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1363,7 +1383,7 @@ entries:
     version: 0.2.0-rc.1
   - apiVersion: v2
     appVersion: 4c79724
-    created: "2024-01-22T21:49:23.617951823Z"
+    created: "2024-01-22T21:49:43.216003079Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1383,7 +1403,7 @@ entries:
     version: 0.1.1-dev.0.update-dependency-zenith.29
   - apiVersion: v2
     appVersion: 1ca55eb
-    created: "2024-01-22T21:49:23.61424924Z"
+    created: "2024-01-22T21:49:43.21359752Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1403,7 +1423,7 @@ entries:
     version: 0.1.1-dev.0.update-dependency-reloader.7
   - apiVersion: v2
     appVersion: 4c79724
-    created: "2024-01-22T21:49:23.611896866Z"
+    created: "2024-01-22T21:49:43.211193084Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1423,7 +1443,7 @@ entries:
     version: 0.1.1-dev.0.update-dependency-openstack-cluster.29
   - apiVersion: v2
     appVersion: c394ad7
-    created: "2024-01-22T21:49:23.609427732Z"
+    created: "2024-01-22T21:49:43.207561498Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1443,7 +1463,7 @@ entries:
     version: 0.1.1-dev.0.update-dependency-openstack-cluster.18
   - apiVersion: v2
     appVersion: d9db663
-    created: "2024-01-22T21:49:23.606977755Z"
+    created: "2024-01-22T21:49:43.204995201Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1463,7 +1483,7 @@ entries:
     version: 0.1.1-dev.0.update-dependency-kube-state-metrics.9
   - apiVersion: v2
     appVersion: d9db663
-    created: "2024-01-22T21:49:23.603199368Z"
+    created: "2024-01-22T21:49:43.201107672Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1483,7 +1503,7 @@ entries:
     version: 0.1.1-dev.0.update-dependency-kube-state-metrics.8
   - apiVersion: v2
     appVersion: 2fb5db2
-    created: "2024-01-22T21:49:23.585105984Z"
+    created: "2024-01-22T21:49:43.182537823Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1503,7 +1523,7 @@ entries:
     version: 0.1.1-dev.0.main.30
   - apiVersion: v2
     appVersion: 4c79724
-    created: "2024-01-22T21:49:23.579556064Z"
+    created: "2024-01-22T21:49:43.176961074Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1523,7 +1543,7 @@ entries:
     version: 0.1.1-dev.0.main.28
   - apiVersion: v2
     appVersion: "6976105"
-    created: "2024-01-22T21:49:23.577100316Z"
+    created: "2024-01-22T21:49:43.174539906Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1543,7 +1563,7 @@ entries:
     version: 0.1.1-dev.0.main.27
   - apiVersion: v2
     appVersion: 53f7748
-    created: "2024-01-22T21:49:23.573716547Z"
+    created: "2024-01-22T21:49:43.172110022Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1563,7 +1583,7 @@ entries:
     version: 0.1.1-dev.0.main.26
   - apiVersion: v2
     appVersion: b576d17
-    created: "2024-01-22T21:49:23.571272992Z"
+    created: "2024-01-22T21:49:43.168804171Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1583,7 +1603,7 @@ entries:
     version: 0.1.1-dev.0.main.25
   - apiVersion: v2
     appVersion: 5dc5a6f
-    created: "2024-01-22T21:49:23.567150607Z"
+    created: "2024-01-22T21:49:43.166393282Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1603,7 +1623,7 @@ entries:
     version: 0.1.1-dev.0.main.24
   - apiVersion: v2
     appVersion: 217331d
-    created: "2024-01-22T21:49:23.564650206Z"
+    created: "2024-01-22T21:49:43.163858063Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1623,7 +1643,7 @@ entries:
     version: 0.1.1-dev.0.main.23
   - apiVersion: v2
     appVersion: 89b6ddf
-    created: "2024-01-22T21:49:23.562137332Z"
+    created: "2024-01-22T21:49:43.16023324Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1643,7 +1663,7 @@ entries:
     version: 0.1.1-dev.0.main.22
   - apiVersion: v2
     appVersion: 3fe0fd1
-    created: "2024-01-22T21:49:23.559729614Z"
+    created: "2024-01-22T21:49:43.157820127Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1663,7 +1683,7 @@ entries:
     version: 0.1.1-dev.0.main.21
   - apiVersion: v2
     appVersion: 28bc4f4
-    created: "2024-01-22T21:49:23.554007919Z"
+    created: "2024-01-22T21:49:43.152060165Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1683,7 +1703,7 @@ entries:
     version: 0.1.1-dev.0.main.19
   - apiVersion: v2
     appVersion: c394ad7
-    created: "2024-01-22T21:49:23.550595989Z"
+    created: "2024-01-22T21:49:43.149396028Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1703,7 +1723,7 @@ entries:
     version: 0.1.1-dev.0.main.17
   - apiVersion: v2
     appVersion: bf73b0d
-    created: "2024-01-22T21:49:23.548228115Z"
+    created: "2024-01-22T21:49:43.146961215Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1723,7 +1743,7 @@ entries:
     version: 0.1.1-dev.0.main.16
   - apiVersion: v2
     appVersion: d9c984a
-    created: "2024-01-22T21:49:23.54582244Z"
+    created: "2024-01-22T21:49:43.143634143Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1743,7 +1763,7 @@ entries:
     version: 0.1.1-dev.0.main.15
   - apiVersion: v2
     appVersion: 3b7bd2e
-    created: "2024-01-22T21:49:23.543410825Z"
+    created: "2024-01-22T21:49:43.141220529Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1763,7 +1783,7 @@ entries:
     version: 0.1.1-dev.0.main.14
   - apiVersion: v2
     appVersion: 52ce983
-    created: "2024-01-22T21:49:23.540019383Z"
+    created: "2024-01-22T21:49:43.138759157Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1783,7 +1803,7 @@ entries:
     version: 0.1.1-dev.0.main.13
   - apiVersion: v2
     appVersion: 4b8d669
-    created: "2024-01-22T21:49:23.537594833Z"
+    created: "2024-01-22T21:49:43.135369445Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1803,7 +1823,7 @@ entries:
     version: 0.1.1-dev.0.main.12
   - apiVersion: v2
     appVersion: 653892b
-    created: "2024-01-22T21:49:23.534418645Z"
+    created: "2024-01-22T21:49:43.132921457Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1823,7 +1843,7 @@ entries:
     version: 0.1.1-dev.0.main.11
   - apiVersion: v2
     appVersion: 8f636ff
-    created: "2024-01-22T21:49:23.600770641Z"
+    created: "2024-01-22T21:49:43.198701442Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1843,7 +1863,7 @@ entries:
     version: 0.1.1-dev.0.main.9
   - apiVersion: v2
     appVersion: 61cdca0
-    created: "2024-01-22T21:49:23.597563842Z"
+    created: "2024-01-22T21:49:43.196126098Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1863,7 +1883,7 @@ entries:
     version: 0.1.1-dev.0.main.8
   - apiVersion: v2
     appVersion: d9db663
-    created: "2024-01-22T21:49:23.595147066Z"
+    created: "2024-01-22T21:49:43.192676507Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1883,7 +1903,7 @@ entries:
     version: 0.1.1-dev.0.main.7
   - apiVersion: v2
     appVersion: 1ca55eb
-    created: "2024-01-22T21:49:23.592739358Z"
+    created: "2024-01-22T21:49:43.190327153Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1903,7 +1923,7 @@ entries:
     version: 0.1.1-dev.0.main.6
   - apiVersion: v2
     appVersion: 006aa8a
-    created: "2024-01-22T21:49:23.58966918Z"
+    created: "2024-01-22T21:49:43.188001022Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1923,7 +1943,7 @@ entries:
     version: 0.1.1-dev.0.main.5
   - apiVersion: v2
     appVersion: 3f98290
-    created: "2024-01-22T21:49:23.587419426Z"
+    created: "2024-01-22T21:49:43.184828428Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1943,7 +1963,7 @@ entries:
     version: 0.1.1-dev.0.main.4
   - apiVersion: v2
     appVersion: e2199ee
-    created: "2024-01-22T21:49:23.581818943Z"
+    created: "2024-01-22T21:49:43.180081981Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1963,7 +1983,7 @@ entries:
     version: 0.1.1-dev.0.main.3
   - apiVersion: v2
     appVersion: 53a8b31
-    created: "2024-01-22T21:49:23.556303679Z"
+    created: "2024-01-22T21:49:43.155190241Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -1983,7 +2003,7 @@ entries:
     version: 0.1.1-dev.0.main.2
   - apiVersion: v2
     appVersion: 6cff68f
-    created: "2024-01-22T21:49:23.532003222Z"
+    created: "2024-01-22T21:49:43.129205872Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2003,7 +2023,7 @@ entries:
     version: 0.1.1-dev.0.main.1
   - apiVersion: v2
     appVersion: d2b0c56
-    created: "2024-01-22T21:49:23.529707794Z"
+    created: "2024-01-22T21:49:43.126802317Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2023,7 +2043,7 @@ entries:
     version: 0.1.1-dev.0.feature-support-secret-deletion.20
   - apiVersion: v2
     appVersion: 3ca5a21
-    created: "2024-01-22T21:49:23.516437162Z"
+    created: "2024-01-22T21:49:43.112533821Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2043,7 +2063,7 @@ entries:
     version: 0.1.1-dev.0.feature-scanning.10
   - apiVersion: v2
     appVersion: "1014e96"
-    created: "2024-01-22T21:49:23.526424118Z"
+    created: "2024-01-22T21:49:43.124348879Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2063,7 +2083,7 @@ entries:
     version: 0.1.1-dev.0.feature-scanning.9
   - apiVersion: v2
     appVersion: 14aee29
-    created: "2024-01-22T21:49:23.524163073Z"
+    created: "2024-01-22T21:49:43.122050329Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2083,7 +2103,7 @@ entries:
     version: 0.1.1-dev.0.feature-scanning.8
   - apiVersion: v2
     appVersion: 19a7ba1
-    created: "2024-01-22T21:49:23.521821909Z"
+    created: "2024-01-22T21:49:43.118723149Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2103,7 +2123,7 @@ entries:
     version: 0.1.1-dev.0.feature-scanning.7
   - apiVersion: v2
     appVersion: dabdc8f
-    created: "2024-01-22T21:49:23.518738181Z"
+    created: "2024-01-22T21:49:43.116406775Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2123,7 +2143,7 @@ entries:
     version: 0.1.1-dev.0.feature-scanning.5
   - apiVersion: v2
     appVersion: 2d4bfa4
-    created: "2024-01-22T21:49:23.514111086Z"
+    created: "2024-01-22T21:49:43.110168968Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2143,7 +2163,7 @@ entries:
     version: 0.1.1-dev.0.feature-scanning.1
   - apiVersion: v2
     appVersion: 32ba032
-    created: "2024-01-22T21:49:23.510991499Z"
+    created: "2024-01-22T21:49:43.107780361Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2163,7 +2183,7 @@ entries:
     version: 0.1.1-dev.0.feature-rework-dockerfile.6
   - apiVersion: v2
     appVersion: 210c403
-    created: "2024-01-22T21:49:23.508675602Z"
+    created: "2024-01-22T21:49:43.105276784Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2183,7 +2203,7 @@ entries:
     version: 0.1.1-dev.0.feature-rework-dockerfile.5
   - apiVersion: v2
     appVersion: 514defb
-    created: "2024-01-22T21:49:23.506294223Z"
+    created: "2024-01-22T21:49:43.102216358Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2203,7 +2223,7 @@ entries:
     version: 0.1.1-dev.0.feature-migrate-to-pydantic2.5
   - apiVersion: v2
     appVersion: 7da641f
-    created: "2024-01-22T21:49:23.503531064Z"
+    created: "2024-01-22T21:49:43.099906728Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2223,7 +2243,7 @@ entries:
     version: 0.1.1-dev.0.feature-migrate-to-pydantic2.4
   - apiVersion: v2
     appVersion: 03d1393
-    created: "2024-01-22T21:49:23.501022147Z"
+    created: "2024-01-22T21:49:43.09688939Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2243,7 +2263,7 @@ entries:
     version: 0.1.1-dev.0.feature-migrate-to-pydantic2.3
   - apiVersion: v2
     appVersion: f74d825
-    created: "2024-01-22T21:49:23.498728821Z"
+    created: "2024-01-22T21:49:43.094427566Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2263,7 +2283,7 @@ entries:
     version: 0.1.1-dev.0.feature-migrate-to-pydantic2.2
   - apiVersion: v2
     appVersion: bf0ed97
-    created: "2024-01-22T21:49:23.495448376Z"
+    created: "2024-01-22T21:49:43.09211993Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2283,7 +2303,7 @@ entries:
     version: 0.1.1-dev.0.feature-migrate-to-pydantic2.1
   - apiVersion: v2
     appVersion: f14d002
-    created: "2024-01-22T21:49:23.493125226Z"
+    created: "2024-01-22T21:49:43.088840427Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2303,7 +2323,7 @@ entries:
     version: 0.1.1-dev.0.feature-integration-tests.4
   - apiVersion: v2
     appVersion: eaffcf0
-    created: "2024-01-22T21:49:23.490826109Z"
+    created: "2024-01-22T21:49:43.086492726Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2323,7 +2343,7 @@ entries:
     version: 0.1.1-dev.0.feature-integration-tests.3
   - apiVersion: v2
     appVersion: bf73b0d
-    created: "2024-01-22T21:49:23.488485426Z"
+    created: "2024-01-22T21:49:43.084159071Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2343,7 +2363,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-yarl-1-9-3.17
   - apiVersion: v2
     appVersion: 4b8d669
-    created: "2024-01-22T21:49:23.484724055Z"
+    created: "2024-01-22T21:49:43.081250537Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2363,7 +2383,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-pydantic-core-2-14-5.13
   - apiVersion: v2
     appVersion: 3b7bd2e
-    created: "2024-01-22T21:49:23.482282173Z"
+    created: "2024-01-22T21:49:43.07856083Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2383,7 +2403,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-pydantic-2-5-2.15
   - apiVersion: v2
     appVersion: 006aa8a
-    created: "2024-01-22T21:49:23.479176917Z"
+    created: "2024-01-22T21:49:43.076107914Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2403,7 +2423,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-pydantic-2-5-1.6
   - apiVersion: v2
     appVersion: 3f98290
-    created: "2024-01-22T21:49:23.476877711Z"
+    created: "2024-01-22T21:49:43.072805799Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2423,7 +2443,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-pydantic-2-5-1.5
   - apiVersion: v2
     appVersion: 5dc5a6f
-    created: "2024-01-22T21:49:23.474588885Z"
+    created: "2024-01-22T21:49:43.070519673Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2443,7 +2463,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-idna-3-6.25
   - apiVersion: v2
     appVersion: d2b0c56
-    created: "2024-01-22T21:49:23.471361754Z"
+    created: "2024-01-22T21:49:43.068072346Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2463,7 +2483,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-idna-3-5.20
   - apiVersion: v2
     appVersion: 3fe0fd1
-    created: "2024-01-22T21:49:23.46894007Z"
+    created: "2024-01-22T21:49:43.065198039Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2483,7 +2503,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-httpx-0-25-2.23
   - apiVersion: v2
     appVersion: 61cdca0
-    created: "2024-01-22T21:49:23.466496104Z"
+    created: "2024-01-22T21:49:43.06241045Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2503,7 +2523,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-httpcore-1-0-2.9
   - apiVersion: v2
     appVersion: 52ce983
-    created: "2024-01-22T21:49:23.46329137Z"
+    created: "2024-01-22T21:49:43.059947044Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2523,7 +2543,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-exceptiongroup-1-2-0.14
   - apiVersion: v2
     appVersion: b576d17
-    created: "2024-01-22T21:49:23.460859637Z"
+    created: "2024-01-22T21:49:43.056582432Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2543,7 +2563,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-cryptography-41-0-7.26
   - apiVersion: v2
     appVersion: 217331d
-    created: "2024-01-22T21:49:23.458249Z"
+    created: "2024-01-22T21:49:43.0541322Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2563,7 +2583,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-cryptography-41-0-6.24
   - apiVersion: v2
     appVersion: 653892b
-    created: "2024-01-22T21:49:23.454893306Z"
+    created: "2024-01-22T21:49:43.051663434Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2583,7 +2603,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-certifi-2023-11-17.12
   - apiVersion: v2
     appVersion: c394ad7
-    created: "2024-01-22T21:49:23.452450973Z"
+    created: "2024-01-22T21:49:43.048586544Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2603,7 +2623,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-anyio-4-1-0.18
   - apiVersion: v2
     appVersion: 89b6ddf
-    created: "2024-01-22T21:49:23.450022647Z"
+    created: "2024-01-22T21:49:43.045720159Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2623,7 +2643,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-aiohttp-3-9-1.23
   - apiVersion: v2
     appVersion: 8f636ff
-    created: "2024-01-22T21:49:23.446643832Z"
+    created: "2024-01-22T21:49:43.043280908Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2643,7 +2663,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-pip-aiohttp-3-9-0.10
   - apiVersion: v2
     appVersion: 3f98290
-    created: "2024-01-22T21:49:23.444224081Z"
+    created: "2024-01-22T21:49:43.040124942Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2663,7 +2683,7 @@ entries:
     version: 0.1.1-dev.0.dependabot-github-actions-github-actions-e53591e42e.5
   - apiVersion: v2
     appVersion: 1a46517
-    created: "2024-01-22T21:49:23.441047386Z"
+    created: "2024-01-22T21:49:43.037850016Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2683,7 +2703,7 @@ entries:
     version: 0.1.0
   - apiVersion: v2
     appVersion: 83817d2
-    created: "2024-01-22T21:49:23.438500789Z"
+    created: "2024-01-22T21:49:43.035234868Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6adac185639e6002cc55467c0cdacb767c983333626473edbf9e6145efa99bdb
     name: azimuth-capi-operator
@@ -2693,7 +2713,7 @@ entries:
     version: 0.1.0-dev.0.zenith-support.14
   - apiVersion: v2
     appVersion: d41bca9
-    created: "2024-01-22T21:49:23.438240734Z"
+    created: "2024-01-22T21:49:43.034879818Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 02e4f55c66774135a885ae5594fc548ec5835ca07e879ffcbf4126b85f9ee0b0
     name: azimuth-capi-operator
@@ -2703,7 +2723,7 @@ entries:
     version: 0.1.0-dev.0.zenith-support.13
   - apiVersion: v2
     appVersion: 1552bcb
-    created: "2024-01-22T21:49:23.438000045Z"
+    created: "2024-01-22T21:49:43.03420792Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 437e82c83430739644afb6b8837d54c3b2e939161938a0aacc79efbf097f31c0
     name: azimuth-capi-operator
@@ -2713,7 +2733,7 @@ entries:
     version: 0.1.0-dev.0.zenith-support.12
   - apiVersion: v2
     appVersion: 0c3d29d
-    created: "2024-01-22T21:49:23.437754718Z"
+    created: "2024-01-22T21:49:43.033683937Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 8940a3af2b0b6793fb604616f87b66cfe0e8596534d63912a0aea091ceeff1a5
     name: azimuth-capi-operator
@@ -2723,7 +2743,7 @@ entries:
     version: 0.1.0-dev.0.zenith-support.11
   - apiVersion: v2
     appVersion: aa1e3f4
-    created: "2024-01-22T21:49:23.437506606Z"
+    created: "2024-01-22T21:49:43.033267103Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 710f2b944910c5ff8be066e74f0f113455292bcd5a1f51a28a5f88a310814336
     name: azimuth-capi-operator
@@ -2733,7 +2753,7 @@ entries:
     version: 0.1.0-dev.0.zenith-support.10
   - apiVersion: v2
     appVersion: 86db3b8
-    created: "2024-01-22T21:49:23.438783175Z"
+    created: "2024-01-22T21:49:43.035507084Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: f81e5ff2ffc9f9aee74ea4811e6ecee29d67a1fbaa78f35b057ce488fa54ae29
     name: azimuth-capi-operator
@@ -2743,7 +2763,7 @@ entries:
     version: 0.1.0-dev.0.zenith-support.9
   - apiVersion: v2
     appVersion: 8deabe5
-    created: "2024-01-22T21:49:23.437234388Z"
+    created: "2024-01-22T21:49:43.032976483Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2763,7 +2783,7 @@ entries:
     version: 0.1.0-dev.0.update-capi-helm-chart-version.138
   - apiVersion: v2
     appVersion: a86ea86
-    created: "2024-01-22T21:49:23.434495442Z"
+    created: "2024-01-22T21:49:43.03068738Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2783,7 +2803,7 @@ entries:
     version: 0.1.0-dev.0.update-20230929-bump-charts.136
   - apiVersion: v2
     appVersion: 1a46517
-    created: "2024-01-22T21:49:23.415892123Z"
+    created: "2024-01-22T21:49:43.010849687Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2803,7 +2823,7 @@ entries:
     version: 0.1.0-dev.0.main.138
   - apiVersion: v2
     appVersion: 547e43a
-    created: "2024-01-22T21:49:23.412842549Z"
+    created: "2024-01-22T21:49:43.008534046Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2823,7 +2843,7 @@ entries:
     version: 0.1.0-dev.0.main.137
   - apiVersion: v2
     appVersion: 0b6ab6a
-    created: "2024-01-22T21:49:23.410522424Z"
+    created: "2024-01-22T21:49:43.00626474Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2843,7 +2863,7 @@ entries:
     version: 0.1.0-dev.0.main.136
   - apiVersion: v2
     appVersion: 8a56f8b
-    created: "2024-01-22T21:49:23.408212057Z"
+    created: "2024-01-22T21:49:43.003870243Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2863,7 +2883,7 @@ entries:
     version: 0.1.0-dev.0.main.135
   - apiVersion: v2
     appVersion: 498e86f
-    created: "2024-01-22T21:49:23.405130974Z"
+    created: "2024-01-22T21:49:43.000600349Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2883,7 +2903,7 @@ entries:
     version: 0.1.0-dev.0.main.134
   - apiVersion: v2
     appVersion: abbd36b
-    created: "2024-01-22T21:49:23.40289225Z"
+    created: "2024-01-22T21:49:42.998331755Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2903,7 +2923,7 @@ entries:
     version: 0.1.0-dev.0.main.133
   - apiVersion: v2
     appVersion: 9db3221
-    created: "2024-01-22T21:49:23.400555104Z"
+    created: "2024-01-22T21:49:42.995263986Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2923,7 +2943,7 @@ entries:
     version: 0.1.0-dev.0.main.132
   - apiVersion: v2
     appVersion: 37d890f
-    created: "2024-01-22T21:49:23.39744692Z"
+    created: "2024-01-22T21:49:42.99258328Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2943,7 +2963,7 @@ entries:
     version: 0.1.0-dev.0.main.131
   - apiVersion: v2
     appVersion: 02b08a5
-    created: "2024-01-22T21:49:23.395201454Z"
+    created: "2024-01-22T21:49:42.990313604Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2963,7 +2983,7 @@ entries:
     version: 0.1.0-dev.0.main.130
   - apiVersion: v2
     appVersion: d0c9dd4
-    created: "2024-01-22T21:49:23.392911425Z"
+    created: "2024-01-22T21:49:42.98795888Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -2983,7 +3003,7 @@ entries:
     version: 0.1.0-dev.0.main.129
   - apiVersion: v2
     appVersion: e92066c
-    created: "2024-01-22T21:49:23.389686433Z"
+    created: "2024-01-22T21:49:42.984505802Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3003,7 +3023,7 @@ entries:
     version: 0.1.0-dev.0.main.126
   - apiVersion: v2
     appVersion: 77c78b9
-    created: "2024-01-22T21:49:23.387443442Z"
+    created: "2024-01-22T21:49:42.982226488Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3018,7 +3038,7 @@ entries:
     version: 0.1.0-dev.0.main.121
   - apiVersion: v2
     appVersion: 8ac554a
-    created: "2024-01-22T21:49:23.386545208Z"
+    created: "2024-01-22T21:49:42.981326556Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3033,7 +3053,7 @@ entries:
     version: 0.1.0-dev.0.main.120
   - apiVersion: v2
     appVersion: dbb242f
-    created: "2024-01-22T21:49:23.385654277Z"
+    created: "2024-01-22T21:49:42.980334743Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3048,7 +3068,7 @@ entries:
     version: 0.1.0-dev.0.main.118
   - apiVersion: v2
     appVersion: edda0d2
-    created: "2024-01-22T21:49:23.384753037Z"
+    created: "2024-01-22T21:49:42.978350215Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 3394e89fb7088b79e2fc67a77e5d73b713f3b7b8b5ddefc30e7478895f80c687
     name: azimuth-capi-operator
@@ -3058,7 +3078,7 @@ entries:
     version: 0.1.0-dev.0.main.116
   - apiVersion: v2
     appVersion: f6e235d
-    created: "2024-01-22T21:49:23.384487301Z"
+    created: "2024-01-22T21:49:42.978089671Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: e117cb46bb12dd23cc8bd1319a7cce3dd0f026bab5d37a2582252398d58a9ce9
     name: azimuth-capi-operator
@@ -3068,7 +3088,7 @@ entries:
     version: 0.1.0-dev.0.main.111
   - apiVersion: v2
     appVersion: 4496c36
-    created: "2024-01-22T21:49:23.384206919Z"
+    created: "2024-01-22T21:49:42.977832594Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 199457636dffea2544937d3a8ae6e5b4b84b393790b27f9d0ab20a7a390f2c81
     name: azimuth-capi-operator
@@ -3078,7 +3098,7 @@ entries:
     version: 0.1.0-dev.0.main.109
   - apiVersion: v2
     appVersion: d787eb5
-    created: "2024-01-22T21:49:23.383681548Z"
+    created: "2024-01-22T21:49:42.97757252Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d50a521eb5cfc2e4cd89ed3b08ac8a348b458f3d6491582673284051b64e6235
     name: azimuth-capi-operator
@@ -3088,7 +3108,7 @@ entries:
     version: 0.1.0-dev.0.main.105
   - apiVersion: v2
     appVersion: 0f7aafc
-    created: "2024-01-22T21:49:23.383151951Z"
+    created: "2024-01-22T21:49:42.977309702Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: ce5ceba92bc4b42969c4eb61e2346bf55827a07ac6e76bf9a4702aafcce4e3cc
     name: azimuth-capi-operator
@@ -3098,7 +3118,7 @@ entries:
     version: 0.1.0-dev.0.main.104
   - apiVersion: v2
     appVersion: 3fc093d
-    created: "2024-01-22T21:49:23.382500476Z"
+    created: "2024-01-22T21:49:42.97700727Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: ab5e515181cef02059a84e8d33c9c91bd643922e357fadfcfe5cf3d1c5e95dda
     name: azimuth-capi-operator
@@ -3108,7 +3128,7 @@ entries:
     version: 0.1.0-dev.0.main.100
   - apiVersion: v2
     appVersion: 4a13237
-    created: "2024-01-22T21:49:23.431538815Z"
+    created: "2024-01-22T21:49:43.028335952Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 3367a3c1ccecc3f500adeac10b3d5be472cb72790ecc6937943744723e5b830c
     name: azimuth-capi-operator
@@ -3118,7 +3138,7 @@ entries:
     version: 0.1.0-dev.0.main.99
   - apiVersion: v2
     appVersion: d7c3bca
-    created: "2024-01-22T21:49:23.431283318Z"
+    created: "2024-01-22T21:49:43.028076049Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: aa95f5209ead3db2c46d411a3ad4cea25ae785461f7b8bd261c9b54bea6e4608
     name: azimuth-capi-operator
@@ -3128,7 +3148,7 @@ entries:
     version: 0.1.0-dev.0.main.98
   - apiVersion: v2
     appVersion: "0784654"
-    created: "2024-01-22T21:49:23.431029966Z"
+    created: "2024-01-22T21:49:43.02780757Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 804120228ba8b283ca84d2d6907052d49baabed3eef59daf7d6e09845c6f89bf
     name: azimuth-capi-operator
@@ -3138,7 +3158,7 @@ entries:
     version: 0.1.0-dev.0.main.97
   - apiVersion: v2
     appVersion: 1eeee57
-    created: "2024-01-22T21:49:23.4307692Z"
+    created: "2024-01-22T21:49:43.027539422Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 118cc776ab49cbc9ce8f1d7c8c84edd56a0d221bfaf8d55098ae4abf47d44c8c
     name: azimuth-capi-operator
@@ -3148,7 +3168,7 @@ entries:
     version: 0.1.0-dev.0.main.80
   - apiVersion: v2
     appVersion: c0169a0
-    created: "2024-01-22T21:49:23.430239663Z"
+    created: "2024-01-22T21:49:43.026937504Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 5d7979f4e265a9608427bac4c379f01d4feec989b89381997482cca52afd5f56
     name: azimuth-capi-operator
@@ -3158,7 +3178,7 @@ entries:
     version: 0.1.0-dev.0.main.78
   - apiVersion: v2
     appVersion: 96772b1
-    created: "2024-01-22T21:49:23.429988394Z"
+    created: "2024-01-22T21:49:43.02621453Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 2449c630086ed47baebd8958a71bd4f9cb7fcdb68f92df0388df0decec3f6738
     name: azimuth-capi-operator
@@ -3168,7 +3188,7 @@ entries:
     version: 0.1.0-dev.0.main.76
   - apiVersion: v2
     appVersion: c7ddc1a
-    created: "2024-01-22T21:49:23.429719042Z"
+    created: "2024-01-22T21:49:43.025580051Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a8e33650d0dbad2294477dd1d511cc63a47ee0f4bfb04174c93802f7763a4653
     name: azimuth-capi-operator
@@ -3178,7 +3198,7 @@ entries:
     version: 0.1.0-dev.0.main.75
   - apiVersion: v2
     appVersion: 5c1c7a0
-    created: "2024-01-22T21:49:23.429458967Z"
+    created: "2024-01-22T21:49:43.02532093Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: ea03b6185d4f2a0980d58883f96d4e4779e73226c2508bc927da541a38d04c05
     name: azimuth-capi-operator
@@ -3188,7 +3208,7 @@ entries:
     version: 0.1.0-dev.0.main.74
   - apiVersion: v2
     appVersion: 01168cb
-    created: "2024-01-22T21:49:23.429199714Z"
+    created: "2024-01-22T21:49:43.025019069Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 50b8bb774856757bb9cc9b263e8bffe065ba469999ab3211b33cdc98fcf67360
     name: azimuth-capi-operator
@@ -3198,7 +3218,7 @@ entries:
     version: 0.1.0-dev.0.main.73
   - apiVersion: v2
     appVersion: fcb2e04
-    created: "2024-01-22T21:49:23.428923649Z"
+    created: "2024-01-22T21:49:43.024768984Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: af7c1d18b7f6610adb8a05dcf8968c45557edd9a9cc64ddfbf4e6a574f8cbb53
     name: azimuth-capi-operator
@@ -3208,7 +3228,7 @@ entries:
     version: 0.1.0-dev.0.main.72
   - apiVersion: v2
     appVersion: b1136b9
-    created: "2024-01-22T21:49:23.428621185Z"
+    created: "2024-01-22T21:49:43.024515063Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7bd732212bf5d836add87e5234ceb2979b18c550205ea48254c147d6b60d7a73
     name: azimuth-capi-operator
@@ -3218,7 +3238,7 @@ entries:
     version: 0.1.0-dev.0.main.71
   - apiVersion: v2
     appVersion: f92c0ee
-    created: "2024-01-22T21:49:23.427949259Z"
+    created: "2024-01-22T21:49:43.024263095Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 5db9980f7f8cadd32f217ba0d27ffc2f563182e364e51ded5860b3e570675417
     name: azimuth-capi-operator
@@ -3228,7 +3248,7 @@ entries:
     version: 0.1.0-dev.0.main.70
   - apiVersion: v2
     appVersion: f4d53d9
-    created: "2024-01-22T21:49:23.427049863Z"
+    created: "2024-01-22T21:49:43.02377071Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: e336866a17a44a50c6eda1834c6b8a9518060a63cd178e585cdcc49691ae6bfa
     name: azimuth-capi-operator
@@ -3238,7 +3258,7 @@ entries:
     version: 0.1.0-dev.0.main.69
   - apiVersion: v2
     appVersion: d477c98
-    created: "2024-01-22T21:49:23.426800277Z"
+    created: "2024-01-22T21:49:43.023518972Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 8752e01557a1362b3f2ea03d2789699bf8658be986d560897077b8a8a9e25e33
     name: azimuth-capi-operator
@@ -3248,7 +3268,7 @@ entries:
     version: 0.1.0-dev.0.main.68
   - apiVersion: v2
     appVersion: 9e0c87b
-    created: "2024-01-22T21:49:23.426510918Z"
+    created: "2024-01-22T21:49:43.023267545Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a7b07745aea5b403195d5f111e8eece66eca28915ae990e4d845f853251ab97f
     name: azimuth-capi-operator
@@ -3258,7 +3278,7 @@ entries:
     version: 0.1.0-dev.0.main.67
   - apiVersion: v2
     appVersion: f0e8a50
-    created: "2024-01-22T21:49:23.426250272Z"
+    created: "2024-01-22T21:49:43.023013524Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6ab61ff2b5ef6c4e0fca311e4be6e9418742a7b58a0c956f597750a23cdb7d17
     name: azimuth-capi-operator
@@ -3268,7 +3288,7 @@ entries:
     version: 0.1.0-dev.0.main.66
   - apiVersion: v2
     appVersion: 8189b52
-    created: "2024-01-22T21:49:23.426002981Z"
+    created: "2024-01-22T21:49:43.02276383Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d8f276a31e7b204dc997366ac19eb40189b429611cc6705991fc817fa535094d
     name: azimuth-capi-operator
@@ -3278,7 +3298,7 @@ entries:
     version: 0.1.0-dev.0.main.61
   - apiVersion: v2
     appVersion: 09e6830
-    created: "2024-01-22T21:49:23.425510644Z"
+    created: "2024-01-22T21:49:43.022275242Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7f846891104e4a7ba9ae736335e2be0498e6850bea641fe1bb6fc7b0d1472134
     name: azimuth-capi-operator
@@ -3288,7 +3308,7 @@ entries:
     version: 0.1.0-dev.0.main.57
   - apiVersion: v2
     appVersion: eaf964c
-    created: "2024-01-22T21:49:23.425243305Z"
+    created: "2024-01-22T21:49:43.022018555Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: e18fa61221dd7e7cc0699c9b5b5a6e9d7245fa72ffb14e38be114ce285801f8e
     name: azimuth-capi-operator
@@ -3298,7 +3318,7 @@ entries:
     version: 0.1.0-dev.0.main.56
   - apiVersion: v2
     appVersion: bcf7240
-    created: "2024-01-22T21:49:23.424995393Z"
+    created: "2024-01-22T21:49:43.021763572Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 461b61e1e9314e5b78f13a3eaa339cb35e0a980f925fce46c5a8878f92c7a7bb
     name: azimuth-capi-operator
@@ -3308,7 +3328,7 @@ entries:
     version: 0.1.0-dev.0.main.55
   - apiVersion: v2
     appVersion: 0548fda
-    created: "2024-01-22T21:49:23.424740708Z"
+    created: "2024-01-22T21:49:43.021503118Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d0253e1eee6f075ceca31ebf9e522a0b9a0147d679ba41c01195f121972bec91
     name: azimuth-capi-operator
@@ -3318,7 +3338,7 @@ entries:
     version: 0.1.0-dev.0.main.54
   - apiVersion: v2
     appVersion: f9b05a0
-    created: "2024-01-22T21:49:23.424489169Z"
+    created: "2024-01-22T21:49:43.021240159Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7e059e34b09ae40fa9c53e0a38764aa88c50d2cc25c07edec8dbd0bb1b9e0a19
     name: azimuth-capi-operator
@@ -3328,7 +3348,7 @@ entries:
     version: 0.1.0-dev.0.main.53
   - apiVersion: v2
     appVersion: a2fc982
-    created: "2024-01-22T21:49:23.424238733Z"
+    created: "2024-01-22T21:49:43.020948237Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: b3c972fb3d861b404fc56e880df3d2165243b1985617ff38582968818a9ea358
     name: azimuth-capi-operator
@@ -3338,7 +3358,7 @@ entries:
     version: 0.1.0-dev.0.main.52
   - apiVersion: v2
     appVersion: 8fa45db
-    created: "2024-01-22T21:49:23.423989909Z"
+    created: "2024-01-22T21:49:43.020682243Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6958d3f195661431f4ba30fc962564f1614433928ca2149ebec7219b8ed50dc6
     name: azimuth-capi-operator
@@ -3348,7 +3368,7 @@ entries:
     version: 0.1.0-dev.0.main.51
   - apiVersion: v2
     appVersion: ebe24c3
-    created: "2024-01-22T21:49:23.423503772Z"
+    created: "2024-01-22T21:49:43.019841396Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 70cdb2f2f385633e1e468801fe8cda7b7c5b797a4a9d2e27e664307a50d752d1
     name: azimuth-capi-operator
@@ -3358,7 +3378,7 @@ entries:
     version: 0.1.0-dev.0.main.49
   - apiVersion: v2
     appVersion: 2fb6cd5
-    created: "2024-01-22T21:49:23.423252684Z"
+    created: "2024-01-22T21:49:43.019326339Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6b64acab3e04b593038d8e52b516df25612209dc9384dd425835a13eda932094
     name: azimuth-capi-operator
@@ -3368,7 +3388,7 @@ entries:
     version: 0.1.0-dev.0.main.47
   - apiVersion: v2
     appVersion: 9b7ac03
-    created: "2024-01-22T21:49:23.422994473Z"
+    created: "2024-01-22T21:49:43.018683535Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 38267cb90c1d64ee8b9ac43378f8e319d9106d6b499f69fff770820af5502b83
     name: azimuth-capi-operator
@@ -3378,7 +3398,7 @@ entries:
     version: 0.1.0-dev.0.main.43
   - apiVersion: v2
     appVersion: bf6f760
-    created: "2024-01-22T21:49:23.422715353Z"
+    created: "2024-01-22T21:49:43.018430756Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d108e8748e386b2546f2829649d9073f6d46b4ae0f76b681242c52840ba5de2b
     name: azimuth-capi-operator
@@ -3388,7 +3408,7 @@ entries:
     version: 0.1.0-dev.0.main.40
   - apiVersion: v2
     appVersion: 2b81aa8
-    created: "2024-01-22T21:49:23.422366953Z"
+    created: "2024-01-22T21:49:43.018189157Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6677cf649f54f264ae9b1c084952f985dc7153847587eabd3c8cd892f41987bb
     name: azimuth-capi-operator
@@ -3398,7 +3418,7 @@ entries:
     version: 0.1.0-dev.0.main.39
   - apiVersion: v2
     appVersion: 487ab2e
-    created: "2024-01-22T21:49:23.422115495Z"
+    created: "2024-01-22T21:49:43.017936117Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 55e144b55e5ec36d66c9fc488f0dab70d544cab99a475a4fa7945d7fb56bddf8
     name: azimuth-capi-operator
@@ -3408,7 +3428,7 @@ entries:
     version: 0.1.0-dev.0.main.38
   - apiVersion: v2
     appVersion: a4e2387
-    created: "2024-01-22T21:49:23.4218556Z"
+    created: "2024-01-22T21:49:43.017696191Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 694f2854887cab99533ec4d17c219ad5dc41b769897f148cf9ba659148fdc160
     name: azimuth-capi-operator
@@ -3418,7 +3438,7 @@ entries:
     version: 0.1.0-dev.0.main.37
   - apiVersion: v2
     appVersion: 3715b83
-    created: "2024-01-22T21:49:23.421388618Z"
+    created: "2024-01-22T21:49:43.017452508Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 00d227ea19d40ef1148e05fa78d257ff8b5836ab47841c1b3515f79e36610816
     name: azimuth-capi-operator
@@ -3428,7 +3448,7 @@ entries:
     version: 0.1.0-dev.0.main.36
   - apiVersion: v2
     appVersion: 8cbfa15
-    created: "2024-01-22T21:49:23.420883747Z"
+    created: "2024-01-22T21:49:43.017192585Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 353fa299a3b65b479aecd16b998b3d71b81c1de976e79e71c3f5f8307f3fca4e
     name: azimuth-capi-operator
@@ -3438,7 +3458,7 @@ entries:
     version: 0.1.0-dev.0.main.35
   - apiVersion: v2
     appVersion: afe7d82
-    created: "2024-01-22T21:49:23.420202678Z"
+    created: "2024-01-22T21:49:43.016898719Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a8d9ff9f38459892c603fdf51b068792a5de569b97e75b1b24564c0606eabf56
     name: azimuth-capi-operator
@@ -3448,7 +3468,7 @@ entries:
     version: 0.1.0-dev.0.main.34
   - apiVersion: v2
     appVersion: d6d420c
-    created: "2024-01-22T21:49:23.419963061Z"
+    created: "2024-01-22T21:49:43.01665115Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d41519a43cb908806f92f30acc7f39f222b40269f424bd55e8bb23b472045c2f
     name: azimuth-capi-operator
@@ -3458,7 +3478,7 @@ entries:
     version: 0.1.0-dev.0.main.33
   - apiVersion: v2
     appVersion: 1a5f83e
-    created: "2024-01-22T21:49:23.419724296Z"
+    created: "2024-01-22T21:49:43.016394663Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a1fa767a4ace014189a852ed6464030c74e2621dcec77cf9755753e164a6216a
     name: azimuth-capi-operator
@@ -3468,7 +3488,7 @@ entries:
     version: 0.1.0-dev.0.main.32
   - apiVersion: v2
     appVersion: 2f07e2c
-    created: "2024-01-22T21:49:23.419484509Z"
+    created: "2024-01-22T21:49:43.016152513Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 76032859c9bfb0b2602e425c34d71b91c8a574ec6ee297316ff3ecb0a3b50703
     name: azimuth-capi-operator
@@ -3478,7 +3498,7 @@ entries:
     version: 0.1.0-dev.0.main.31
   - apiVersion: v2
     appVersion: 0f2f646
-    created: "2024-01-22T21:49:23.419245563Z"
+    created: "2024-01-22T21:49:43.015912447Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 83a04823f9f1f48d32f35dd2c90f7d1ef082ba235fb5a5fa4d003923e2761a4b
     name: azimuth-capi-operator
@@ -3488,7 +3508,7 @@ entries:
     version: 0.1.0-dev.0.main.30
   - apiVersion: v2
     appVersion: 97f1b2d
-    created: "2024-01-22T21:49:23.419004574Z"
+    created: "2024-01-22T21:49:43.015670999Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 94bc0ef3331d2df52165a220ec7c523d1aee37b16cce92d9a5cb7cd90bd0b44a
     name: azimuth-capi-operator
@@ -3498,7 +3518,7 @@ entries:
     version: 0.1.0-dev.0.main.29
   - apiVersion: v2
     appVersion: 32bc820
-    created: "2024-01-22T21:49:23.418760239Z"
+    created: "2024-01-22T21:49:43.015425082Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d7bbd68d322f131467b7c11f9e9f5a681e69b1a3b99e0991db7c94beed7724ce
     name: azimuth-capi-operator
@@ -3508,7 +3528,7 @@ entries:
     version: 0.1.0-dev.0.main.28
   - apiVersion: v2
     appVersion: b07305d
-    created: "2024-01-22T21:49:23.418487971Z"
+    created: "2024-01-22T21:49:43.01511731Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a518ddac7287c056fded6edbfcf50ad8556a156f42d25211b58fc8a774d4a2f0
     name: azimuth-capi-operator
@@ -3518,7 +3538,7 @@ entries:
     version: 0.1.0-dev.0.main.27
   - apiVersion: v2
     appVersion: 66af583
-    created: "2024-01-22T21:49:23.418251631Z"
+    created: "2024-01-22T21:49:43.01484786Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6bbe631ac59cef45dee50756282dd7c13e961d6222897747421bd8af22b3af22
     name: azimuth-capi-operator
@@ -3528,7 +3548,7 @@ entries:
     version: 0.1.0-dev.0.main.26
   - apiVersion: v2
     appVersion: bbfc856
-    created: "2024-01-22T21:49:23.418011794Z"
+    created: "2024-01-22T21:49:43.014601001Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7f520bd8f6bb326c502c489ae83def433791a16aa7e3088bcd6373c7d3c3bba3
     name: azimuth-capi-operator
@@ -3538,7 +3558,7 @@ entries:
     version: 0.1.0-dev.0.main.25
   - apiVersion: v2
     appVersion: 62e4b74
-    created: "2024-01-22T21:49:23.417753092Z"
+    created: "2024-01-22T21:49:43.014338082Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: d52feb89fe07a7f5de7500478cc57d2dcb39e325217fe7f88102362740a043db
     name: azimuth-capi-operator
@@ -3548,7 +3568,7 @@ entries:
     version: 0.1.0-dev.0.main.24
   - apiVersion: v2
     appVersion: bf4b30c
-    created: "2024-01-22T21:49:23.417493568Z"
+    created: "2024-01-22T21:49:43.014066528Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: ca532622c893e7dc85599b1b8e50ecf9df311ffea5c3f945b3da7ee1ac61cbda
     name: azimuth-capi-operator
@@ -3558,7 +3578,7 @@ entries:
     version: 0.1.0-dev.0.main.23
   - apiVersion: v2
     appVersion: 70c63a5
-    created: "2024-01-22T21:49:23.417236909Z"
+    created: "2024-01-22T21:49:43.01378225Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 39ebd56128b39b8f6320a228954230ba721b41e950b768704129bdc49b4ce36e
     name: azimuth-capi-operator
@@ -3568,7 +3588,7 @@ entries:
     version: 0.1.0-dev.0.main.22
   - apiVersion: v2
     appVersion: f29df5e
-    created: "2024-01-22T21:49:23.416975532Z"
+    created: "2024-01-22T21:49:43.013465993Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 25e5a6bb0a5162f12ae59659d3db19e86e477edc701d0238e3dcace50f99161f
     name: azimuth-capi-operator
@@ -3578,7 +3598,7 @@ entries:
     version: 0.1.0-dev.0.main.19
   - apiVersion: v2
     appVersion: 4ce5bc6
-    created: "2024-01-22T21:49:23.416713213Z"
+    created: "2024-01-22T21:49:43.011770839Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: fed544deb75c8a6ab2a763502db6c6056e8aab9b065b6139339c9a57cf757241
     name: azimuth-capi-operator
@@ -3588,7 +3608,7 @@ entries:
     version: 0.1.0-dev.0.main.18
   - apiVersion: v2
     appVersion: 730f0c9
-    created: "2024-01-22T21:49:23.416446466Z"
+    created: "2024-01-22T21:49:43.011408135Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: e3736da1edfeeed9af24024635d434e835f46e9086201f6c5b6d3497d079d288
     name: azimuth-capi-operator
@@ -3598,7 +3618,7 @@ entries:
     version: 0.1.0-dev.0.main.17
   - apiVersion: v2
     appVersion: 703ab21
-    created: "2024-01-22T21:49:23.416173808Z"
+    created: "2024-01-22T21:49:43.011129677Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 3e4ba92b8f990bd55d1e157dbbf781beb559c0a209ee9615e582833e904a8dab
     name: azimuth-capi-operator
@@ -3608,7 +3628,7 @@ entries:
     version: 0.1.0-dev.0.main.16
   - apiVersion: v2
     appVersion: d3845e2
-    created: "2024-01-22T21:49:23.430478678Z"
+    created: "2024-01-22T21:49:43.027245096Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: cd003f6c60d35a7a8cbd0b4452d9c6e1aba6d05857c8debfcaa4958fa1562a67
     name: azimuth-capi-operator
@@ -3618,7 +3638,7 @@ entries:
     version: 0.1.0-dev.0.main.8
   - apiVersion: v2
     appVersion: a02c8d3
-    created: "2024-01-22T21:49:23.427280383Z"
+    created: "2024-01-22T21:49:43.024011117Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 93b30c18e3958aa40fae12cf1ba19149f61dd95ea74b4ddf827d36fa548a03e8
     name: azimuth-capi-operator
@@ -3628,7 +3648,7 @@ entries:
     version: 0.1.0-dev.0.main.7
   - apiVersion: v2
     appVersion: 8f9f929
-    created: "2024-01-22T21:49:23.425746794Z"
+    created: "2024-01-22T21:49:43.022511952Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 9e0701ead3176efb9c6c50368ad971d2af394cda9f9586b1978d0518d5fb3696
     name: azimuth-capi-operator
@@ -3638,7 +3658,7 @@ entries:
     version: 0.1.0-dev.0.main.6
   - apiVersion: v2
     appVersion: 7585ebe
-    created: "2024-01-22T21:49:23.423739202Z"
+    created: "2024-01-22T21:49:43.020400019Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 5c0488184e11973dc37c5a646af0b925584405561f0743f00e0b7e07cc63fc02
     name: azimuth-capi-operator
@@ -3648,7 +3668,7 @@ entries:
     version: 0.1.0-dev.0.main.5
   - apiVersion: v2
     appVersion: 5c50709
-    created: "2024-01-22T21:49:23.382184167Z"
+    created: "2024-01-22T21:49:42.976746997Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: da7dbbf488e9dfd95166c18b46ae83c3d24066bcb6d4c949c650237936436ccc
     name: azimuth-capi-operator
@@ -3658,7 +3678,7 @@ entries:
     version: 0.1.0-dev.0.kubeapps-support.21
   - apiVersion: v2
     appVersion: 1b232dc
-    created: "2024-01-22T21:49:23.381921116Z"
+    created: "2024-01-22T21:49:42.976480161Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 0da019d632fe6bad172ded6bfc9a9e47c7799cded33cd407333a8089a867077b
     name: azimuth-capi-operator
@@ -3668,7 +3688,7 @@ entries:
     version: 0.1.0-dev.0.kubeapps-support.20
   - apiVersion: v2
     appVersion: 9d36aab
-    created: "2024-01-22T21:49:23.381645803Z"
+    created: "2024-01-22T21:49:42.976198388Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3683,7 +3703,7 @@ entries:
     version: 0.1.0-dev.0.fix-restart-on-cert-changes.117
   - apiVersion: v2
     appVersion: 0faaa4f
-    created: "2024-01-22T21:49:23.380774909Z"
+    created: "2024-01-22T21:49:42.975314706Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 2156764a3d2002c4d21e0358614bdaee1258f36702395fef10af20443a59249e
     name: azimuth-capi-operator
@@ -3693,7 +3713,7 @@ entries:
     version: 0.1.0-dev.0.fix-delete-port-security-disabled.60
   - apiVersion: v2
     appVersion: 91a9020
-    created: "2024-01-22T21:49:23.380522058Z"
+    created: "2024-01-22T21:49:42.97505839Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: fc55f4fb3d785c8886e26d9813e9edaa5a77e0ff5377e4bc27577f70cc746e20
     name: azimuth-capi-operator
@@ -3703,7 +3723,7 @@ entries:
     version: 0.1.0-dev.0.fix-delete-port-security-disabled.59
   - apiVersion: v2
     appVersion: 29e3a93
-    created: "2024-01-22T21:49:23.380270149Z"
+    created: "2024-01-22T21:49:42.974802866Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 00b615eccc6cc3b3da67236971e6740fd623b9d0c8602f9192ffacc2dd23362b
     name: azimuth-capi-operator
@@ -3713,7 +3733,7 @@ entries:
     version: 0.1.0-dev.0.fix-delete-port-security-disabled.58
   - apiVersion: v2
     appVersion: d907ee3
-    created: "2024-01-22T21:49:23.380015073Z"
+    created: "2024-01-22T21:49:42.974543344Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: db9776ee33359a23f5fcca16ae3ca1b6062d94a3012c61b2b345df090e83f7b6
     name: azimuth-capi-operator
@@ -3723,7 +3743,7 @@ entries:
     version: 0.1.0-dev.0.fix-addon-migration.103
   - apiVersion: v2
     appVersion: 668c184
-    created: "2024-01-22T21:49:23.379754397Z"
+    created: "2024-01-22T21:49:42.974282048Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7c873f16c8c763040a3445d63c878582f4e44ab7602074b5a17f9e5dbf943d34
     name: azimuth-capi-operator
@@ -3733,7 +3753,7 @@ entries:
     version: 0.1.0-dev.0.fix-addon-migration.102
   - apiVersion: v2
     appVersion: "2526787"
-    created: "2024-01-22T21:49:23.379496156Z"
+    created: "2024-01-22T21:49:42.974019691Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 1fa355102056684c1dfb056a3186e589fb7d1e2a78cf2ea75f37fc19be2f49a7
     name: azimuth-capi-operator
@@ -3743,7 +3763,7 @@ entries:
     version: 0.1.0-dev.0.fix-addon-migration.101
   - apiVersion: v2
     appVersion: b6c2ed5
-    created: "2024-01-22T21:49:23.379231382Z"
+    created: "2024-01-22T21:49:42.973740041Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: b30910825d6ccb6dafdb3507e822d6d87b542297f09898d04814a158ae2961bb
     name: azimuth-capi-operator
@@ -3753,7 +3773,7 @@ entries:
     version: 0.1.0-dev.0.feature-zenith-operator.65
   - apiVersion: v2
     appVersion: 027a0f7
-    created: "2024-01-22T21:49:23.378974724Z"
+    created: "2024-01-22T21:49:42.973477674Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 0d848f4fa53a8774a4fb92ce05dde209c764dda9e8c04dbfd7167c5932f6576b
     name: azimuth-capi-operator
@@ -3763,7 +3783,7 @@ entries:
     version: 0.1.0-dev.0.feature-zenith-operator.64
   - apiVersion: v2
     appVersion: f00dfb8
-    created: "2024-01-22T21:49:23.378712275Z"
+    created: "2024-01-22T21:49:42.973205849Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: f202b41ff7854cd14b958a9086021c3ad9b3170568a0c2b58a83ce3c85e0b712
     name: azimuth-capi-operator
@@ -3773,7 +3793,7 @@ entries:
     version: 0.1.0-dev.0.feature-zenith-operator.63
   - apiVersion: v2
     appVersion: 2b31733
-    created: "2024-01-22T21:49:23.378417836Z"
+    created: "2024-01-22T21:49:42.972908717Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 363c5ee159d6cb3adc2ee9f1bea7fc449afc97ea2b9e0ee7eaf27dce5cc00468
     name: azimuth-capi-operator
@@ -3783,7 +3803,7 @@ entries:
     version: 0.1.0-dev.0.feature-zenith-operator.59
   - apiVersion: v2
     appVersion: 76425a8
-    created: "2024-01-22T21:49:23.378149486Z"
+    created: "2024-01-22T21:49:42.972637263Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: ed6b9b14c3ee4057befd9d6dbf335eec276e202265f6ea5aac9f34f42855e99e
     name: azimuth-capi-operator
@@ -3793,7 +3813,7 @@ entries:
     version: 0.1.0-dev.0.feature-zenith-operator.58
   - apiVersion: v2
     appVersion: "40554e0"
-    created: "2024-01-22T21:49:23.377869023Z"
+    created: "2024-01-22T21:49:42.972352083Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3813,7 +3833,7 @@ entries:
     version: 0.1.0-dev.0.feature-template-tags.137
   - apiVersion: v2
     appVersion: ee17973
-    created: "2024-01-22T21:49:23.374733399Z"
+    created: "2024-01-22T21:49:42.969292701Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3833,7 +3853,7 @@ entries:
     version: 0.1.0-dev.0.feature-template-tags.136
   - apiVersion: v2
     appVersion: 3c9aa95
-    created: "2024-01-22T21:49:23.372458829Z"
+    created: "2024-01-22T21:49:42.966995895Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3853,7 +3873,7 @@ entries:
     version: 0.1.0-dev.0.feature-specify-ingress-ip.128
   - apiVersion: v2
     appVersion: 7dfff23
-    created: "2024-01-22T21:49:23.370096195Z"
+    created: "2024-01-22T21:49:42.963692077Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3873,7 +3893,7 @@ entries:
     version: 0.1.0-dev.0.feature-specify-ingress-ip.127
   - apiVersion: v2
     appVersion: 4365e4a
-    created: "2024-01-22T21:49:23.367072547Z"
+    created: "2024-01-22T21:49:42.961351389Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3893,7 +3913,7 @@ entries:
     version: 0.1.0-dev.0.feature-root-volume-option.133
   - apiVersion: v2
     appVersion: a318de8
-    created: "2024-01-22T21:49:23.364729088Z"
+    created: "2024-01-22T21:49:42.959036499Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3913,7 +3933,7 @@ entries:
     version: 0.1.0-dev.0.feature-root-volume-option.132
   - apiVersion: v2
     appVersion: d0a5de6
-    created: "2024-01-22T21:49:23.362338302Z"
+    created: "2024-01-22T21:49:42.956713143Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3933,7 +3953,7 @@ entries:
     version: 0.1.0-dev.0.feature-random-suffix.136
   - apiVersion: v2
     appVersion: c3147ad
-    created: "2024-01-22T21:49:23.359134541Z"
+    created: "2024-01-22T21:49:42.953409546Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 111eebd6d0274c7f8590615ed756304c52af1120efcbf1c659dffa8f31dc102a
     name: azimuth-capi-operator
@@ -3943,7 +3963,7 @@ entries:
     version: 0.1.0-dev.0.feature-node-size.47
   - apiVersion: v2
     appVersion: 1f4f967
-    created: "2024-01-22T21:49:23.358877141Z"
+    created: "2024-01-22T21:49:42.953117864Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a8221ae64b22d8505463afdf65ed0fcea36dbb6312ab05dc4a126524e259d6cb
     name: azimuth-capi-operator
@@ -3953,7 +3973,7 @@ entries:
     version: 0.1.0-dev.0.feature-node-size.46
   - apiVersion: v2
     appVersion: 2f0efaa
-    created: "2024-01-22T21:49:23.358584115Z"
+    created: "2024-01-22T21:49:42.952855086Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 1150b41dd4ac2d09bdfc79c9d07b2485b6d646013ece43a79a31151e5e086fec
     name: azimuth-capi-operator
@@ -3963,7 +3983,7 @@ entries:
     version: 0.1.0-dev.0.feature-multiple-ips.79
   - apiVersion: v2
     appVersion: b0af9c1
-    created: "2024-01-22T21:49:23.358320464Z"
+    created: "2024-01-22T21:49:42.952589663Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: c6033c665268e2e9f3587f236170152cd3cb4c3622226aba682497328c09a34d
     name: azimuth-capi-operator
@@ -3973,7 +3993,7 @@ entries:
     version: 0.1.0-dev.0.feature-move-to-new-libraries.77
   - apiVersion: v2
     appVersion: 721c4f3
-    created: "2024-01-22T21:49:23.358047846Z"
+    created: "2024-01-22T21:49:42.952313911Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -3993,7 +4013,7 @@ entries:
     version: 0.1.0-dev.0.feature-monitoring-volumes.133
   - apiVersion: v2
     appVersion: de070bf
-    created: "2024-01-22T21:49:23.355763928Z"
+    created: "2024-01-22T21:49:42.950021482Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4013,7 +4033,7 @@ entries:
     version: 0.1.0-dev.0.feature-metrics.125
   - apiVersion: v2
     appVersion: d89900f
-    created: "2024-01-22T21:49:23.352681592Z"
+    created: "2024-01-22T21:49:42.946931536Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4033,7 +4053,7 @@ entries:
     version: 0.1.0-dev.0.feature-metrics.124
   - apiVersion: v2
     appVersion: 78f4f76
-    created: "2024-01-22T21:49:23.350474989Z"
+    created: "2024-01-22T21:49:42.944797581Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4053,7 +4073,7 @@ entries:
     version: 0.1.0-dev.0.feature-metrics.123
   - apiVersion: v2
     appVersion: 53f0eba
-    created: "2024-01-22T21:49:23.348407394Z"
+    created: "2024-01-22T21:49:42.942680259Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4073,7 +4093,7 @@ entries:
     version: 0.1.0-dev.0.feature-metrics.122
   - apiVersion: v2
     appVersion: cb7a5cc
-    created: "2024-01-22T21:49:23.345487305Z"
+    created: "2024-01-22T21:49:42.94068402Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 391de5159ccb163472319b753d872c231fcc7ac10596a92a49f2c583c6d7150b
     name: azimuth-capi-operator
@@ -4083,7 +4103,7 @@ entries:
     version: 0.1.0-dev.0.feature-identity-platforms.115
   - apiVersion: v2
     appVersion: 82dc701
-    created: "2024-01-22T21:49:23.345230436Z"
+    created: "2024-01-22T21:49:42.940390225Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6a278e52f2bef1f0db85593d09f6b95ebd13b6d779652f006a9c3c11f240d7f0
     name: azimuth-capi-operator
@@ -4093,7 +4113,7 @@ entries:
     version: 0.1.0-dev.0.feature-identity-platforms.113
   - apiVersion: v2
     appVersion: 54b5734
-    created: "2024-01-22T21:49:23.344972565Z"
+    created: "2024-01-22T21:49:42.939802379Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 639af13e44d0d757dfc89a0f64b75a4d56366db57fcee1b4bffc430a2210c748
     name: azimuth-capi-operator
@@ -4103,7 +4123,7 @@ entries:
     version: 0.1.0-dev.0.feature-identity-platforms.112
   - apiVersion: v2
     appVersion: ba52c2b
-    created: "2024-01-22T21:49:23.344713262Z"
+    created: "2024-01-22T21:49:42.939230206Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 73d71c35be7b585c6613f9bfa279b6c26145bce4082c1d2171d74f3d76792e93
     name: azimuth-capi-operator
@@ -4113,7 +4133,7 @@ entries:
     version: 0.1.0-dev.0.feature-identity-platforms.111
   - apiVersion: v2
     appVersion: 8414ccd
-    created: "2024-01-22T21:49:23.344447847Z"
+    created: "2024-01-22T21:49:42.938737301Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 3240601ca634f8ce53c7d7485b867a8faf9e058aad6a3f1679c7054bdde60765
     name: azimuth-capi-operator
@@ -4123,7 +4143,7 @@ entries:
     version: 0.1.0-dev.0.feature-identity-platforms.110
   - apiVersion: v2
     appVersion: e5fdd5e
-    created: "2024-01-22T21:49:23.34417048Z"
+    created: "2024-01-22T21:49:42.938444747Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4143,7 +4163,7 @@ entries:
     version: 0.1.0-dev.0.feature-ha-option.131
   - apiVersion: v2
     appVersion: 15bcec6
-    created: "2024-01-22T21:49:23.341831229Z"
+    created: "2024-01-22T21:49:42.936070476Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4163,7 +4183,7 @@ entries:
     version: 0.1.0-dev.0.feature-extract-semver.135
   - apiVersion: v2
     appVersion: 22d09a0
-    created: "2024-01-22T21:49:23.338778375Z"
+    created: "2024-01-22T21:49:42.933756949Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 57f4660db175659435104afa4988ba6003cda505bf13c73d34ad65bf3582b906
     name: azimuth-capi-operator
@@ -4173,7 +4193,7 @@ entries:
     version: 0.1.0-dev.0.feature-external-auth.111
   - apiVersion: v2
     appVersion: a5a8d87
-    created: "2024-01-22T21:49:23.338454181Z"
+    created: "2024-01-22T21:49:42.933482929Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 67ec9764c8fa44d5edfca672231382098697b031a8ef3fe531337ec81850f3ed
     name: azimuth-capi-operator
@@ -4183,7 +4203,7 @@ entries:
     version: 0.1.0-dev.0.feature-external-auth.110
   - apiVersion: v2
     appVersion: 1a556dd
-    created: "2024-01-22T21:49:23.338179168Z"
+    created: "2024-01-22T21:49:42.933190166Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4198,7 +4218,7 @@ entries:
     version: 0.1.0-dev.0.feature-explicit-network-ids.119
   - apiVersion: v2
     appVersion: b889519
-    created: "2024-01-22T21:49:23.337288508Z"
+    created: "2024-01-22T21:49:42.932242315Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4218,7 +4238,7 @@ entries:
     version: 0.1.0-dev.0.feature-delete-external-resources.136
   - apiVersion: v2
     appVersion: 5eea7f1
-    created: "2024-01-22T21:49:23.335037712Z"
+    created: "2024-01-22T21:49:42.928899414Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4238,7 +4258,7 @@ entries:
     version: 0.1.0-dev.0.feature-cluster-zenith-debug.134
   - apiVersion: v2
     appVersion: 03730bc
-    created: "2024-01-22T21:49:23.332707899Z"
+    created: "2024-01-22T21:49:42.926609349Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4258,7 +4278,7 @@ entries:
     version: 0.1.0-dev.0.feature-cluster-zenith-debug.133
   - apiVersion: v2
     appVersion: 7062f44
-    created: "2024-01-22T21:49:23.329438172Z"
+    created: "2024-01-22T21:49:42.923489576Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4278,7 +4298,7 @@ entries:
     version: 0.1.0-dev.0.feature-cluster-zenith-debug.132
   - apiVersion: v2
     appVersion: 646ee0f
-    created: "2024-01-22T21:49:23.327183119Z"
+    created: "2024-01-22T21:49:42.920688222Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4298,7 +4318,7 @@ entries:
     version: 0.1.0-dev.0.feature-cluster-zenith-debug.131
   - apiVersion: v2
     appVersion: "9102800"
-    created: "2024-01-22T21:49:23.324850571Z"
+    created: "2024-01-22T21:49:42.918385735Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4318,7 +4338,7 @@ entries:
     version: 0.1.0-dev.0.feature-cluster-zenith-debug.130
   - apiVersion: v2
     appVersion: 6b51343
-    created: "2024-01-22T21:49:23.321675507Z"
+    created: "2024-01-22T21:49:42.916029367Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 307eec728f33caab1af722dee07597949ef5f259a03075d04d5cde87455eb1bc
     name: azimuth-capi-operator
@@ -4328,7 +4348,7 @@ entries:
     version: 0.1.0-dev.0.feature-bump-addon-versions.107
   - apiVersion: v2
     appVersion: f251c6b
-    created: "2024-01-22T21:49:23.321415302Z"
+    created: "2024-01-22T21:49:42.915725563Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 42031d203d41b7fe8f0933761af4670c5c2c50127a7f3e0de974bbcd58a46d5c
     name: azimuth-capi-operator
@@ -4338,7 +4358,7 @@ entries:
     version: 0.1.0-dev.0.feature-bump-addon-versions.106
   - apiVersion: v2
     appVersion: 77bfe42
-    created: "2024-01-22T21:49:23.321140249Z"
+    created: "2024-01-22T21:49:42.915059574Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 64d9825dbf985d47fae784b9443b082345184f7d99768199d829ba330f7824f4
     name: azimuth-capi-operator
@@ -4348,7 +4368,7 @@ entries:
     version: 0.1.0-dev.0.feature-autoscaling-groups.43
   - apiVersion: v2
     appVersion: e762832
-    created: "2024-01-22T21:49:23.320883069Z"
+    created: "2024-01-22T21:49:42.914292249Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 4be89458b399385c45763ee3b75aeecbeb790316f8f5e58f472e96f88c24d658
     name: azimuth-capi-operator
@@ -4358,7 +4378,7 @@ entries:
     version: 0.1.0-dev.0.feature-autoscaling-groups.42
   - apiVersion: v2
     appVersion: 495c7d0
-    created: "2024-01-22T21:49:23.320632012Z"
+    created: "2024-01-22T21:49:42.914010014Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a68af9037c891bc6f964ec24ad240fee33918f1852c2eb42a567bf27e892f0bc
     name: azimuth-capi-operator
@@ -4368,7 +4388,7 @@ entries:
     version: 0.1.0-dev.0.feature-autoscaling-groups.41
   - apiVersion: v2
     appVersion: 351a2d5
-    created: "2024-01-22T21:49:23.32037394Z"
+    created: "2024-01-22T21:49:42.913749931Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 8742a8289b72e27d7de9ef7815d126713757833d70710de90191390dc004927b
     name: azimuth-capi-operator
@@ -4378,7 +4398,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.119
   - apiVersion: v2
     appVersion: 68277a6
-    created: "2024-01-22T21:49:23.320105931Z"
+    created: "2024-01-22T21:49:42.913475622Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 9053e3ecdf1d055d280fb71deb2274ae6d5015c31d58f24b24dd8c2e26f8361d
     name: azimuth-capi-operator
@@ -4388,7 +4408,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.118
   - apiVersion: v2
     appVersion: f433568
-    created: "2024-01-22T21:49:23.319840907Z"
+    created: "2024-01-22T21:49:42.91319495Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a0a1b3a9e9327e0ef8d465f0d5c0f0afec3c8a7c4eeaf7b5ef18ae133b48ae57
     name: azimuth-capi-operator
@@ -4398,7 +4418,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.117
   - apiVersion: v2
     appVersion: 4a6e4d8
-    created: "2024-01-22T21:49:23.319577936Z"
+    created: "2024-01-22T21:49:42.912848587Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: da8ce47651067904c74944165d5843dab8933f2beff89442bdcc4ce2d674a753
     name: azimuth-capi-operator
@@ -4408,7 +4428,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.114
   - apiVersion: v2
     appVersion: 9ed17c6
-    created: "2024-01-22T21:49:23.319320026Z"
+    created: "2024-01-22T21:49:42.912517692Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 21f8a2346b66f6f355d7aed8001a48ccadad805e44b029f79218d5a2f9b7e3ce
     name: azimuth-capi-operator
@@ -4418,7 +4438,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.113
   - apiVersion: v2
     appVersion: d4f9333
-    created: "2024-01-22T21:49:23.319048059Z"
+    created: "2024-01-22T21:49:42.912226281Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 1354702d90a2cbed10dcda5f132c9106151f350d2f521bcb8a7714993a5ab059
     name: azimuth-capi-operator
@@ -4428,7 +4448,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.112
   - apiVersion: v2
     appVersion: a5b38ef
-    created: "2024-01-22T21:49:23.318758268Z"
+    created: "2024-01-22T21:49:42.911962872Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 0e4cd14ea5820daac366f323586d5c1845cfbad5b316cb4a8288557c5e90e67b
     name: azimuth-capi-operator
@@ -4438,7 +4458,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.111
   - apiVersion: v2
     appVersion: 8410b3e
-    created: "2024-01-22T21:49:23.318461856Z"
+    created: "2024-01-22T21:49:42.911696767Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 37b2e77feba77cffecae5c242e364bf6673a60099b312f49b8847460c1ed9cc8
     name: azimuth-capi-operator
@@ -4448,7 +4468,7 @@ entries:
     version: 0.1.0-dev.0.feature-argo-support.110
   - apiVersion: v2
     appVersion: 08c1597
-    created: "2024-01-22T21:49:23.318202252Z"
+    created: "2024-01-22T21:49:42.911419643Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: a5a44f7589d321705be3c77e16886cf6a38c089762d7bb44b184b150024ea521
     name: azimuth-capi-operator
@@ -4458,7 +4478,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.95
   - apiVersion: v2
     appVersion: 704a0bb
-    created: "2024-01-22T21:49:23.31794361Z"
+    created: "2024-01-22T21:49:42.91115972Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 9267f5e172ad1a56c5f4a0074b2ffae67f44c4bb44546c1f389d92d43d7fcc8c
     name: azimuth-capi-operator
@@ -4468,7 +4488,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.94
   - apiVersion: v2
     appVersion: ef605d1
-    created: "2024-01-22T21:49:23.317663488Z"
+    created: "2024-01-22T21:49:42.910878317Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 2662cbd11e873fbebb3eb43f77ec95480b3710733474033923b522508e514726
     name: azimuth-capi-operator
@@ -4478,7 +4498,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.93
   - apiVersion: v2
     appVersion: d66d776
-    created: "2024-01-22T21:49:23.317398854Z"
+    created: "2024-01-22T21:49:42.910615619Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: b8fd67a89901a19e5a594b1ba6c2a68e476e1b020c2bffd1958126fec4ee4b5b
     name: azimuth-capi-operator
@@ -4488,7 +4508,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.92
   - apiVersion: v2
     appVersion: 135d753
-    created: "2024-01-22T21:49:23.31711766Z"
+    created: "2024-01-22T21:49:42.910339256Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 55297c958f9254f64db48c9cd17d35d310c3aa89e9cfe3a5febae7b3a2072eb4
     name: azimuth-capi-operator
@@ -4498,7 +4518,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.91
   - apiVersion: v2
     appVersion: 22631b0
-    created: "2024-01-22T21:49:23.31681694Z"
+    created: "2024-01-22T21:49:42.910074975Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 4942031e7866c672a8eeced90fd9cac0f7465beded2320f6573141c88b40d047
     name: azimuth-capi-operator
@@ -4508,7 +4528,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.90
   - apiVersion: v2
     appVersion: d77e07e
-    created: "2024-01-22T21:49:23.316039285Z"
+    created: "2024-01-22T21:49:42.909799293Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 3d63f7bd65cd328b7cb7f3ac4dab6df3bcbd5d624e7758924293c1e9c0a508d2
     name: azimuth-capi-operator
@@ -4518,7 +4538,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.89
   - apiVersion: v2
     appVersion: 42916d0
-    created: "2024-01-22T21:49:23.315305387Z"
+    created: "2024-01-22T21:49:42.909525464Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 64b46f1e2d2dfbba18f74925a58da4f15646d4c3be584af6a00df5e0511acdb3
     name: azimuth-capi-operator
@@ -4528,7 +4548,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.88
   - apiVersion: v2
     appVersion: 3001a73
-    created: "2024-01-22T21:49:23.315037838Z"
+    created: "2024-01-22T21:49:42.909218143Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 562426588e837ec31e34c62708909d7b5e84150b956e522bf90a75c5778ddca5
     name: azimuth-capi-operator
@@ -4538,7 +4558,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.87
   - apiVersion: v2
     appVersion: 78d2c93
-    created: "2024-01-22T21:49:23.314764639Z"
+    created: "2024-01-22T21:49:42.90889337Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 84e3cc466106131437200d6b6724675529edf92818d98989efa2e980a8bf8adc
     name: azimuth-capi-operator
@@ -4548,7 +4568,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.86
   - apiVersion: v2
     appVersion: d5d7ec1
-    created: "2024-01-22T21:49:23.314473316Z"
+    created: "2024-01-22T21:49:42.908081383Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 6df1cc1def8902b8ac94f5feeecca88be3ae875120309a61c9984fa288d7151e
     name: azimuth-capi-operator
@@ -4558,7 +4578,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.85
   - apiVersion: v2
     appVersion: 45f8a7c
-    created: "2024-01-22T21:49:23.314211007Z"
+    created: "2024-01-22T21:49:42.907537503Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7d607e926399323c27acfc360ff3c508bf1cf1bbd6396ed55c5dee8f0ce78c95
     name: azimuth-capi-operator
@@ -4568,7 +4588,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.84
   - apiVersion: v2
     appVersion: 79bf589
-    created: "2024-01-22T21:49:23.313950311Z"
+    created: "2024-01-22T21:49:42.906928211Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 2739ff863b46fe5b2943747649040b50fd99921dba1e89399af50338ae989ba0
     name: azimuth-capi-operator
@@ -4578,7 +4598,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.83
   - apiVersion: v2
     appVersion: ff6a06e
-    created: "2024-01-22T21:49:23.313654039Z"
+    created: "2024-01-22T21:49:42.906658459Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 5098d41257de96ceb0d8fe612c3f48bf6d72ba0b7dd25c4615ea29494da17e41
     name: azimuth-capi-operator
@@ -4588,7 +4608,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.82
   - apiVersion: v2
     appVersion: bb35db5
-    created: "2024-01-22T21:49:23.313389876Z"
+    created: "2024-01-22T21:49:42.906381545Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: c2f4908475c26034e96c311324c06801f824e7af23310fe3a79371a952c94da7
     name: azimuth-capi-operator
@@ -4598,7 +4618,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.81
   - apiVersion: v2
     appVersion: b0af9c1
-    created: "2024-01-22T21:49:23.313106167Z"
+    created: "2024-01-22T21:49:42.906101224Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 7fb1734217b72e908d7e77b2562a65fe8052a418b8b75d374480cc52d8fcf707
     name: azimuth-capi-operator
@@ -4608,7 +4628,7 @@ entries:
     version: 0.1.0-dev.0.feature-addon-provider.77
   - apiVersion: v2
     appVersion: c3587b9
-    created: "2024-01-22T21:49:23.312544921Z"
+    created: "2024-01-22T21:49:42.905437562Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4623,7 +4643,7 @@ entries:
     version: 0.1.0-dev.0.deps-bump-capi-charts-198.122
   - apiVersion: v2
     appVersion: 77c78b9
-    created: "2024-01-22T21:49:23.311614978Z"
+    created: "2024-01-22T21:49:42.904434198Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4638,7 +4658,7 @@ entries:
     version: 0.1.0-dev.0.deps-bump-capi-charts-198.121
   - apiVersion: v2
     appVersion: "4215341"
-    created: "2024-01-22T21:49:23.312833189Z"
+    created: "2024-01-22T21:49:42.905811977Z"
     description: Helm chart for deploying the Azimuth CAPI operator.
     digest: 3401d028dda6c95a13f503311c2ce5610d2c2a39873f3d6400dc38b429f9fc96
     name: azimuth-capi-operator
@@ -4648,7 +4668,7 @@ entries:
     version: 0.1.0-dev.0.deps-bump-capi-charts.110
   - apiVersion: v2
     appVersion: d0976dc
-    created: "2024-01-22T21:49:23.310664596Z"
+    created: "2024-01-22T21:49:42.903502978Z"
     dependencies:
     - condition: reloader.enabled
       name: reloader
@@ -4661,4 +4681,4 @@ entries:
     urls:
     - azimuth-capi-operator-0.1.0-dev.0.bump-capi-helm-charts.122.tgz
     version: 0.1.0-dev.0.bump-capi-helm-charts.122
-generated: "2024-01-22T21:49:23.309453228Z"
+generated: "2024-01-22T21:49:42.902371947Z"
