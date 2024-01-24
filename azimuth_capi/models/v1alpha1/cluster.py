@@ -156,6 +156,10 @@ class ClusterSpec(schema.BaseModel):
         default_factory = AddonsSpec,
         description = "Describes the optional addons that should be enabled for the cluster."
     )
+    createdByUsername: schema.Optional[str] = None
+    createdByUserId: schema.Optional[str] = None
+    updatedByUsername: schema.Optional[str] = None
+    updatedByUserId: schema.Optional[str] = None
 
 
 class ClusterPhase(str, schema.Enum):
