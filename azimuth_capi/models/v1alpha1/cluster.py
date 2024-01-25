@@ -168,7 +168,7 @@ class ClusterSpec(schema.BaseModel):
         None,
         description = "Username of user that updated the cluster.",
     )
-    updated_by_user_id: schema.Optional[str] = = Field(
+    updated_by_user_id: schema.Optional[str] = Field(
         None,
         description = "User id of user that updated the cluster.",
     )
