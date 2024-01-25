@@ -156,10 +156,22 @@ class ClusterSpec(schema.BaseModel):
         default_factory = AddonsSpec,
         description = "Describes the optional addons that should be enabled for the cluster."
     )
-    createdByUsername: schema.Optional[str] = None
-    createdByUserId: schema.Optional[str] = None
-    updatedByUsername: schema.Optional[str] = None
-    updatedByUserId: schema.Optional[str] = None
+    created_by_username: schema.Optional[str] = Field(
+        None,
+        description = "Username of user that created the cluster.",
+    )
+    created_by_user_id: schema.Optional[str] = Field(
+        None,
+        description = "User id of user that created the cluster.",
+    )
+    updated_by_username: schema.Optional[str] = Field(
+        None,
+        description = "Username of user that updated the cluster.",
+    )
+    updated_by_user_id: schema.Optional[str] = = Field(
+        None,
+        description = "User id of user that updated the cluster.",
+    )
 
 
 class ClusterPhase(str, schema.Enum):
