@@ -8,7 +8,12 @@ changelog:
 
     - title: New features and enhancements
       labels:
-        - enhancement
+        - "*"
+      exclude:
+        labels:
+          - bug
+          - dependency-update
+          - pip-update
 
     - title: Bugs fixed
       labels:
@@ -18,7 +23,3 @@ changelog:
       labels:
         - dependency-update
         - pip-update
-
-    - title: Other changes
-      labels:
-        - "*"
