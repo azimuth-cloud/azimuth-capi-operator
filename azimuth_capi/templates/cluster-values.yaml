@@ -1,15 +1,6 @@
 cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
 controlPlane:
-{% if spec.ha_control_plane %}
-  machineCount: 3
-{% else %}
-  machineCount: 1
-{% endif %}
-{% if spec.control_plane_root_volume_size %}
-  machineRootVolume:
-    diskSize: {{ spec.control_plane_root_volume_size }}
-{% endif %}
   machineFlavor: "{{ spec.control_plane_machine_size }}"
   healthCheck:
     enabled: {{ "true" if spec.autohealing else "false" }}
@@ -28,10 +19,6 @@ nodeGroups:
     machineCountMax: {{ node_group.max_count }}
 {% else %}
     machineCount: {{ node_group.count }}
-{% endif %}
-{% if node_group.root_volume_size %}
-    machineRootVolume:
-      diskSize: {{ node_group.root_volume_size }}
 {% endif %}
 {% endfor %}
 
