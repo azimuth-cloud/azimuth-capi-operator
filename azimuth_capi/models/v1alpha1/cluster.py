@@ -19,13 +19,6 @@ class NodeGroupSpec(schema.BaseModel):
         ...,
         description = "The name of the size to use for the machines in the node group."
     )
-    root_volume_size: schema.conint(ge = 0) = Field(
-        0,
-        description = (
-            "The root volume size to use for machines in the node group. "
-            "If not given, the root disk from the flavor will be used."
-        )
-    )
     autoscale: bool = Field(
         False,
         description = "Whether the node group should autoscale or not."
@@ -136,17 +129,6 @@ class ClusterSpec(schema.BaseModel):
     control_plane_machine_size: schema.constr(min_length = 1) = Field(
         ...,
         description = "The name of the size to use for control plane machines."
-    )
-    ha_control_plane: bool = Field(
-        True,
-        description = "Indicates whether the control plane should be HA or not."
-    )
-    control_plane_root_volume_size: schema.conint(ge = 0) = Field(
-        0,
-        description = (
-            "The root volume size to use for control plane machines. "
-            "If not given, the root disk from the flavor will be used."
-        )
     )
     node_groups: t.List[NodeGroupSpec] = Field(
         default_factory = list,
