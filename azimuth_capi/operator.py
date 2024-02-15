@@ -179,6 +179,22 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
             raise kopf.AdmissionError("template is in use by at least one cluster", code = 400)
 
 
+async def fetch_model_instance(model, name, namespace = None):
+    """
+    Fetches and parses the specified model instance, or None if the instance does not exist.
+    """
+    ekresource = await ekresource_for_model(model)
+    try:
+        data = await ekresource.fetch(name, namespace = namespace)
+    except ApiError as exc:
+        if exc.status_code == 404:
+            return None
+        else:
+            raise
+    else:
+        return model.model_validate(data)
+
+
 @model_handler(
     api.Cluster,
     kopf.on.validate,
@@ -198,9 +214,9 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
         raise kopf.AdmissionError(str(exc), code = 400)
     # The credentials secret must exist, unless the cluster is deleting
     if not meta.get("deletionTimestamp"):
-        ekresource = await ekclient.api("v1").resource("secrets")
+        secrets = await ekclient.api("v1").resource("secrets")
         try:
-            _ = await ekresource.fetch(
+            _ = await secrets.fetch(
                 spec.cloud_credentials_secret_name,
                 namespace = namespace
             )
@@ -213,32 +229,61 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
             else:
                 raise
     # The specified template must exist
-    ekresource = await ekresource_for_model(api.ClusterTemplate)
-    try:
-        template = await ekresource.fetch(spec.template_name)
-    except ApiError as exc:
-        if exc.status_code == 404:
-            raise kopf.AdmissionError("specified cluster template does not exist", code = 400)
-        else:
-            raise
-    # If the template is being changed, we want to impose additional conditions
-    ekresource = await ekresource_for_model(api.Cluster)
-    try:
-        existing = await ekresource.fetch(name, namespace = namespace)
-    except ApiError as exc:
-        if exc.status_code == 404:
-            existing = {}
-        else:
-            raise
-    if not existing or existing.spec["templateName"] != template.metadata.name:
-        # The new template must not be deprecated
-        if template.spec.get("deprecated", False):
-            raise kopf.AdmissionError("specified cluster template is deprecated", code = 400)
-        # The new template must not be a downgrade
-        template_vn = template.spec["values"]["kubernetesVersion"]
-        existing_vn = existing.get("status", {}).get("kubernetesVersion")
-        if existing_vn and template_vn < existing_vn:
-            raise kopf.AdmissionError("specified cluster template would be a downgrade", code = 400)
+    next_template = await fetch_model_instance(api.ClusterTemplate, spec.template_name)
+    if not next_template:
+        raise kopf.AdmissionError("specified cluster template does not exist", code = 400)
+    # Load the current state of the cluster
+    current_cluster = await fetch_model_instance(api.Cluster, name, namespace = namespace)
+    # If the template is not changing, we are done
+    if current_cluster and current_cluster.spec.template_name == next_template.metadata.name:
+        return
+    # If we get to here, the template must not be deprecated
+    if next_template.spec.deprecated:
+        raise kopf.AdmissionError("specified cluster template is deprecated", code = 400)
+    # The rest of the validation only applies to upgrades
+    if not current_cluster:
+        return
+    # Load the current template
+    current_template = await fetch_model_instance(
+        api.ClusterTemplate,
+        current_cluster.spec.template_name
+    )
+    # Get the versions of both templates as SemVer versions
+    current_version = easysemver.Version(current_template.spec.values.kubernetes_version)
+    next_version = easysemver.Version(next_template.spec.values.kubernetes_version)
+    # The template is not permitted to be a downgrade
+    if next_version < current_version:
+        raise kopf.AdmissionError("specified cluster template would be a downgrade", code = 400)
+    # Prevent the major version from changing
+    # TODO(mkjpryor) change this if Kubernetes 2.x is ever released and upgrade is allowed
+    if next_version.major != current_version.major:
+        raise kopf.AdmissionError("upgrading to a new major version is not supported", code = 400)
+    # The template can only be bumped by one minor version
+    if next_version.minor > current_version.minor.increment():
+        raise kopf.AdmissionError("upgrading by more than one minor version is not supported", code = 400)
+    # If there are no nodes, we are done
+    if not current_cluster.status.nodes:
+        return
+    # Make sure that the new template is within one minor version of the oldest node
+    # NOTE(mkjpryor) this is stricter than the official Kubernetes skew policy, which
+    #                allows kubelet to be up to three minor versions old, but enforcing
+    #                the stricter constraint here reduces the risk of races in the
+    #                control plane when multiple upgrades are applied without waiting
+    #                for the previous one to finish
+    oldest_kubelet_version = min(
+        easysemver.Version(node.kubelet_version)
+        for node in current_cluster.status.nodes.values()
+        if node.kubelet_version
+    )
+    if next_version.minor > oldest_kubelet_version.minor.increment():
+        raise kopf.AdmissionError(
+            (
+                "upgrading to more than one minor version newer than "
+                "the oldest node is not supported"
+            ),
+            code = 400
+        )
+    return next_template
 
 
 @model_handler(api.Cluster, kopf.on.create)
