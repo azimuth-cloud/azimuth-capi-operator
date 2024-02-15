@@ -210,6 +210,9 @@ class Configuration(
     #: The field manager name to use for server-side apply
     easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
 
+    #: The amount of time (seconds) before a watch is forcefully restarted
+    watch_timeout: conint(gt = 0) = 600
+
     #: The Helm client configuration
     helm_client: HelmClientConfiguration = Field(default_factory = HelmClientConfiguration)
 
