@@ -66,13 +66,17 @@ metrics:
     enabled: true
     labels:
       grafana_dashboard: "1"
-  # Use a custom build until https://github.com/kubernetes/kube-state-metrics/pull/2048 is in a release
-  image:
-    registry: ghcr.io/stackhpc
-    tag: v2.8.2-stackhpc.1
   rbac:
     create: true
     extraRules:
+      - apiGroups:
+          - apiextensions.k8s.io
+        resources:
+          - customresourcedefinitions
+        verbs:
+          - list
+          - watch
+          - get
       - apiGroups:
           - azimuth.stackhpc.com
         resources:
