@@ -15,7 +15,6 @@ import yaml
 
 from easykube import Configuration, ApiError
 import easysemver
-from kube_custom_resource import CustomResourceRegistry
 from pyhelm3 import Client as HelmClient, errors as helm_errors
 
 from . import models, status
@@ -53,11 +52,6 @@ helm_client = HelmClient(
 )
 
 
-# Create a registry of custom resources and populate it from the models module
-registry = CustomResourceRegistry(settings.api_group, settings.crd_categories)
-registry.discover_models(models)
-
-
 @kopf.on.startup()
 async def apply_settings(**kwargs):
     """
@@ -82,29 +76,6 @@ async def apply_settings(**kwargs):
     kopf_settings.watching.client_timeout = settings.watch_timeout
     if settings.webhook.managed:
         kopf_settings.admission.managed = f"webhook.{settings.api_group}"
-    # Apply the CRDs
-    for crd in registry:
-        try:
-            await ekclient.apply_object(crd.kubernetes_resource(), force = True)
-        except Exception:
-            logger.exception("error applying CRD %s.%s - exiting", crd.plural_name, crd.api_group)
-            sys.exit(1)
-    # Give Kubernetes a chance to create the APIs for the CRDs
-    await asyncio.sleep(0.5)
-    # Check to see if the APIs for the CRDs are up
-    # If they are not, the kopf watches will not start properly so we exit and get restarted
-    for crd in registry:
-        preferred_version = next(k for k, v in crd.versions.items() if v.storage)
-        api_version = f"{crd.api_group}/{preferred_version}"
-        try:
-            _ = await ekclient.get(f"/apis/{api_version}/{crd.plural_name}")
-        except Exception:
-            logger.exception(
-                "api for %s.%s not available - exiting",
-                crd.plural_name,
-                crd.api_group
-            )
-            sys.exit(1)
 
 
 @kopf.on.cleanup()

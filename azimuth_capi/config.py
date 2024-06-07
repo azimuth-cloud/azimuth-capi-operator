@@ -196,10 +196,6 @@ class Configuration(
 
     #: The API group of the cluster CRDs
     api_group: constr(min_length = 1) = "azimuth.stackhpc.com"
-    #: A list of categories to place CRDs into
-    crd_categories: t.List[constr(min_length = 1)] = Field(
-        default_factory = lambda: ["azimuth"]
-    )
 
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
