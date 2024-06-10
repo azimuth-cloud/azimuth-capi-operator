@@ -1,0 +1,14 @@
+{{- if and .Values.metrics.enabled .Values.metrics.prometheus.monitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "azimuth-capi-operator.fullname" . }}
+  labels: {{ include "azimuth-capi-operator.labels" . | nindent 4 }}
+spec:
+  endpoints:
+    - honorLabels: true
+      port: metrics
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels: {{ include "azimuth-capi-operator.selectorLabels" . | nindent 6 }}
+{{- end }}

@@ -86,12 +86,6 @@ jobs:
             chart_repo_jsonpath: dependencies[0].repository
             chart_version_jsonpath: dependencies[0].version
 
-          - key: kube-state-metrics
-            path: ./chart/Chart.yaml
-            chart_name_jsonpath: dependencies[1].name
-            chart_repo_jsonpath: dependencies[1].repository
-            chart_version_jsonpath: dependencies[1].version
-
     name: ${{ matrix.key }}
     steps:
       - name: Checkout
