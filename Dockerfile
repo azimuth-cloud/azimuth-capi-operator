@@ -98,12 +98,4 @@ COPY --from=python-builder /app /app
 
 USER $APP_UID
 ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
-CMD [ \
-    "/venv/bin/kopf", \
-    "run", \
-    "--module", \
-    "azimuth_capi.operator", \
-    "--all-namespaces", \
-    "--liveness", \
-    "http://0.0.0.0:8000/healthz" \
-]
+CMD ["/venv/bin/python", "-m", "azimuth_capi"]

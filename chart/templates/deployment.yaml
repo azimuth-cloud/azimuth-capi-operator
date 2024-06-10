@@ -31,6 +31,9 @@ spec:
           image: {{ printf "%s:%s" .Values.image.repository (default .Chart.AppVersion .Values.image.tag) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
             - name: webhook
               containerPort: 8443
               protocol: TCP
