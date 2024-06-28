@@ -8,7 +8,7 @@ metadata:
     {{- toYaml .Values.metrics.dashboard.labels | nindent 4 }}
 data:
   azimuth_capi_operator_clusters_dashboard.json: |
-    {{- .Files.Get "files/clusters_dashboard.json" | nindent 4 }}
+    {{- .Files.Get "files/dashboards/clusters.json" | nindent 4 }}
   azimuth_capi_operator_apps_dashboard.json: |
-    {{- .Files.Get "files/apps_dashboard.json" | nindent 4 }}
+    {{- .Files.Get "files/dashboards/apps.json" | nindent 4 }}
 {{- end }}

@@ -1,0 +1,6 @@
+{{- if .Values.crds.enabled }}
+{{- range $path, $_ := .Files.Glob "files/crds/*.yaml" }}
+---
+{{ include "azimuth-capi-operator.crd" (list $ $path) }}
+{{- end }}
+{{- end }}
