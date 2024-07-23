@@ -122,6 +122,10 @@ class ClusterSpec(schema.BaseModel):
             "If not given then the first discovered realm in the namespace is used."
         )
     )
+    paused: bool = Field(
+        False,
+        description = "Indicates if reconciliation should be paused."
+    )
     autohealing: bool = Field(
         True,
         description = "Indicates if auto-healing should be enabled."
@@ -378,6 +382,11 @@ class Cluster(
             "name": "Kubernetes Version",
             "type": "string",
             "jsonPath": ".status.kubernetesVersion",
+        },
+        {
+            "name": "Paused",
+            "type": "boolean",
+            "jsonPath": ".spec.paused",
         },
         {
             "name": "Phase",

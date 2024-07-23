@@ -307,10 +307,14 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
 
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
-async def on_cluster_create(instance, name, namespace, patch, **kwargs):
+async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     """
     Executes when a new cluster is created or the spec of an existing cluster is updated.
     """
+    # If cluster reconciliation is paused, there is nothing else to do
+    if instance.spec.paused:
+        logger.info("reconciliation is paused - no action taken")
+        return
     # Make sure that the secret exists
     ekresource = await ekclient.api("v1").resource("secrets")
     secret = await ekresource.fetch(
@@ -358,10 +362,14 @@ async def on_cluster_create(instance, name, namespace, patch, **kwargs):
 
 
 @model_handler(api.Cluster, kopf.on.delete)
-async def on_cluster_delete(name, namespace, **kwargs):
+async def on_cluster_delete(logger, instance, name, namespace, **kwargs):
     """
     Executes whenever a cluster is deleted.
     """
+    # If cluster reconciliation is paused, there is nothing else to do
+    if instance.spec.paused:
+        logger.info("reconciliation is paused - no action taken")
+        return
     # Delete the corresponding Helm release
     try:
         await helm_client.uninstall_release(name, namespace = namespace)
