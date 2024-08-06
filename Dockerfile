@@ -17,7 +17,7 @@ RUN set -ex; \
     helm version
 
 # Pull and unpack the baked in charts
-ARG OPENSTACK_CLUSTER_CHART_REPO=https://stackhpc.github.io/capi-helm-charts
+ARG OPENSTACK_CLUSTER_CHART_REPO=https://azimuth-cloud.github.io/capi-helm-charts
 ARG OPENSTACK_CLUSTER_CHART_NAME=openstack-cluster
 ARG OPENSTACK_CLUSTER_CHART_VERSION=0.9.0
 RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
@@ -27,7 +27,7 @@ RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
       --untardir /charts && \
     rm -rf /charts/*.tgz
 
-ARG ZENITH_CHART_REPO=https://stackhpc.github.io/zenith
+ARG ZENITH_CHART_REPO=https://azimuth-cloud.github.io/zenith
 ARG ZENITH_CHART_VERSION=0.10.1
 ARG ZENITH_APISERVER_CHART_NAME=zenith-apiserver
 ARG ZENITH_OPERATOR_CHART_NAME=zenith-operator
