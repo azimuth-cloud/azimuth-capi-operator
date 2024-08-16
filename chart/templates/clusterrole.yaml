@@ -123,7 +123,7 @@ rules:
       - list
       - get
       - watch
-  # We also need to be able to find realms and manipulate platforms
+  # We need to be able to find realms
   - apiGroups:
       - identity.azimuth.stackhpc.com
     resources:
@@ -132,9 +132,20 @@ rules:
       - list
       - get
       - watch
+  # We need to be able to manipulate platforms
   - apiGroups:
       - identity.azimuth.stackhpc.com
     resources:
       - platforms
     verbs:
       - "*"
+  # We need to be able to find and patch the finalizers of leases
+  - apiGroups:
+      - scheduling.azimuth.stackhpc.com
+    resources:
+      - leases
+    verbs:
+      - list
+      - get
+      - watch
+      - patch

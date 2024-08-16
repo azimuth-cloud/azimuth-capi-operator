@@ -122,6 +122,10 @@ class ClusterSpec(schema.BaseModel):
             "If not given then the first discovered realm in the namespace is used."
         )
     )
+    lease_name: schema.Optional[schema.constr(min_length = 1)] = Field(
+        None,
+        description = "The name of the lease to use for the cluster, if required."
+    )
     paused: bool = Field(
         False,
         description = "Indicates if reconciliation should be paused."
@@ -164,6 +168,7 @@ class ClusterPhase(str, schema.Enum):
     """
     The overall phase of the cluster.
     """
+    PENDING      = "Pending"
     RECONCILING  = "Reconciling"
     UPGRADING    = "Upgrading"
     READY        = "Ready"
@@ -171,6 +176,22 @@ class ClusterPhase(str, schema.Enum):
     UNHEALTHY    = "Unhealthy"
     FAILED       = "Failed"
     UNKNOWN      = "Unknown"
+
+
+class LeasePhase(str, schema.Enum):
+    """
+    The phase of the lease for a cluster.
+    """
+    CREATING    = "Creating"
+    PENDING     = "Pending"
+    STARTING    = "Starting"
+    ACTIVE      = "Active"
+    UPDATING    = "Updating"
+    TERMINATING = "Terminating"
+    TERMINATED  = "Terminated"
+    DELETING    = "Deleting"
+    ERROR       = "Error"
+    UNKNOWN     = "Unknown"
 
 
 class NetworkingPhase(str, schema.Enum):
@@ -333,6 +354,10 @@ class ClusterStatus(schema.BaseModel, extra = "allow"):
     phase: ClusterPhase = Field(
         ClusterPhase.UNKNOWN.value,
         description = "The overall phase of the cluster."
+    )
+    lease_phase: LeasePhase = Field(
+        LeasePhase.UNKNOWN.value,
+        description = "The phase of the lease for the cluster."
     )
     networking_phase: NetworkingPhase = Field(
         NetworkingPhase.UNKNOWN.value,
