@@ -29,9 +29,10 @@ from .zenith import zenith_values, zenith_operator_resources
 logger = logging.getLogger(__name__)
 
 
-# Constants for the Cluster API versions
+# Constants for target API versions
 CLUSTER_API_VERSION = "cluster.x-k8s.io/v1beta1"
 CLUSTER_API_CONTROLPLANE_VERSION = f"controlplane.{CLUSTER_API_VERSION}"
+AZIMUTH_SCHEDULING_VERSION = "scheduling.azimuth.stackhpc.com/v1alpha1"
 
 
 # Create an easykube client from the environment
@@ -305,6 +306,53 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
     return next_template
 
 
+async def patch_finalizers(resource, obj, finalizers):
+    """
+    Patches the finalizers of a resource. If the resource does not exist any
+    more, that is classed as a success.
+    """
+    try:
+        await resource.patch(
+            obj["metadata"]["name"],
+            { "metadata": { "finalizers": finalizers } },
+            namespace = obj["metadata"].get("namespace")
+        )
+    except ApiError as exc:
+        if exc.status_code == 422:
+            raise kopf.TemporaryError("error patching finalizers", delay = 1)
+        elif exc.status_code != 404:
+            raise
+
+
+async def ensure_finalizer(resource, obj, finalizer):
+    """
+    Ensures that the specified finalizer is present on an object.
+    """
+    finalizers = obj["metadata"].get("finalizers", [])
+    if finalizer not in finalizers:
+        await patch_finalizers(resource, obj, finalizers + [finalizer])
+
+
+async def remove_finalizer(resource, obj, finalizer):
+    """
+    Ensures that the specified finalizer is not present on an object.
+    """
+    finalizers = obj["metadata"].get("finalizers", [])
+    if finalizer in finalizers:
+        await patch_finalizers(resource, obj, [f for f in finalizers if f != finalizer])
+
+
+def update_machine_flavor(obj, size_map):
+    """
+    Updates the machine flavor in the given object using the size map.
+    """
+    current_flavor = obj["machineFlavor"]
+    mapped_flavor = size_map.get(current_flavor, current_flavor)
+    updated_obj = obj.copy()
+    updated_obj["machineFlavor"] = mapped_flavor
+    return updated_obj
+
+
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
 async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
@@ -316,20 +364,41 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         logger.info("reconciliation is paused - no action taken")
         return
     # Make sure that the secret exists
-    ekresource = await ekclient.api("v1").resource("secrets")
-    secret = await ekresource.fetch(
+    eksecrets = await ekclient.api("v1").resource("secrets")
+    secret = await eksecrets.fetch(
         instance.spec.cloud_credentials_secret_name,
         namespace = namespace
     )
     # Then fetch the template
-    ekresource = await ekresource_for_model(api.ClusterTemplate)
-    template = api.ClusterTemplate.model_validate(await ekresource.fetch(instance.spec.template_name))
+    ekcts = await ekresource_for_model(api.ClusterTemplate)
+    template = api.ClusterTemplate.model_validate(await ekcts.fetch(instance.spec.template_name))
     # Generate the Helm values for the release
     helm_values = mergeconcat(
         settings.capi_helm.default_values,
         template.spec.values.model_dump(by_alias = True),
         default_loader.load("cluster-values.yaml", spec = instance.spec, settings = settings)
     )
+    # If a lease name is set, update the flavors in the values from the size map
+    if instance.spec.lease_name:
+        ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
+        lease = await ekleases.fetch(instance.spec.lease_name, namespace = namespace)
+        # Add our finalizer to the lease to indicate that we are using it
+        await ensure_finalizer(ekleases, lease, settings.api_group)
+        # When the lease is active, update the values using the size map
+        lease_status = lease.get("status", {})
+        lease_phase = lease_status.get("phase", "Unknown")
+        if lease_phase == "Active":
+            size_map = lease_status.get("sizeNameMap", {})
+            helm_values["controlPlane"] = update_machine_flavor(
+                helm_values["controlPlane"],
+                size_map
+            )
+            helm_values["nodeGroups"] = [
+                update_machine_flavor(ng, size_map)
+                for ng in helm_values.get("nodeGroups", [])
+            ]
+        else:
+            raise kopf.TemporaryError("lease is not active", delay = 15)
     if settings.zenith.enabled:
         helm_values = mergeconcat(
             helm_values,
@@ -383,6 +452,20 @@ async def on_cluster_delete(logger, instance, name, namespace, **kwargs):
             async for event in events:
                 if event["type"] == "DELETED":
                     break
+    # Once the cluster is deleted, we can relinquish the lease
+    if instance.spec.lease_name:
+        ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
+        try:
+            lease = await ekleases.fetch(
+                instance.spec.lease_name,
+                namespace = namespace
+            )
+        except ApiError as exc:
+            if exc.status_code != 404:
+                raise
+        else:
+            # Remove our finalizer from the lease to indicate that we are done with it
+            await remove_finalizer(ekleases, lease, settings.api_group)
 
 
 @model_handler(api.Cluster, kopf.on.resume)
@@ -448,25 +531,38 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     await save_cluster_status(instance)
 
 
-def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", **kwargs):
+def on_related_object_event(
+    *args,
+    # This function maps an object to a cluster name
+    cluster_name_mapper = None,
+    # If no cluster mapper is given, use this label
+    cluster_label = "capi.stackhpc.com/cluster",
+    **kwargs
+):
     """
     Decorator that registers a function as updating the Azimuth cluster state in response
     to a CAPI resource changing.
     """
-    # Limit the query to objects that have a cluster label
-    kwargs.setdefault("labels", {}).update({ cluster_label: kopf.PRESENT })
+    # If no mapper is given, use one that checks the cluster label
+    if cluster_name_mapper is None:
+        # Limit the query to objects that have the cluster label
+        kwargs.setdefault("labels", {}).update({ cluster_label: kopf.PRESENT })
+        cluster_name_mapper = lambda obj: obj["metadata"].get("labels", {}).get(cluster_label)
     def decorator(func):
         @kopf.on.event(*args, **kwargs)
         @functools.wraps(func)
         async def wrapper(**inner):
             ekclusters = await ekresource_for_model(api.Cluster)
+            cluster_name = cluster_name_mapper(inner["body"])
+            if not cluster_name:
+                return
             # Retry the fetch and updating of the state until it succeeds without conflict
             # kopf retry logic does not apply to events
             while True:
                 try:
                     cluster = api.Cluster.model_validate(
                         await ekclusters.fetch(
-                            inner["labels"][cluster_label],
+                            cluster_name,
                             namespace = inner["namespace"]
                         )
                     )
@@ -489,7 +585,33 @@ def on_managed_object_event(*args, cluster_label = "capi.stackhpc.com/cluster", 
     return decorator
 
 
-@on_managed_object_event(CLUSTER_API_VERSION, "clusters")
+@on_related_object_event(
+    AZIMUTH_SCHEDULING_VERSION,
+    "leases",
+    # Look for a cluster name in the lease owners
+    cluster_name_mapper = lambda obj: next(
+        (
+            ref["name"]
+            for ref in obj["metadata"].get("ownerReferences", [])
+            if(
+                ref["apiVersion"].split("/")[0] == settings.api_group and
+                ref["kind"] == api.Cluster._meta.kind
+            )
+        ),
+        None
+    )
+)
+async def on_lease_event(cluster, type, body, **kwargs):
+    """
+    Executes on events for leases associated with an Azimuth cluster.
+    """
+    if type == "DELETED":
+        status.lease_deleted(cluster, body)
+    else:
+        status.lease_updated(cluster, body)
+
+
+@on_related_object_event(CLUSTER_API_VERSION, "clusters")
 async def on_capi_cluster_event(cluster, type, body, **kwargs):
     """
     Executes on events for CAPI clusters with an associated Azimuth cluster.
@@ -500,7 +622,7 @@ async def on_capi_cluster_event(cluster, type, body, **kwargs):
         status.cluster_updated(cluster, body)
 
 
-@on_managed_object_event(CLUSTER_API_CONTROLPLANE_VERSION, "kubeadmcontrolplanes")
+@on_related_object_event(CLUSTER_API_CONTROLPLANE_VERSION, "kubeadmcontrolplanes")
 async def on_capi_controlplane_event(cluster, type, body, **kwargs):
     """
     Executes on events for CAPI control planes with an associated Azimuth cluster.
@@ -511,7 +633,7 @@ async def on_capi_controlplane_event(cluster, type, body, **kwargs):
         status.control_plane_updated(cluster, body)
 
 
-@on_managed_object_event(CLUSTER_API_VERSION, "machines")
+@on_related_object_event(CLUSTER_API_VERSION, "machines")
 async def on_capi_machine_event(cluster, type, body, **kwargs):
     """
     Executes on events for CAPI machines with an associated Azimuth cluster.
@@ -529,7 +651,7 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):
         status.machine_updated(cluster, body, infra_machine)
 
 
-@on_managed_object_event("addons.stackhpc.com", "helmreleases")
+@on_related_object_event("addons.stackhpc.com", "helmreleases")
 async def on_helmrelease_event(cluster, type, body, **kwargs):
     """
     Executes on events for HelmRelease addons.
@@ -540,7 +662,7 @@ async def on_helmrelease_event(cluster, type, body, **kwargs):
         status.addon_updated(cluster, body)
 
 
-@on_managed_object_event("addons.stackhpc.com", "manifests")
+@on_related_object_event("addons.stackhpc.com", "manifests")
 async def on_manifests_event(cluster, type, body, **kwargs):
     """
     Executes on events for Manifests addons.
@@ -551,7 +673,7 @@ async def on_manifests_event(cluster, type, body, **kwargs):
         status.addon_updated(cluster, body)
 
 
-@on_managed_object_event(
+@on_related_object_event(
     "v1",
     "secrets",
     # The kubeconfig secret does not have the capi.stackhpc.com/cluster label
@@ -625,7 +747,7 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
     await ekclient.apply_object(platform, force = True)
 
 
-@on_managed_object_event(
+@on_related_object_event(
     "addons.stackhpc.com",
     "helmreleases",
     # Use the label applied by the addon operator to locate the corresponding cluster

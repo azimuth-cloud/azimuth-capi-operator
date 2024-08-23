@@ -2,6 +2,7 @@ import logging
 
 from .models.v1alpha1 import (
     ClusterPhase,
+    LeasePhase,
     NetworkingPhase,
     ControlPlanePhase,
     NodePhase,
@@ -30,7 +31,7 @@ def _multiple_kubelet_versions(cluster, role):
     versions = set(
         node.kubelet_version
         for node in cluster.status.nodes.values()
-        if node.role is role
+        if node.role == role
     )
     return len(versions) > 1
 
@@ -46,17 +47,40 @@ def _reconcile_cluster_phase(cluster):
     """
     Sets the overall cluster phase based on the component phases.
     """
+    # Only consider the lease when reconciling the cluster phase if one is set
+    if cluster.spec.lease_name:
+        if cluster.status.lease_phase in {
+            LeasePhase.CREATING,
+            LeasePhase.PENDING,
+            LeasePhase.STARTING
+        }:
+            cluster.status.phase = ClusterPhase.PENDING
+            return
+        if cluster.status.lease_phase == LeasePhase.ERROR:
+            cluster.status.phase = ClusterPhase.FAILED
+            return
+        if cluster.status.lease_phase in {
+            LeasePhase.TERMINATING,
+            LeasePhase.TERMINATED,
+            LeasePhase.DELETING
+        }:
+            cluster.status.phase = ClusterPhase.UNHEALTHY
+            return
+        if cluster.status.lease_phase == LeasePhase.UNKNOWN:
+            cluster.status.phase = ClusterPhase.PENDING
+            return
+    # At this point, either there is no lease or the lease phase is Active or Updating
     if cluster.status.networking_phase in {
         NetworkingPhase.PENDING,
         NetworkingPhase.PROVISIONING
     }:
         cluster.status.phase = ClusterPhase.RECONCILING
-    elif cluster.status.networking_phase is NetworkingPhase.DELETING:
+    elif cluster.status.networking_phase == NetworkingPhase.DELETING:
         cluster.status.phase = ClusterPhase.DELETING
-    elif cluster.status.networking_phase is NetworkingPhase.FAILED:
+    elif cluster.status.networking_phase == NetworkingPhase.FAILED:
         cluster.status.phase = ClusterPhase.FAILED
-    elif cluster.status.networking_phase is NetworkingPhase.UNKNOWN:
-        cluster.status.phase = ClusterPhase.UNKNOWN
+    elif cluster.status.networking_phase == NetworkingPhase.UNKNOWN:
+        cluster.status.phase = ClusterPhase.PENDING
     # The networking phase is Provisioned
     elif cluster.status.control_plane_phase in {
         ControlPlanePhase.PENDING,
@@ -69,14 +93,14 @@ def _reconcile_cluster_phase(cluster):
             cluster.status.phase = ClusterPhase.UPGRADING
         else:
             cluster.status.phase = ClusterPhase.RECONCILING
-    elif cluster.status.control_plane_phase is ControlPlanePhase.UPGRADING:
+    elif cluster.status.control_plane_phase == ControlPlanePhase.UPGRADING:
         cluster.status.phase = ClusterPhase.UPGRADING
-    elif cluster.status.control_plane_phase is ControlPlanePhase.DELETING:
+    elif cluster.status.control_plane_phase == ControlPlanePhase.DELETING:
         cluster.status.phase = ClusterPhase.DELETING
-    elif cluster.status.control_plane_phase is ControlPlanePhase.FAILED:
+    elif cluster.status.control_plane_phase == ControlPlanePhase.FAILED:
         cluster.status.phase = ClusterPhase.FAILED
-    elif cluster.status.control_plane_phase is ControlPlanePhase.UNKNOWN:
-        cluster.status.phase = ClusterPhase.UNKNOWN
+    elif cluster.status.control_plane_phase == ControlPlanePhase.UNKNOWN:
+        cluster.status.phase = ClusterPhase.PENDING
     # The control plane phase is Ready or Unhealthy
     # If there are workers with different versions, assume an upgrade is in progress
     elif _multiple_kubelet_versions(cluster, NodeRole.WORKER):
@@ -102,7 +126,7 @@ def _reconcile_cluster_phase(cluster):
     # All addons are either Ready, Failed or Unknown
     # Now we know that there is no reconciliation happening, consider cluster health
     elif (
-        cluster.status.control_plane_phase is ControlPlanePhase.UNHEALTHY or
+        cluster.status.control_plane_phase == ControlPlanePhase.UNHEALTHY or
         _any_node_has_phase(
             cluster,
             NodePhase.UNHEALTHY,
@@ -118,6 +142,21 @@ def _reconcile_cluster_phase(cluster):
         cluster.status.phase = ClusterPhase.UNHEALTHY
     else:
         cluster.status.phase = ClusterPhase.READY
+
+
+def lease_updated(cluster, obj):
+    """
+    Updates the status when a lease is updated.
+    """
+    phase = obj.get("status", {}).get("phase", "Unknown")
+    cluster.status.lease_phase = LeasePhase(phase)
+
+
+def lease_deleted(cluster, obj):
+    """
+    Updates the status when a lease is deleted.
+    """
+    cluster.status.lease_phase = LeasePhase.UNKNOWN
 
 
 def cluster_updated(cluster, obj):
