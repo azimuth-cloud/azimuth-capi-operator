@@ -28,7 +28,7 @@ RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
     rm -rf /charts/*.tgz
 
 ARG ZENITH_CHART_REPO=https://azimuth-cloud.github.io/zenith
-ARG ZENITH_CHART_VERSION=0.10.1
+ARG ZENITH_CHART_VERSION=0.12.0
 ARG ZENITH_APISERVER_CHART_NAME=zenith-apiserver
 ARG ZENITH_OPERATOR_CHART_NAME=zenith-operator
 RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
