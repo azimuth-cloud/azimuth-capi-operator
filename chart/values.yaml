@@ -2,6 +2,9 @@
 # For all available options, see azimuth_capi/config.py
 config: {}
 
+# A bundle of trusted CAs to use instead of the defaults
+trustBundle:
+
 # The image to use for the operator
 image:
   repository: ghcr.io/azimuth-cloud/azimuth-capi-operator
