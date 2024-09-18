@@ -306,40 +306,94 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
     return next_template
 
 
-async def patch_finalizers(resource, obj, finalizers):
+async def adopt_lease(instance):
     """
-    Patches the finalizers of a resource. If the resource does not exist any
-    more, that is classed as a success.
+    Ensures that the lease for the cluster is adopted by the cluster.
     """
+    ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
+    lease = await ekleases.fetch(
+        instance.spec.lease_name,
+        namespace = instance.metadata.namespace
+    )
+    lease_patch = []
+    if "finalizers" not in lease.metadata:
+        lease_patch.append(
+            {
+                "op": "add",
+                "path": "/metadata/finalizers",
+                "value": [],
+            }
+        )
+    if settings.api_group not in lease.metadata.get("finalizers", []):
+        lease_patch.append(
+            {
+                "op": "add",
+                "path": "/metadata/finalizers/-",
+                "value": settings.api_group,
+            }
+        )
+    if "ownerReferences" not in lease.metadata:
+        lease_patch.append(
+            {
+                "op": "add",
+                "path": "/metadata/ownerReferences",
+                "value": [],
+            }
+        )
+    if not any(
+        ref["uid"] == instance.metadata.uid
+        for ref in lease.metadata.get("ownerReferences", [])
+    ):
+        lease_patch.append(
+            {
+                "op": "add",
+                "path": "/metadata/ownerReferences/-",
+                "value": {
+                    "apiVersion": instance.api_version,
+                    "kind": instance.kind,
+                    "name": instance.metadata.name,
+                    "uid": instance.metadata.uid,
+                    "blockOwnerDeletion": True,
+                },
+            }
+        )
+    if lease_patch:
+        lease = await ekleases.json_patch(
+            lease.metadata.name,
+            lease_patch,
+            namespace = lease.metadata.namespace
+        )
+    return lease
+
+
+async def release_lease(instance):
+    ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
     try:
-        await resource.patch(
-            obj["metadata"]["name"],
-            { "metadata": { "finalizers": finalizers } },
-            namespace = obj["metadata"].get("namespace")
+        lease = await ekleases.fetch(
+            instance.spec.lease_name,
+            namespace = instance.metadata.namespace
         )
     except ApiError as exc:
-        if exc.status_code == 422:
-            raise kopf.TemporaryError("error patching finalizers", delay = 1)
-        elif exc.status_code != 404:
+        if exc.status_code == 404:
+            return
+        else:
             raise
-
-
-async def ensure_finalizer(resource, obj, finalizer):
-    """
-    Ensures that the specified finalizer is present on an object.
-    """
-    finalizers = obj["metadata"].get("finalizers", [])
-    if finalizer not in finalizers:
-        await patch_finalizers(resource, obj, finalizers + [finalizer])
-
-
-async def remove_finalizer(resource, obj, finalizer):
-    """
-    Ensures that the specified finalizer is not present on an object.
-    """
-    finalizers = obj["metadata"].get("finalizers", [])
-    if finalizer in finalizers:
-        await patch_finalizers(resource, obj, [f for f in finalizers if f != finalizer])
+    # Remove our finalizer from the lease to indicate that we are done with it
+    existing_finalizers = lease.metadata.get("finalizers", [])
+    if settings.api_group in existing_finalizers:
+        await ekleases.patch(
+            lease.metadata.name,
+            {
+                "metadata": {
+                    "finalizers": [
+                        f
+                        for f in existing_finalizers
+                        if f != settings.api_group
+                    ],
+                },
+            },
+            namespace = lease.metadata.namespace
+        )
 
 
 def update_machine_flavor(obj, size_map):
@@ -380,10 +434,8 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     )
     # If a lease name is set, update the flavors in the values from the size map
     if instance.spec.lease_name:
-        ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
-        lease = await ekleases.fetch(instance.spec.lease_name, namespace = namespace)
-        # Add our finalizer to the lease to indicate that we are using it
-        await ensure_finalizer(ekleases, lease, settings.api_group)
+        # Make sure that we adopt the lease
+        lease = await adopt_lease(instance)
         # When the lease is active, update the values using the size map
         lease_status = lease.get("status", {})
         lease_phase = lease_status.get("phase", "Unknown")
@@ -452,20 +504,9 @@ async def on_cluster_delete(logger, instance, name, namespace, **kwargs):
             async for event in events:
                 if event["type"] == "DELETED":
                     break
-    # Once the cluster is deleted, we can relinquish the lease
+    # Once the cluster is deleted, we can release the lease
     if instance.spec.lease_name:
-        ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
-        try:
-            lease = await ekleases.fetch(
-                instance.spec.lease_name,
-                namespace = namespace
-            )
-        except ApiError as exc:
-            if exc.status_code != 404:
-                raise
-        else:
-            # Remove our finalizer from the lease to indicate that we are done with it
-            await remove_finalizer(ekleases, lease, settings.api_group)
+        await release_lease(instance)
 
 
 @model_handler(api.Cluster, kopf.on.resume)
@@ -473,6 +514,9 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     """
     Executes for each cluster when the operator is resumed.
     """
+    # Make sure that we adopt the lease when we are resumed
+    if instance.spec.lease_name:
+        await adopt_lease(instance)
     # When we are resumed, the managed event handlers will be called with all the CAPI
     # objects that exist
     # However if CAPI objects have been deleted while the operator was down, we will
