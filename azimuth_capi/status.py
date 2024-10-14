@@ -54,6 +54,9 @@ def _reconcile_cluster_phase(cluster):
             LeasePhase.PENDING,
             LeasePhase.STARTING
         }:
+            if cluster.status.phase == ClusterPhase.UNHEALTHY:
+                # preserve the unhealthy state, on timeout
+                return
             cluster.status.phase = ClusterPhase.PENDING
             return
         if cluster.status.lease_phase == LeasePhase.ERROR:
