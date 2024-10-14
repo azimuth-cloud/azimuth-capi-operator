@@ -416,6 +416,16 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
+
+    # Adding a date timestamp so we can timeout pending changes that fail early
+    # e.g. due to failing to get a lease
+    last_updated_annotation_name = f"{settings.api_group}/last-updated-timestamp"
+    if last_updated_annotation_name not in instance.metadata.annotations:
+        logger.info("adding last updated timestamp")
+        now = dt.datetime.now(dt.timezone.utc)
+        annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
+        annotations[last_updated_annotation_name] = now.isoformat()
+
     # Make sure that the secret exists
     eksecrets = await ekclient.api("v1").resource("secrets")
     secret = await eksecrets.fetch(
@@ -449,6 +459,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
                 for ng in helm_values.get("nodeGroups", [])
             ]
         else:
+            # TODO(johngarbutt) look for when a lease has an error, and go unhealthy
             raise kopf.TemporaryError("lease is not active", delay = 15)
     if settings.zenith.enabled:
         helm_values = mergeconcat(
@@ -480,10 +491,10 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
 
-    # adding a date timestamp so we can timeout pending changes
-    now = dt.datetime.now(dt.timezone.utc)
+    # Always reset the timeout counter, now changes have been made
     annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
-    annotations[f"{settings.api_group}/last-updated-timestamp"] = now.isoformat()
+    now = dt.datetime.now(dt.timezone.utc)
+    annotations[last_updated_annotation_name] = now.isoformat()
 
 
 @model_handler(api.Cluster, kopf.on.delete)
@@ -581,26 +592,41 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
 
 @model_handler(
     api.Cluster,
-    kopf.on.timer,
+    kopf.timer,
     # Since we have create and update handlers, we want to idle after a change
-    interval = settings.timer_interval,
-    idle = settings.timer_interval)
-async def check_cluster_timeout(instance, name, namespace, **kwargs):
+    interval = settings.timer_interval)
+async def check_cluster_timeout(logger, instance, patch, **kwargs):
+    # If cluster reconciliation is paused, there is nothing else to do
+    if instance.spec.paused:
+        logger.info("reconciliation is paused - no action taken")
+        return
+
+    # Remove the timeout counter if the cluster goes ready
+    last_updated_annotation_name = f"{settings.api_group}/last-updated-timestamp"
+    if (instance.status.phase == api.ClusterPhase.READY and
+        last_updated_annotation_name in instance.metadata.annotations):
+        annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
+        annotations[last_updated_annotation_name] = None
+        logger.info("cluster gone ready, reset timeout timestamp")
+        return
+
+    # Check if the cluster is in a transition state
     if instance.status.phase not in [api.ClusterPhase.PENDING,
                                      api.ClusterPhase.RECONCILING,
                                      api.ClusterPhase.UPGRADING]:
-        # we are not in a transition state, no need to check
+        logger.info("cluster is not in a transition state - no action taken")
         return
 
-    annotation_name = f"{settings.api_group}/last-updated-timestamp"
-    last_updated_str = instance.metadata.annotations.get(annotation_name)
+    # If we have not been updated in time, mark as unhealthy
+    last_updated_str = instance.metadata.annotations.get(last_updated_annotation_name)
     if last_updated_str:
         last_updated = dt.datetime.fromisoformat(last_updated_str)
         now = dt.datetime.now(dt.timezone.utc)
-        if (now - last_updated).seconds > (60 * settings.cluster_timeout_minutes):
-            # we have not been updated in time, mark as unhealthy
+        logger.info(f"Time since last updated: {now - last_updated} vs {settings.cluster_timeout_minutes} minutes")
+        if (now - last_updated).total_seconds() > (60 * settings.cluster_timeout_minutes):
             instance.status.phase = api.ClusterPhase.UNHEALTHY
             await save_cluster_status(instance)
+            logger.info("cluster has timed out, marked as unhealthy")
 
 
 def on_related_object_event(
