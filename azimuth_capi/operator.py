@@ -34,7 +34,6 @@ CLUSTER_API_VERSION = "cluster.x-k8s.io/v1beta1"
 CLUSTER_API_CONTROLPLANE_VERSION = f"controlplane.{CLUSTER_API_VERSION}"
 AZIMUTH_SCHEDULING_VERSION = "scheduling.azimuth.stackhpc.com/v1alpha1"
 
-
 # Create an easykube client from the environment
 from pydantic.json import pydantic_encoder
 ekclient = (
@@ -481,6 +480,11 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
 
+    # adding a date timestamp so we can timeout pending changes
+    now = dt.datetime.now(dt.timezone.utc)
+    annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
+    annotations[f"{settings.api_group}/last-updated-timestamp"] = now.isoformat()
+
 
 @model_handler(api.Cluster, kopf.on.delete)
 async def on_cluster_delete(logger, instance, name, namespace, **kwargs):
@@ -573,6 +577,30 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
         ]
     )
     await save_cluster_status(instance)
+
+
+@model_handler(
+    api.Cluster,
+    kopf.on.timer,
+    # Since we have create and update handlers, we want to idle after a change
+    interval = settings.timer_interval,
+    idle = settings.timer_interval)
+async def check_cluster_timeout(instance, name, namespace, **kwargs):
+    if instance.status.phase not in [api.ClusterPhase.PENDING,
+                                     api.ClusterPhase.RECONCILING,
+                                     api.ClusterPhase.UPGRADING]:
+        # we are not in a transition state, no need to check
+        return
+
+    annotation_name = f"{settings.api_group}/last-updated-timestamp"
+    last_updated_str = instance.metadata.annotations.get(annotation_name)
+    if last_updated_str:
+        last_updated = dt.datetime.fromisoformat(last_updated_str)
+        now = dt.datetime.now(dt.timezone.utc)
+        if (now - last_updated).seconds > (60 * settings.cluster_timeout_minutes):
+            # we have not been updated in time, mark as unhealthy
+            instance.status.phase = api.ClusterPhase.UNHEALTHY
+            await save_cluster_status(instance)
 
 
 def on_related_object_event(

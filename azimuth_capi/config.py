@@ -207,6 +207,9 @@ class Configuration(
     #: The number of seconds to wait between timer executions
     timer_interval: conint(gt = 0) = 60
 
+    #: The number of minutes to wait for cluster timeout
+    cluster_timeout_minutes: conint(gt = 0) = 30
+
     #: The field manager name to use for server-side apply
     easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
 
