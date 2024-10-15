@@ -387,6 +387,10 @@ class ClusterStatus(schema.BaseModel, extra = "allow"):
         default_factory = dict,
         description = "The services for the cluster, indexed by service name."
     )
+    last_updated_timestamp: schema.Optional[dt.datetime] = Field(
+        default = None,
+        description = "Used to trigger the timeout of pending states"
+    )
 
 
 class Cluster(
