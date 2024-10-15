@@ -157,8 +157,8 @@ def _reconcile_cluster_phase(cluster):
     # timeout pending states if we are stuck their too long
     if cluster.status.phase in {ClusterPhase.PENDING, ClusterPhase.RECONCILING, ClusterPhase.UPGRADING}:
         now = dt.datetime.now(dt.timezone.utc)
-        timeout_after_time = now + dt.timedelta(minutes=settings.cluster_timeout_minutes)
-        if cluster.status.last_updated_timestamp >= timeout_after_time:
+        timeout_after = cluster.status.last_updated_timestamp + dt.timedelta(minutes=settings.cluster_timeout_minutes)
+        if now > timeout_after:
             cluster.status.phase = ClusterPhase.UNHEALTHY
 
 
