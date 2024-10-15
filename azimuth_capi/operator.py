@@ -417,14 +417,9 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         logger.info("reconciliation is paused - no action taken")
         return
 
-    # Adding a date timestamp so we can timeout pending changes that fail early
-    # e.g. due to failing to get a lease
-    last_updated_annotation_name = f"{settings.api_group}/last-updated-timestamp"
-    if last_updated_annotation_name not in instance.metadata.annotations:
-        logger.info("adding last updated timestamp")
-        now = dt.datetime.now(dt.timezone.utc)
-        annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
-        annotations[last_updated_annotation_name] = now.isoformat()
+    # To help trigger timeouts if we get stuck, save the last_updated_timestamp
+    if not instance.status.last_updated_timestamp:
+        await save_cluster_status(instance)
 
     # Make sure that the secret exists
     eksecrets = await ekclient.api("v1").resource("secrets")
@@ -491,10 +486,10 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
 
-    # Always reset the timeout counter, now changes have been made
-    annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
-    now = dt.datetime.now(dt.timezone.utc)
-    annotations[last_updated_annotation_name] = now.isoformat()
+    # Reset the timeout counter, now we have completed the update
+    # and we need to wait for all the components to do their updates
+    instance.status.last_updated_timestamp = dt.datetime.now(dt.timezone.utc)
+    await save_cluster_status(instance)
 
 
 @model_handler(api.Cluster, kopf.on.delete)
@@ -593,40 +588,18 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
 @model_handler(
     api.Cluster,
     kopf.timer,
-    # Since we have create and update handlers, we want to idle after a change
+    # we don't set idle timeout, as we want to run during changes
     interval = settings.timer_interval)
 async def check_cluster_timeout(logger, instance, patch, **kwargs):
-    # If cluster reconciliation is paused, there is nothing else to do
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
 
-    # Remove the timeout counter if the cluster goes ready
-    last_updated_annotation_name = f"{settings.api_group}/last-updated-timestamp"
-    if (instance.status.phase == api.ClusterPhase.READY and
-        last_updated_annotation_name in instance.metadata.annotations):
-        annotations = patch.setdefault("metadata", {}).setdefault("annotations", {})
-        annotations[last_updated_annotation_name] = None
-        logger.info("cluster gone ready, reset timeout timestamp")
-        return
-
-    # Check if the cluster is in a transition state
-    if instance.status.phase not in [api.ClusterPhase.PENDING,
-                                     api.ClusterPhase.RECONCILING,
-                                     api.ClusterPhase.UPGRADING]:
-        logger.info("cluster is not in a transition state - no action taken")
-        return
-
-    # If we have not been updated in time, mark as unhealthy
-    last_updated_str = instance.metadata.annotations.get(last_updated_annotation_name)
-    if last_updated_str:
-        last_updated = dt.datetime.fromisoformat(last_updated_str)
-        now = dt.datetime.now(dt.timezone.utc)
-        logger.info(f"Time since last updated: {now - last_updated} vs {settings.cluster_timeout_minutes} minutes")
-        if (now - last_updated).total_seconds() > (60 * settings.cluster_timeout_minutes):
-            instance.status.phase = api.ClusterPhase.UNHEALTHY
-            await save_cluster_status(instance)
-            logger.info("cluster has timed out, marked as unhealthy")
+    # Trigger a timeout check if we are in a transitional state
+    if instance.status.phase in {None, api.ClusterPhase.PENDING,
+                                 api.ClusterPhase.RECONCILING,
+                                 api.ClusterPhase.UPGRADING}:
+        await save_cluster_status(instance)
 
 
 def on_related_object_event(

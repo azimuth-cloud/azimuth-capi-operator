@@ -1,5 +1,7 @@
+import datetime as dt
 import logging
 
+from .config import settings
 from .models.v1alpha1 import (
     ClusterPhase,
     LeasePhase,
@@ -48,32 +50,28 @@ def _reconcile_cluster_phase(cluster):
     Sets the overall cluster phase based on the component phases.
     """
     # Only consider the lease when reconciling the cluster phase if one is set
-    if cluster.spec.lease_name:
+    if (
+        cluster.spec.lease_name and
+        cluster.status.lease_phase not in {LeasePhase.ACTIVE, LeasePhase.UPDATING}
+    ):
         if cluster.status.lease_phase in {
             LeasePhase.CREATING,
             LeasePhase.PENDING,
             LeasePhase.STARTING
         }:
-            if cluster.status.phase == ClusterPhase.UNHEALTHY:
-                # preserve the unhealthy state, on timeout
-                return
             cluster.status.phase = ClusterPhase.PENDING
-            return
         if cluster.status.lease_phase == LeasePhase.ERROR:
             cluster.status.phase = ClusterPhase.FAILED
-            return
         if cluster.status.lease_phase in {
             LeasePhase.TERMINATING,
             LeasePhase.TERMINATED,
             LeasePhase.DELETING
         }:
             cluster.status.phase = ClusterPhase.UNHEALTHY
-            return
         if cluster.status.lease_phase == LeasePhase.UNKNOWN:
             cluster.status.phase = ClusterPhase.PENDING
-            return
     # At this point, either there is no lease or the lease phase is Active or Updating
-    if cluster.status.networking_phase in {
+    elif cluster.status.networking_phase in {
         NetworkingPhase.PENDING,
         NetworkingPhase.PROVISIONING
     }:
@@ -145,6 +143,23 @@ def _reconcile_cluster_phase(cluster):
         cluster.status.phase = ClusterPhase.UNHEALTHY
     else:
         cluster.status.phase = ClusterPhase.READY
+        # reset the timeout timestamp, as we are now in a stable state
+        cluster.status.last_updated_timestamp = None
+
+    # If we hit a terminal state, remove the updated timestamp,
+    if cluster.status.phase in {ClusterPhase.READY, ClusterPhase.FAILED}:
+        cluster.status.last_updated_timestamp = None
+    else:
+        # if not a terminal state, ensure timestamp has been set
+        if cluster.status.last_updated_timestamp is None:
+            cluster.status.last_updated_timestamp = dt.datetime.now(dt.timezone.utc)
+
+    # timeout pending states if we are stuck their too long
+    if cluster.status.phase in {ClusterPhase.PENDING, ClusterPhase.RECONCILING, ClusterPhase.UPGRADING}:
+        now = dt.datetime.now(dt.timezone.utc)
+        timeout_after_time = now + dt.timedelta(minutes=settings.cluster_timeout_minutes)
+        if cluster.status.last_updated_timestamp >= timeout_after_time:
+            cluster.status.phase = ClusterPhase.UNHEALTHY
 
 
 def lease_updated(cluster, obj):
