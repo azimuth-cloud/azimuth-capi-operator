@@ -34,7 +34,6 @@ CLUSTER_API_VERSION = "cluster.x-k8s.io/v1beta1"
 CLUSTER_API_CONTROLPLANE_VERSION = f"controlplane.{CLUSTER_API_VERSION}"
 AZIMUTH_SCHEDULING_VERSION = "scheduling.azimuth.stackhpc.com/v1alpha1"
 
-
 # Create an easykube client from the environment
 from pydantic.json import pydantic_encoder
 ekclient = (
@@ -417,6 +416,11 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
+
+    # To help trigger timeouts if we get stuck, save the last_updated_timestamp
+    if not instance.status.last_updated_timestamp:
+        await save_cluster_status(instance)
+
     # Make sure that the secret exists
     eksecrets = await ekclient.api("v1").resource("secrets")
     secret = await eksecrets.fetch(
@@ -450,6 +454,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
                 for ng in helm_values.get("nodeGroups", [])
             ]
         else:
+            # TODO(johngarbutt) look for when a lease has an error, and go unhealthy
             raise kopf.TemporaryError("lease is not active", delay = 15)
     if settings.zenith.enabled:
         helm_values = mergeconcat(
@@ -480,6 +485,11 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     # order to prevent deletion of cluster templates that are in use
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
+
+    # Reset the timeout counter, now we have completed the update
+    # and we need to wait for all the components to do their updates
+    instance.status.last_updated_timestamp = dt.datetime.now(dt.timezone.utc)
+    await save_cluster_status(instance)
 
 
 @model_handler(api.Cluster, kopf.on.delete)
@@ -573,6 +583,23 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
         ]
     )
     await save_cluster_status(instance)
+
+
+@model_handler(
+    api.Cluster,
+    kopf.timer,
+    # we don't set idle timeout, as we want to run during changes
+    interval = settings.timer_interval)
+async def check_cluster_timeout(logger, instance, patch, **kwargs):
+    if instance.spec.paused:
+        logger.info("reconciliation is paused - no action taken")
+        return
+
+    # Trigger a timeout check if we are in a transitional state
+    if instance.status.phase in {None, api.ClusterPhase.PENDING,
+                                 api.ClusterPhase.RECONCILING,
+                                 api.ClusterPhase.UPGRADING}:
+        await save_cluster_status(instance)
 
 
 def on_related_object_event(
