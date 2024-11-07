@@ -34,6 +34,7 @@ CLUSTER_API_VERSION = "cluster.x-k8s.io/v1beta1"
 CLUSTER_API_CONTROLPLANE_VERSION = f"controlplane.{CLUSTER_API_VERSION}"
 AZIMUTH_SCHEDULING_VERSION = "scheduling.azimuth.stackhpc.com/v1alpha1"
 
+
 # Create an easykube client from the environment
 from pydantic.json import pydantic_encoder
 ekclient = (
