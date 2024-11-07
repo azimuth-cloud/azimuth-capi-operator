@@ -605,7 +605,9 @@ async def check_cluster_timeout(logger, instance, patch, **kwargs):
     # Trigger a timeout check if we are in a transitional state
     if instance.status.phase in {None, api.ClusterPhase.PENDING,
                                  api.ClusterPhase.RECONCILING,
-                                 api.ClusterPhase.UPGRADING}:
+                                 api.ClusterPhase.UPGRADING,
+                                 api.ClusterPhase.UNHEALTHY,
+                                 api.ClusterPhase.UNKNOWN}:
         await save_cluster_status(instance)
 
 
