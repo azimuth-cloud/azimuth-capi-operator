@@ -19,7 +19,7 @@ RUN set -ex; \
 # Pull and unpack the baked in charts
 ARG OPENSTACK_CLUSTER_CHART_REPO=https://azimuth-cloud.github.io/capi-helm-charts
 ARG OPENSTACK_CLUSTER_CHART_NAME=openstack-cluster
-ARG OPENSTACK_CLUSTER_CHART_VERSION=0.10.1
+ARG OPENSTACK_CLUSTER_CHART_VERSION=0.11.2
 RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
       --repo ${OPENSTACK_CLUSTER_CHART_REPO} \
       --version ${OPENSTACK_CLUSTER_CHART_VERSION} \
@@ -28,7 +28,7 @@ RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
     rm -rf /charts/*.tgz
 
 ARG ZENITH_CHART_REPO=https://azimuth-cloud.github.io/zenith
-ARG ZENITH_CHART_VERSION=0.12.0
+ARG ZENITH_CHART_VERSION=0.13.0
 ARG ZENITH_APISERVER_CHART_NAME=zenith-apiserver
 ARG ZENITH_OPERATOR_CHART_NAME=zenith-operator
 RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
@@ -67,6 +67,10 @@ FROM ubuntu:jammy
 
 # Don't buffer stdout and stderr as it breaks realtime logging
 ENV PYTHONUNBUFFERED 1
+
+# Make httpx use the system trust roots
+# By default, this means we use the CAs from the ca-certificates package
+ENV SSL_CERT_FILE /etc/ssl/certs/ca-certificates.crt
 
 # Tell Helm to use /tmp for mutable data
 ENV HELM_CACHE_HOME /tmp/helm/cache
