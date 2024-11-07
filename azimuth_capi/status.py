@@ -143,21 +143,28 @@ def _reconcile_cluster_phase(cluster):
         cluster.status.phase = ClusterPhase.UNHEALTHY
     else:
         cluster.status.phase = ClusterPhase.READY
-        # reset the timeout timestamp, as we are now in a stable state
-        cluster.status.last_updated_timestamp = None
 
     # If we hit a terminal state, remove the updated timestamp,
     if cluster.status.phase in {ClusterPhase.READY, ClusterPhase.FAILED}:
-        cluster.status.last_updated_timestamp = None
+        # reset the timeout timestamp, as we are now in a stable state
+        # if we do not reset the last_updated here, we are unable
+        # to know at the start of an update if we are re-entering
+        # due to an error vs starting for the first time since the
+        # last successful update (or its our fist ever update)
+        cluster.status.last_updated = None
     else:
         # if not a terminal state, ensure timestamp has been set
-        if cluster.status.last_updated_timestamp is None:
-            cluster.status.last_updated_timestamp = dt.datetime.now(dt.timezone.utc)
+        if cluster.status.last_updated is None:
+            now = dt.datetime.now(dt.timezone.utc)
+            cluster.status.last_updated = now
 
     # timeout pending states if we are stuck their too long
-    if cluster.status.phase in {ClusterPhase.PENDING, ClusterPhase.RECONCILING, ClusterPhase.UPGRADING}:
+    if cluster.status.phase in {ClusterPhase.PENDING,
+                                ClusterPhase.RECONCILING,
+                                ClusterPhase.UPGRADING}:
         now = dt.datetime.now(dt.timezone.utc)
-        timeout_after = cluster.status.last_updated_timestamp + dt.timedelta(minutes=settings.cluster_timeout_minutes)
+        timeout_after = cluster.status.last_updated + dt.timedelta(
+            seconds=settings.cluster_timeout_seconds)
         if now > timeout_after:
             cluster.status.phase = ClusterPhase.UNHEALTHY
 

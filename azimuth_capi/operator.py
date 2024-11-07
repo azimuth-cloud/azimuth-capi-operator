@@ -417,8 +417,13 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         logger.info("reconciliation is paused - no action taken")
         return
 
-    # To help trigger timeouts if we get stuck, save the last_updated_timestamp
-    if not instance.status.last_updated_timestamp:
+    # To help trigger timeouts if we get stuck,
+    # ensure we set the last_updated time.
+    # But be sure not to reset that if we retrying
+    # the same update after a failure, so we timeout
+    # if we are stuck in a retry loop before the end
+    # of the update function.
+    if not instance.status.last_updated:
         await save_cluster_status(instance)
 
     # Make sure that the secret exists
@@ -486,9 +491,10 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
 
-    # Reset the timeout counter, now we have completed the update
-    # and we need to wait for all the components to do their updates
-    instance.status.last_updated_timestamp = dt.datetime.now(dt.timezone.utc)
+    # We might have been stuck in an error loop that has just been
+    # fixed by the operator, so in this case we reset the last_updated
+    # now we are letting the async poll loops take over
+    instance.status.last_updated = dt.datetime.now(dt.timezone.utc)
     await save_cluster_status(instance)
 
 
