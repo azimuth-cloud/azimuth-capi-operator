@@ -37,6 +37,11 @@ spec:
             - name: webhook
               containerPort: 8443
               protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: webhook
+            failureThreshold: 1
+            periodSeconds: 5
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: etc-azimuth
