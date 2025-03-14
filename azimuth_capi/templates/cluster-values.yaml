@@ -1,5 +1,10 @@
 cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
+oidc:
+  issuerUrl: {{ oidc_issuer_url }}
+  clientId: {{ oidc_client_id }}
+  usernameClaim: preferred_username
+
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
   healthCheck:

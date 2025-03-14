@@ -130,6 +130,8 @@ class IdentityConfig(Section):
     """
     #: The API version to use for Azimuth identity resources
     api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
+    #: The template to use for cluster OIDC client IDs
+    cluster_oidc_client_id_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for cluster platform names
     cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for app platform names

@@ -407,6 +407,114 @@ def update_machine_flavor(obj, size_map):
     return updated_obj
 
 
+async def find_realm(cluster: api.Cluster):
+    """
+    Return the identity realm for the given cluster.
+    """
+    ekrealms = await ekclient.api(settings.identity.api_version).resource("realms")
+    if cluster.spec.zenith_identity_realm_name:
+        # If the cluster specifies a realm, use it
+        try:
+            return await ekrealms.fetch(
+                cluster.spec.zenith_identity_realm_name,
+                namespace = cluster.metadata.namespace
+            )
+        except ApiError as exc:
+            if exc.status_code == 404:
+                raise kopf.TemporaryError(
+                    f"Could not find identity realm '{cluster.spec.zenith_identity_realm_name}'"
+                )
+            else:
+                raise
+    else:
+        # Otherwise, try to discover a realm in the namespace
+        realm = await ekrealms.first(namespace = cluster.metadata.namespace)
+        if realm:
+            return realm
+        else:
+            raise kopf.TemporaryError("No identity realm available to use")
+
+
+async def ensure_oidc_client(instance: api.Cluster):
+    """
+    Ensures that an OIDC client exists for the given cluster.
+    """
+    realm = await find_realm(instance)
+    oidc_client = {
+        "apiVersion": settings.identity.api_version,
+        "kind": "OIDCClient",
+        "metadata": {
+            "name": settings.identity.cluster_oidc_client_id_template.format(
+                cluster_name = instance.metadata.name,
+            ),
+            "namespace": instance.metadata.namespace,
+            "labels": {
+                "app.kubernetes.io/managed-by": "azimuth-capi-operator",
+            },
+        },
+        "spec": {
+            "realmName": realm.metadata.name,
+            # For Kubernetes access we use the device code grant type
+            "public": True,
+            "grantTypes": ["DeviceCode"],
+        },
+    }
+    kopf.adopt(oidc_client, instance.model_dump())
+    return await ekclient.apply_object(oidc_client, force = True)
+
+
+async def adopt_oidc_client(instance: api.Cluster):
+    """
+    Ensures that the OIDC client is owned by the specified cluster.
+    """
+    ekoidcclients = await ekclient.api(settings.identity.api_version).resource("oidcclients")
+    try:
+        oidc_client = await ekoidcclients.fetch(
+            settings.identity.cluster_oidc_client_id_template.format(
+                cluster_name = instance.metadata.name
+            ),
+            namespace = instance.metadata.namespace
+        )
+    except ApiError as exc:
+        if exc.status_code == 404:
+            return
+        else:
+            raise
+    patch_data = []
+    if "ownerReferences" not in oidc_client.metadata:
+        patch_data.append(
+            {
+                "op": "add",
+                "path": "/metadata/ownerReferences",
+                "value": [],
+            }
+        )
+    if not any(
+        ref["uid"] == instance.metadata.uid
+        for ref in oidc_client.metadata.get("ownerReferences", [])
+    ):
+        patch_data.append(
+            {
+                "op": "add",
+                "path": "/metadata/ownerReferences/-",
+                "value": {
+                    "apiVersion": instance.api_version,
+                    "kind": instance.kind,
+                    "name": instance.metadata.name,
+                    "uid": instance.metadata.uid,
+                    "blockOwnerDeletion": True,
+                    "controller": True,
+                },
+            }
+        )
+    if patch_data:
+        await ekoidcclients.json_patch(
+            oidc_client.metadata.name,
+            patch_data,
+            namespace = oidc_client.metadata.namespace
+        )
+
+
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
 async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
@@ -417,20 +525,33 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
-    # Make sure that the secret exists
+    # Fetch the template for the cluster
+    template = await fetch_model_instance(api.ClusterTemplate, instance.spec.template_name)
+    # Make sure that the credential secret exists
     eksecrets = await ekclient.api("v1").resource("secrets")
     secret = await eksecrets.fetch(
         instance.spec.cloud_credentials_secret_name,
         namespace = namespace
     )
-    # Then fetch the template
-    ekcts = await ekresource_for_model(api.ClusterTemplate)
-    template = api.ClusterTemplate.model_validate(await ekcts.fetch(instance.spec.template_name))
+    # Create the OIDC client for the cluster and wait for the issuer URL and client ID
+    # to be available
+    oidc_client = await ensure_oidc_client(instance)
+    try:
+        oidc_issuer_url = oidc_client["status"]["issuerUrl"]
+        oidc_client_id = oidc_client["status"]["clientId"]
+    except KeyError:
+        raise kopf.TemporaryError("OIDC client is not ready", delay = 15)
     # Generate the Helm values for the release
     helm_values = mergeconcat(
         settings.capi_helm.default_values,
         template.spec.values.model_dump(by_alias = True),
-        default_loader.load("cluster-values.yaml", spec = instance.spec, settings = settings)
+        default_loader.load(
+            "cluster-values.yaml",
+            spec = instance.spec,
+            oidc_issuer_url = oidc_issuer_url,
+            oidc_client_id = oidc_client_id,
+            settings = settings
+        )
     )
     # If a lease name is set, update the flavors in the values from the size map
     if instance.spec.lease_name:
@@ -514,7 +635,9 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     """
     Executes for each cluster when the operator is resumed.
     """
-    # Make sure that we adopt the lease when we are resumed
+    # Make sure that the OIDC client is adopted when we resume
+    await adopt_oidc_client(instance)
+    # Make sure that the lease is adopted when we are resumed
     if instance.spec.lease_name:
         await adopt_lease(instance)
     # When we are resumed, the managed event handlers will be called with all the CAPI
@@ -596,7 +719,6 @@ def on_related_object_event(
         @kopf.on.event(*args, **kwargs)
         @functools.wraps(func)
         async def wrapper(**inner):
-            ekclusters = await ekresource_for_model(api.Cluster)
             cluster_name = cluster_name_mapper(inner["body"])
             if not cluster_name:
                 return
@@ -604,11 +726,10 @@ def on_related_object_event(
             # kopf retry logic does not apply to events
             while True:
                 try:
-                    cluster = api.Cluster.model_validate(
-                        await ekclusters.fetch(
-                            cluster_name,
-                            namespace = inner["namespace"]
-                        )
+                    cluster = await fetch_model_instance(
+                        api.Cluster,
+                        cluster_name,
+                        namespace = inner["namespace"]
                     )
                     await func(cluster = cluster, **inner)
                     await save_cluster_status(cluster)
@@ -717,6 +838,88 @@ async def on_manifests_event(cluster, type, body, **kwargs):
         status.addon_updated(cluster, body)
 
 
+async def ensure_user_kubeconfig_secret(instance: api.Cluster, kubeconfig_secret):
+    """
+    Given the admin kubeconfig secret for a cluster, ensure that a corresponding secret
+    containing a user kubeconfig using OIDC exists and return it.
+    """
+    # Get the OIDC client for the cluster and extract the issuer URL and client ID
+    # Let any 404s or KeyErrors propagate as they _should not_ ever happen and we want
+    # to know if they do
+    ekoidcclients = await ekclient.api(settings.identity.api_version).resource("oidcclients")
+    oidc_client = await ekoidcclients.fetch(
+        settings.identity.cluster_oidc_client_id_template.format(
+            cluster_name = instance.metadata.name
+        ),
+        namespace = instance.metadata.namespace
+    )
+    oidc_issuer_url = oidc_client["status"]["issuerUrl"]
+    oidc_client_id = oidc_client["status"]["clientId"]
+    # Parse the kubeconfig so we can take the cluster info from it
+    kubeconfig = yaml.safe_load(base64.b64decode(kubeconfig_secret["data"]["value"]))
+    cluster = kubeconfig["clusters"][0]
+    # Build the new kubeconfig and write it to a secret
+    kubeconfig_user = {
+        "apiVersion": "v1",
+        "kind": "Config",
+        "clusters": [cluster],
+        "users": [
+            {
+                "name": "oidc",
+                "user": {
+                    "exec": {
+                        "apiVersion": "client.authentication.k8s.io/v1beta1",
+                        "command": "kubectl",
+                        "args": [
+                            "oidc-login",
+                            "get-token",
+                            "--grant-type=device-code",
+                            f"--oidc-issuer-url={oidc_issuer_url}",
+                            f"--oidc-client-id={oidc_client_id}",
+                        ],
+                    },
+                },
+            },
+        ],
+        "contexts": [
+            {
+                "name": f"oidc@{cluster['name']}",
+                "context": {
+                    "cluster": cluster["name"],
+                    "user": "oidc",
+                },
+            },
+        ],
+        "current-context": f"oidc@{cluster['name']}",
+        "preferences": {},
+    }
+    return await ekclient.apply_object(
+        {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+                "name": f"{kubeconfig_secret['metadata']['name']}-user",
+                "namespace": kubeconfig_secret["metadata"]["namespace"],
+                "labels": kubeconfig_secret["metadata"]["labels"],
+                "ownerReferences": [
+                    {
+                        "apiVersion": instance.api_version,
+                        "kind": instance.kind,
+                        "name": instance.metadata.name,
+                        "uid": instance.metadata.uid,
+                        "blockOwnerDeletion": True,
+                        "controller": True,
+                    }
+                ],
+            },
+            "stringData": {
+                "value": yaml.safe_dump(kubeconfig_user),
+            }
+        },
+        force = True
+    )
+
+
 @on_related_object_event(
     "v1",
     "secrets",
@@ -729,35 +932,8 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):
     Executes on events for CAPI cluster secrets.
     """
     if type != "DELETED" and name.endswith("-kubeconfig"):
-        status.kubeconfig_secret_updated(cluster, body)
-
-
-async def find_realm(cluster: api.Cluster):
-    """
-    Return the identity realm for the given cluster.
-    """
-    ekrealms = await ekclient.api(settings.identity.api_version).resource("realms")
-    if cluster.spec.zenith_identity_realm_name:
-        # If the cluster specifies a realm, use it
-        try:
-            return await ekrealms.fetch(
-                cluster.spec.zenith_identity_realm_name,
-                namespace = cluster.metadata.namespace
-            )
-        except ApiError as exc:
-            if exc.status_code == 404:
-                raise kopf.TemporaryError(
-                    f"Could not find identity realm '{cluster.spec.zenith_identity_realm_name}'"
-                )
-            else:
-                raise
-    else:
-        # Otherwise, try to discover a realm in the namespace
-        realm = await ekrealms.first(namespace = cluster.metadata.namespace)
-        if realm:
-            return realm
-        else:
-            raise kopf.TemporaryError("No identity realm available to use")
+        user_kubeconfig_secret = await ensure_user_kubeconfig_secret(cluster, body)
+        status.kubeconfig_secret_updated(cluster, user_kubeconfig_secret)
 
 
 @model_handler(api.Cluster, kopf.on.resume)
