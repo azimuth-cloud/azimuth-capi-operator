@@ -216,11 +216,6 @@ async def zenith_values(client, cluster, addons):
             upstream_service_name = "kubernetes-dashboard",
             upstream_port = 443,
             upstream_scheme = "https",
-            mitm_proxy_enabled = True,
-            mitm_proxy_auth_inject_type = "ServiceAccount",
-            mitm_proxy_auth_inject_service_account = {
-                "clusterRoleName": "cluster-admin",
-            },
             label = "Kubernetes Dashboard",
             icon_url = settings.zenith.kubernetes_dashboard_icon_url
         ),
