@@ -124,6 +124,38 @@ class ZenithConfig(Section):
         return bool(self.registrar_admin_url)
 
 
+class PolicyRule(Section):
+    """
+    Configuration for a rule in a Kubernetes role.
+    """
+    #: The API groups for the resources that the rule applies to
+    api_groups: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The resource names that the rule applies to
+    resources: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The resource names that the rule applies to
+    resource_names: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The non-resource URLs that the rule applies to
+    non_resource_urls: t.List[constr(min_length = 1)] = Field(
+        alias = "nonResourceURLs",
+        default_factory = list
+    )
+    #: The list of verbs that the rule applies to
+    verbs: t.List[constr(min_length = 1)] = Field(default_factory = list)
+
+
+class DefaultUserRoleConfig(Section):
+    """
+    Configuration for the default role and binding for OIDC users.
+    """
+    #: The name for the cluster role and the role binding
+    name: constr(min_length = 1) = "oidc:default-users"
+    #: The namespace for the role binding
+    #: If not given, a cluster role binding is used
+    namespace: t.Optional[constr(min_length = 1)] = None
+    #: The rules for the cluster role
+    rules: t.List[PolicyRule] = Field(default_factory = list)
+
+
 class IdentityConfig(Section):
     """
     Configuration for the Azimuth identity support.
@@ -136,6 +168,10 @@ class IdentityConfig(Section):
     cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for app platform names
     app_platform_name_template: constr(min_length = 1) = "kubeapp-{app_name}"
+    #: The default role binding to give users of the cluster
+    #: This role binding is applied to the platform users group for the realm and the
+    #: managed group that is created for cluster users
+    default_user_role: t.Optional[DefaultUserRoleConfig] = None
 
 
 class WebhookConfiguration(Section):

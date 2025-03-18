@@ -435,11 +435,10 @@ async def find_realm(cluster: api.Cluster):
             raise kopf.TemporaryError("No identity realm available to use")
 
 
-async def ensure_oidc_client(instance: api.Cluster):
+async def ensure_oidc_client(instance: api.Cluster, realm):
     """
     Ensures that an OIDC client exists for the given cluster.
     """
-    realm = await find_realm(instance)
     oidc_client = {
         "apiVersion": settings.identity.api_version,
         "kind": "OIDCClient",
@@ -515,6 +514,32 @@ async def adopt_oidc_client(instance: api.Cluster):
         )
 
 
+async def ensure_platform(instance: api.Cluster, realm):
+    """
+    Ensures that the platform resource for the cluster exists and matches the current services.
+    """
+    platform = {
+        "apiVersion": settings.identity.api_version,
+        "kind": "Platform",
+        "metadata": {
+            "name": settings.identity.cluster_platform_name_template.format(
+                cluster_name = instance.metadata.name,
+            ),
+            "namespace": instance.metadata.namespace,
+        },
+        "spec": {
+            "realmName": realm.metadata.name,
+        },
+    }
+    for name, service in instance.status.services.items():
+        platform["spec"].setdefault("zenithServices", {})[name] = {
+            "subdomain": service.subdomain,
+            "fqdn": service.fqdn,
+        }
+    kopf.adopt(platform, instance.model_dump())
+    return await ekclient.apply_object(platform, force = True)
+
+
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
 async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
@@ -527,20 +552,35 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         return
     # Fetch the template for the cluster
     template = await fetch_model_instance(api.ClusterTemplate, instance.spec.template_name)
+    if not template:
+        raise kopf.TemporaryError("specified template does not exist")
     # Make sure that the credential secret exists
     eksecrets = await ekclient.api("v1").resource("secrets")
     secret = await eksecrets.fetch(
         instance.spec.cloud_credentials_secret_name,
         namespace = namespace
     )
+    # Wait for the realm to become available
+    realm = await find_realm(instance)
+    if realm.get("status", {}).get("phase", "Unknown") == "Ready":
+        # The platform users group is an optional part of a realm
+        platform_users_group = realm["status"].get("platformUsersGroup")
+    else:
+        raise kopf.TemporaryError("identity realm is not ready", delay = 15)
     # Create the OIDC client for the cluster and wait for the issuer URL and client ID
     # to be available
-    oidc_client = await ensure_oidc_client(instance)
+    oidc_client = await ensure_oidc_client(instance, realm)
     try:
         oidc_issuer_url = oidc_client["status"]["issuerUrl"]
         oidc_client_id = oidc_client["status"]["clientId"]
     except KeyError:
         raise kopf.TemporaryError("OIDC client is not ready", delay = 15)
+    # Create the platform and wait for the root group to be set
+    platform = await ensure_platform(instance, realm)
+    try:
+        cluster_users_group = platform["status"]["rootGroup"]
+    except KeyError:
+        raise kopf.TemporaryError("identity platform is not ready", delay = 15)
     # Generate the Helm values for the release
     helm_values = mergeconcat(
         settings.capi_helm.default_values,
@@ -550,6 +590,8 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             spec = instance.spec,
             oidc_issuer_url = oidc_issuer_url,
             oidc_client_id = oidc_client_id,
+            platform_users_group = platform_users_group,
+            cluster_users_group = cluster_users_group,
             settings = settings
         )
     )
@@ -731,14 +773,12 @@ def on_related_object_event(
                         cluster_name,
                         namespace = inner["namespace"]
                     )
-                    await func(cluster = cluster, **inner)
-                    await save_cluster_status(cluster)
+                    if cluster:
+                        await func(cluster = cluster, **inner)
+                        await save_cluster_status(cluster)
                 except ApiError as exc:
-                    # On a 404, don't bother trying again as the cluster is gone
-                    if exc.status_code == 404:
-                        break
                     # On a conflict response, go round again
-                    elif exc.status_code == 409:
+                    if exc.status_code == 409:
                         continue
                     # Any other error should be bubbled up
                     else:
@@ -943,28 +983,7 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
     Executed whenever the cluster services change.
     """
     realm = await find_realm(instance)
-    platform = {
-        "apiVersion": settings.identity.api_version,
-        "kind": "Platform",
-        "metadata": {
-            "name": settings.identity.cluster_platform_name_template.format(
-                cluster_name = instance.metadata.name,
-            ),
-            "namespace": instance.metadata.namespace,
-        },
-        "spec": {
-            "realmName": realm.metadata.name,
-            "zenithServices": {
-                name: {
-                    "subdomain": service.subdomain,
-                    "fqdn": service.fqdn,
-                }
-                for name, service in instance.status.services.items()
-            },
-        },
-    }
-    kopf.adopt(platform, instance.model_dump())
-    await ekclient.apply_object(platform, force = True)
+    await ensure_platform(instance, realm)
 
 
 @on_related_object_event(
@@ -1008,15 +1027,13 @@ async def on_kubernetes_app_event(
                 },
                 "spec": {
                     "realmName": realm.metadata.name,
-                    "zenithServices": {
-                        name: {
-                            "subdomain": service["subdomain"],
-                            "fqdn": service["fqdn"],
-                        }
-                        for name, service in services.items()
-                    },
                 },
             }
+            for name, service in services.items():
+                platform["spec"].setdefault("zenithServices", {})[name] = {
+                    "subdomain": service["subdomain"],
+                    "fqdn": service["fqdn"],
+                }
             # The platform should be owned by the HelmRelease
             kopf.adopt(platform, body)
             await ekclient.apply_object(platform, force = True)
