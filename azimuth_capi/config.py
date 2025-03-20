@@ -160,6 +160,8 @@ class IdentityConfig(Section):
     """
     Configuration for the Azimuth identity support.
     """
+    #: Indicates whether OIDC authentication should be enabled for clusters
+    oidc_enabled: bool = False
     #: The API version to use for Azimuth identity resources
     api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
     #: The template to use for cluster OIDC client IDs

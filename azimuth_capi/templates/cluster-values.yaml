@@ -1,9 +1,11 @@
 cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
+{% if settings.identity.oidc_enabled %}
 oidc:
   issuerUrl: {{ oidc_issuer_url }}
   clientId: {{ oidc_client_id }}
   usernameClaim: preferred_username
+{% endif %}
 
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
@@ -69,7 +71,7 @@ addons:
             persistence:
               size: {{ spec.addons.monitoring_loki_volume_size }}Gi
 {% endif %}
-{% if settings.identity.default_user_role %}
+{% if settings.identity.oidc_enabled and settings.identity.default_user_role %}
   custom:
     oidc-default-rbac:
       kind: Manifests
@@ -101,10 +103,10 @@ addons:
               namespace: {{ settings.identity.default_user_role.namespace }}
               {% endif %}
             subjects:
-              {% if platform_users_group %}
+              {% if realm_users_group %}
               - apiGroup: rbac.authorization.k8s.io
                 kind: Group
-                name: oidc:{{ platform_users_group }}
+                name: oidc:{{ realm_users_group }}
               {% endif %}
               - apiGroup: rbac.authorization.k8s.io
                 kind: Group

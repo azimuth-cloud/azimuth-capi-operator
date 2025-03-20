@@ -465,6 +465,9 @@ async def ensure_oidc_client(instance: api.Cluster, realm):
 async def adopt_oidc_client(instance: api.Cluster):
     """
     Ensures that the OIDC client is owned by the specified cluster.
+
+    This is to ensure that the owner reference is repopulated if it is missing,
+    e.g. after a Velero restore.
     """
     ekoidcclients = await ekclient.api(settings.identity.api_version).resource("oidcclients")
     try:
@@ -476,6 +479,7 @@ async def adopt_oidc_client(instance: api.Cluster):
         )
     except ApiError as exc:
         if exc.status_code == 404:
+            # This is a valid condition, e.g. if OIDC auth is not enabled
             return
         else:
             raise
@@ -560,27 +564,34 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         instance.spec.cloud_credentials_secret_name,
         namespace = namespace
     )
-    # Wait for the realm to become available
-    realm = await find_realm(instance)
-    if realm.get("status", {}).get("phase", "Unknown") == "Ready":
-        # The platform users group is an optional part of a realm
-        platform_users_group = realm["status"].get("platformUsersGroup")
+    # Check if OIDC authentication should be enabled
+    if settings.identity.oidc_enabled:
+        # Wait for the realm to become available
+        realm = await find_realm(instance)
+        if realm.get("status", {}).get("phase", "Unknown") == "Ready":
+            # The platform users group is an optional part of a realm
+            realm_users_group = realm["status"].get("platformUsersGroup")
+        else:
+            raise kopf.TemporaryError("identity realm is not ready", delay = 15)
+        # Create the OIDC client for the cluster and wait for the issuer URL and client ID
+        # to be available
+        oidc_client = await ensure_oidc_client(instance, realm)
+        try:
+            oidc_issuer_url = oidc_client["status"]["issuerUrl"]
+            oidc_client_id = oidc_client["status"]["clientId"]
+        except KeyError:
+            raise kopf.TemporaryError("OIDC client is not ready", delay = 15)
+        # Create the platform and wait for the root group to be set
+        platform = await ensure_platform(instance, realm)
+        try:
+            cluster_users_group = platform["status"]["rootGroup"]
+        except KeyError:
+            raise kopf.TemporaryError("identity platform is not ready", delay = 15)
     else:
-        raise kopf.TemporaryError("identity realm is not ready", delay = 15)
-    # Create the OIDC client for the cluster and wait for the issuer URL and client ID
-    # to be available
-    oidc_client = await ensure_oidc_client(instance, realm)
-    try:
-        oidc_issuer_url = oidc_client["status"]["issuerUrl"]
-        oidc_client_id = oidc_client["status"]["clientId"]
-    except KeyError:
-        raise kopf.TemporaryError("OIDC client is not ready", delay = 15)
-    # Create the platform and wait for the root group to be set
-    platform = await ensure_platform(instance, realm)
-    try:
-        cluster_users_group = platform["status"]["rootGroup"]
-    except KeyError:
-        raise kopf.TemporaryError("identity platform is not ready", delay = 15)
+        oidc_issuer_url = None
+        oidc_client_id = None
+        realm_users_group = None
+        cluster_users_group = None
     # Generate the Helm values for the release
     helm_values = mergeconcat(
         settings.capi_helm.default_values,
@@ -590,7 +601,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             spec = instance.spec,
             oidc_issuer_url = oidc_issuer_url,
             oidc_client_id = oidc_client_id,
-            platform_users_group = platform_users_group,
+            realm_users_group = realm_users_group,
             cluster_users_group = cluster_users_group,
             settings = settings
         )
@@ -972,8 +983,11 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):
     Executes on events for CAPI cluster secrets.
     """
     if type != "DELETED" and name.endswith("-kubeconfig"):
-        user_kubeconfig_secret = await ensure_user_kubeconfig_secret(cluster, body)
-        status.kubeconfig_secret_updated(cluster, user_kubeconfig_secret)
+        if settings.identity.oidc_enabled:
+            user_kubeconfig_secret = await ensure_user_kubeconfig_secret(cluster, body)
+            status.kubeconfig_secret_updated(cluster, user_kubeconfig_secret)
+        else:
+            status.kubeconfig_secret_updated(cluster, body)
 
 
 @model_handler(api.Cluster, kopf.on.resume)
