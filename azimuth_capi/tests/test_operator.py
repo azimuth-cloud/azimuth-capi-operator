@@ -7,6 +7,9 @@ from azimuth_capi import operator
 from azimuth_capi.models import v1alpha1 as api
 
 class TestOperator(unittest.IsolatedAsyncioTestCase):
+    # make debugging dict comparisons easier
+    maxDiff = None
+
     def get_fake_cluster(self) -> api.Cluster:
         fake_cluster = dict(
             apiVersion="capi.azimuth.stackhpc.com/v1alpha1",
@@ -20,12 +23,17 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                 templateName="template1.31",
                 cloudCredentialsSecretName="secret1",
                 controlPlaneMachineSize="vm.small",
-                nodePools=[
+                nodeGroups=[
                     dict(
-                        name="nodepool1",
+                        name="vms",
                         machineSize="vm.small",
                         count=2,
-                    )
+                    ),
+                    dict(
+                        name="gpus",
+                        machineSize="bm.gpus",
+                        count=2,
+                    ),
                 ]
             )
         )
@@ -66,5 +74,14 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             'kubernetesVersion': 'v1.31.0',
             'machineImageId': '12456789',
             'nodeGroupDefaults': {'healthCheck': {'enabled': True}},
-            'nodeGroups': None}
-        )
+            'nodeGroups': [
+                {'autoscale': False,
+                 'machineCount': 2,
+                 'machineFlavor': 'vm.small',
+                 'name': 'vms'},
+                {'autoscale': False,
+                 'machineCount': 2,
+                 'machineFlavor': 'bm.gpus',
+                 'name': 'gpus'}
+            ],
+        })
