@@ -409,11 +409,24 @@ def generate_helm_values_for_release(template : api.ClusterTemplate, cluster : a
     """
     Generates the Helm values for the release.
     """
-    return mergeconcat(
+    values = mergeconcat(
         settings.capi_helm.default_values,
         template.spec.values.model_dump(by_alias = True),
         default_loader.load("cluster-values.yaml", spec = cluster.spec, settings = settings)
     )
+    # Apply the flavor specific node group overrides
+    if settings.capi_helm.flavor_specific_node_group_overrides:
+        updated_node_groups = []
+        for i in range(len(values["nodeGroups"])):
+            ng = values["nodeGroups"][i]
+            flavor = ng["machineFlavor"]
+            import fnmatch
+            for pattern, overrides in settings.capi_helm.flavor_specific_node_group_overrides.items():
+                if fnmatch.fnmatch(flavor, pattern):
+                    ng = mergeconcat(ng, overrides)
+            updated_node_groups.append(ng)
+        values["nodeGroups"] = updated_node_groups
+    return values
 
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
