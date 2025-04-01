@@ -149,9 +149,9 @@ class DefaultUserRoleConfig(Section):
     """
     #: The name for the cluster role and the role binding
     name: constr(min_length = 1) = "oidc:default-users"
-    #: The namespace for the role binding
+    #: The namespaces for the role bindings
     #: If not given, a cluster role binding is used
-    namespace: t.Optional[constr(min_length = 1)] = None
+    namespaces: t.List[constr(min_length = 1)] = Field(default_factory = list)
     #: The rules for the cluster role
     rules: t.List[PolicyRule] = Field(default_factory = list)
 

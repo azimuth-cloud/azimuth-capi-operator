@@ -91,17 +91,14 @@ addons:
               {% endfor %}
             {% endif %}
           oidc-default-role-binding.yaml: |
+            {% if settings.identity.default_user_role.namespaces | length > 0 %}
+            {% for namespace in settings.identity.default_user_role.namespaces %}
+            ---
             apiVersion: rbac.authorization.k8s.io/v1
-            {% if settings.identity.default_user_role.namespace %}
             kind: RoleBinding
-            {% else %}
-            kind: ClusterRoleBinding
-            {% endif %}
             metadata:
-              name: {{ settings.identity.default_user_role.name }}
-              {% if settings.identity.default_user_role.namespace %}
-              namespace: {{ settings.identity.default_user_role.namespace }}
-              {% endif %}
+              name: {{ settings.identity.default_user_role.name }}-{{ namespace }}
+              namespace: {{ namespace }}
             subjects:
               {% if realm_users_group %}
               - apiGroup: rbac.authorization.k8s.io
@@ -115,4 +112,24 @@ addons:
               apiGroup: rbac.authorization.k8s.io
               kind: ClusterRole
               name: {{ settings.identity.default_user_role.name }}
+            {% endfor %}
+            {% else %}
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: {{ settings.identity.default_user_role.name }}
+            subjects:
+              {% if realm_users_group %}
+              - apiGroup: rbac.authorization.k8s.io
+                kind: Group
+                name: oidc:{{ realm_users_group }}
+              {% endif %}
+              - apiGroup: rbac.authorization.k8s.io
+                kind: Group
+                name: oidc:{{ cluster_users_group }}
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: {{ settings.identity.default_user_role.name }}
+            {% endif %}
 {% endif %}
