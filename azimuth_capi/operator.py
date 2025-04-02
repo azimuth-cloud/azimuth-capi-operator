@@ -25,7 +25,6 @@ from .template import default_loader
 from .utils import mergeconcat
 from .zenith import zenith_values, zenith_operator_resources
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -406,6 +405,36 @@ def update_machine_flavor(obj, size_map):
     updated_obj["machineFlavor"] = mapped_flavor
     return updated_obj
 
+def generate_helm_values_for_release(template : api.ClusterTemplate, cluster : api.Cluster, oidc_issuer_url, oidc_client_id, realm_users_group,cluster_users_group):
+    """
+    Generates the Helm values for the release.
+    """
+    values = mergeconcat(
+        settings.capi_helm.default_values,
+        template.spec.values.model_dump(by_alias = True),
+        default_loader.load(
+            "cluster-values.yaml",
+            spec = cluster.spec,
+            oidc_issuer_url = oidc_issuer_url,
+            oidc_client_id = oidc_client_id,
+            realm_users_group = realm_users_group,
+            cluster_users_group = cluster_users_group,
+            settings = settings
+        )
+    )
+    # Apply the flavor specific node group overrides
+    if settings.capi_helm.flavor_specific_node_group_overrides:
+        updated_node_groups = []
+        for i in range(len(values["nodeGroups"])):
+            ng = values["nodeGroups"][i]
+            flavor = ng["machineFlavor"]
+            import fnmatch
+            for pattern, overrides in settings.capi_helm.flavor_specific_node_group_overrides.items():
+                if fnmatch.fnmatch(flavor, pattern):
+                    ng = mergeconcat(ng, overrides)
+            updated_node_groups.append(ng)
+        values["nodeGroups"] = updated_node_groups
+    return values
 
 async def find_realm(cluster: api.Cluster):
     """
@@ -593,19 +622,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         realm_users_group = None
         cluster_users_group = None
     # Generate the Helm values for the release
-    helm_values = mergeconcat(
-        settings.capi_helm.default_values,
-        template.spec.values.model_dump(by_alias = True),
-        default_loader.load(
-            "cluster-values.yaml",
-            spec = instance.spec,
-            oidc_issuer_url = oidc_issuer_url,
-            oidc_client_id = oidc_client_id,
-            realm_users_group = realm_users_group,
-            cluster_users_group = cluster_users_group,
-            settings = settings
-        )
-    )
+    helm_values = generate_helm_values_for_release(template, instance, oidc_issuer_url, oidc_client_id, realm_users_group, cluster_users_group)
     # If a lease name is set, update the flavors in the values from the size map
     if instance.spec.lease_name:
         # Make sure that we adopt the lease
