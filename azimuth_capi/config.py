@@ -60,6 +60,14 @@ class CAPIHelmConfig(Section):
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
+    flavor_specific_node_group_overrides: t.Dict[str, t.Dict[str, t.Any]] = Field(
+        default_factory = dict,
+        description = (
+            "Overrides for node groups based on the flavor. "
+            "The key is the flavor name regex, "
+            "and the value is a dictionary of overrides."
+        )
+    )
 
 
 class ZenithConfig(Section):
@@ -124,16 +132,56 @@ class ZenithConfig(Section):
         return bool(self.registrar_admin_url)
 
 
+class PolicyRule(Section):
+    """
+    Configuration for a rule in a Kubernetes role.
+    """
+    #: The API groups for the resources that the rule applies to
+    api_groups: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The resource names that the rule applies to
+    resources: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The resource names that the rule applies to
+    resource_names: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The non-resource URLs that the rule applies to
+    non_resource_urls: t.List[constr(min_length = 1)] = Field(
+        alias = "nonResourceURLs",
+        default_factory = list
+    )
+    #: The list of verbs that the rule applies to
+    verbs: t.List[constr(min_length = 1)] = Field(default_factory = list)
+
+
+class DefaultUserRoleConfig(Section):
+    """
+    Configuration for the default role and binding for OIDC users.
+    """
+    #: The name for the cluster role and the role binding
+    name: constr(min_length = 1) = "oidc:default-users"
+    #: The namespaces for the role bindings
+    #: If not given, a cluster role binding is used
+    namespaces: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The rules for the cluster role
+    rules: t.List[PolicyRule] = Field(default_factory = list)
+
+
 class IdentityConfig(Section):
     """
     Configuration for the Azimuth identity support.
     """
+    #: Indicates whether OIDC authentication should be enabled for clusters
+    oidc_enabled: bool = False
     #: The API version to use for Azimuth identity resources
     api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
+    #: The template to use for cluster OIDC client IDs
+    cluster_oidc_client_id_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for cluster platform names
     cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for app platform names
     app_platform_name_template: constr(min_length = 1) = "kubeapp-{app_name}"
+    #: The default role binding to give users of the cluster
+    #: This role binding is applied to the platform users group for the realm and the
+    #: managed group that is created for cluster users
+    default_user_role: t.Optional[DefaultUserRoleConfig] = None
 
 
 class WebhookConfiguration(Section):
@@ -145,11 +193,11 @@ class WebhookConfiguration(Section):
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
-    certfile: t.Optional[FilePath] = Field(None, validate_default = True)
+    certfile: t.Optional[FilePath] = Field(None, validate_default = False)
     #: The path to the key for the TLS certificate
-    keyfile: t.Optional[FilePath] = Field(None, validate_default = True)
+    keyfile: t.Optional[FilePath] = Field(None, validate_default = False)
     #: The host for the webhook server (required for self-signed certificate generation)
-    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = True)
+    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = False)
 
     @field_validator("certfile")
     @classmethod
