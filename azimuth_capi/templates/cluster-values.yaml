@@ -1,5 +1,12 @@
 cloudCredentialsSecretName: "{{ spec.cloud_credentials_secret_name }}"
 
+{% if settings.identity.oidc_enabled %}
+oidc:
+  issuerUrl: {{ oidc_issuer_url }}
+  clientId: {{ oidc_client_id }}
+  usernameClaim: preferred_username
+{% endif %}
+
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
   healthCheck:
@@ -63,4 +70,81 @@ addons:
           loki:
             persistence:
               size: {{ spec.addons.monitoring_loki_volume_size }}Gi
+{% endif %}
+{% if settings.identity.oidc_enabled and (settings.identity.default_user_namespace_role or settings.identity.default_user_cluster_role) %}
+  custom:
+    oidc-default-rbac:
+      kind: Manifests
+      spec:
+        # This is the namespace where the Helm release for the manifests will be created
+        namespace: oidc-system
+        manifests:
+          {% if settings.identity.default_user_namespace_role %}
+          oidc-default-namespace-role.yaml: |
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRole
+            metadata:
+              name: {{ settings.identity.default_user_namespace_role.name }}
+            {% if settings.identity.default_user_namespace_role.rules %}
+            rules:
+              {% for rule in settings.identity.default_user_namespace_role.rules %}
+              - {{ rule.model_dump_json(by_alias = True, exclude_defaults = True) }}
+              {% endfor %}
+            {% endif %}
+          {% if settings.identity.default_user_namespace_role.namespaces | length > 0 %}
+          oidc-default-role-binding.yaml: |
+            {% for namespace in settings.identity.default_user_namespace_role.namespaces %}
+            ---
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: RoleBinding
+            metadata:
+              name: {{ settings.identity.default_user_namespace_role.name }}-{{ namespace }}
+              namespace: {{ namespace }}
+            subjects:
+              {% if realm_users_group %}
+              - apiGroup: rbac.authorization.k8s.io
+                kind: Group
+                name: oidc:{{ realm_users_group }}
+              {% endif %}
+              - apiGroup: rbac.authorization.k8s.io
+                kind: Group
+                name: oidc:{{ cluster_users_group }}
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: {{ settings.identity.default_user_namespace_role.name }}
+            {% endfor %}
+          {% endif %}
+          {% endif %}
+          {% if settings.identity.default_user_cluster_role %}
+          oidc-default-cluster-role.yaml: |
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRole
+            metadata:
+              name: {{ settings.identity.default_user_cluster_role.name }}
+            {% if settings.identity.default_user_cluster_role.rules %}
+            rules:
+              {% for rule in settings.identity.default_user_cluster_role.rules %}
+              - {{ rule.model_dump_json(by_alias = True, exclude_defaults = True) }}
+              {% endfor %}
+            {% endif %}
+          oidc-default-cluster-role-binding.yaml: |
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: ClusterRoleBinding
+            metadata:
+              name: {{ settings.identity.default_user_cluster_role.name }}
+            subjects:
+              {% if realm_users_group %}
+              - apiGroup: rbac.authorization.k8s.io
+                kind: Group
+                name: oidc:{{ realm_users_group }}
+              {% endif %}
+              - apiGroup: rbac.authorization.k8s.io
+                kind: Group
+                name: oidc:{{ cluster_users_group }}
+            roleRef:
+              apiGroup: rbac.authorization.k8s.io
+              kind: ClusterRole
+              name: {{ settings.identity.default_user_cluster_role.name }}
+          {% endif %}
 {% endif %}

@@ -216,7 +216,9 @@ async def zenith_values(client, cluster, addons):
             upstream_service_name = "kubernetes-dashboard",
             upstream_port = 443,
             upstream_scheme = "https",
-            mitm_proxy_enabled = True,
+            # When OIDC is enabled, disable the auth proxy and make users enter a token
+            mitm_proxy_enabled = not settings.identity.oidc_enabled,
+            # The following two arguments are only used when mitm_proxy_enabled = True
             mitm_proxy_auth_inject_type = "ServiceAccount",
             mitm_proxy_auth_inject_service_account = {
                 "clusterRoleName": "cluster-admin",
