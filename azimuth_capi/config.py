@@ -143,15 +143,23 @@ class PolicyRule(Section):
     verbs: t.List[constr(min_length = 1)] = Field(default_factory = list)
 
 
-class DefaultUserRoleConfig(Section):
+class DefaultUserNamespaceRoleConfig(Section):
     """
     Configuration for the default role and binding for OIDC users.
     """
     #: The name for the cluster role and the role binding
     name: constr(min_length = 1) = "oidc:default-users"
     #: The namespaces for the role bindings
-    #: If not given, a cluster role binding is used
     namespaces: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The rules for the cluster role
+    rules: t.List[PolicyRule] = Field(default_factory = list)
+
+class DefaultUserClusterRoleConfig(Section):
+    """
+    Configuration for the default role and binding for OIDC users.
+    """
+    #: The name for the cluster role and the role binding
+    name: constr(min_length = 1) = "oidc:default-users"
     #: The rules for the cluster role
     rules: t.List[PolicyRule] = Field(default_factory = list)
 
@@ -170,10 +178,14 @@ class IdentityConfig(Section):
     cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for app platform names
     app_platform_name_template: constr(min_length = 1) = "kubeapp-{app_name}"
-    #: The default role binding to give users of the cluster
-    #: This role binding is applied to the platform users group for the realm and the
+    #: The default namespace-scoped role bindings to give users of the cluster
+    #: These role binding are applied to the platform users group for the realm and the
     #: managed group that is created for cluster users
-    default_user_role: t.Optional[DefaultUserRoleConfig] = None
+    default_user_namespace_role: t.Optional[DefaultUserNamespaceRoleConfig] = None
+    #: The default cluster-wide role bindings to give users of the cluster
+    #: These role binding are applied to the platform users group for the realm and the
+    #: managed group that is created for cluster users
+    default_user_cluster_role: t.Optional[DefaultUserClusterRoleConfig] = None
 
 
 class WebhookConfiguration(Section):
