@@ -148,7 +148,7 @@ class DefaultUserNamespaceRoleConfig(Section):
     Configuration for the default role and binding for OIDC users.
     """
     #: The name for the cluster role and the role binding
-    name: constr(min_length = 1) = "oidc:default-users"
+    name: constr(min_length = 1) = "oidc:default-users-namespaced"
     #: The namespaces for the role bindings
     namespaces: t.List[constr(min_length = 1)] = Field(default_factory = list)
     #: The rules for the cluster role
@@ -159,7 +159,7 @@ class DefaultUserClusterRoleConfig(Section):
     Configuration for the default role and binding for OIDC users.
     """
     #: The name for the cluster role and the role binding
-    name: constr(min_length = 1) = "oidc:default-users"
+    name: constr(min_length = 1) = "oidc:default-users-cluster"
     #: The rules for the cluster role
     rules: t.List[PolicyRule] = Field(default_factory = list)
 
