@@ -3,13 +3,18 @@
 config:
   # By default, give OIDC users a role with the same rules as cluster-admin
   identity:
-    defaultUserRole:
+    defaultUserNamespaceRole:
       rules:
         - apiGroups: ["*"]
           resources: ["*"]
           verbs: ["*"]
         - nonResourceURLs: ["*"]
           verbs: ["*"]
+    defaultUserClusterRole:
+      rules:
+      - apiGroups: ["apiextensions.k8s.io"]
+        resources: ["customresourcedefinitions"]
+        verbs: ["get", "list", "watch"]
 
 # A bundle of trusted CAs to use instead of the defaults
 trustBundle:
