@@ -194,6 +194,18 @@ rules:
       - create
       - delete
   - apiGroups:
+    - kustomize.toolkit.fluxcd.io
+    resources:
+    - kustomizations
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+      - update
+      - create
+      - delete
+  - apiGroups:
     - image.toolkit.fluxcd.io
     resources:
     - imagepolicies
