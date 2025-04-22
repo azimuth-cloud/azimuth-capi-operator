@@ -6,3 +6,4 @@ chart/Chart.lock
 # ignore unit test stuff
 .stestr/*
 .tox/*
+.coverage
