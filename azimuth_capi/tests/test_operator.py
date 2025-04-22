@@ -62,10 +62,6 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
         cluster = self.get_fake_cluster()
         template = self.get_fake_cluster_template()
 
-        operator.settings.capi_helm.default_values = {
-            'extra_things': {'enabled': True},
-        }
-
         result = operator.generate_helm_values_for_release(template, cluster)
 
         self.assertDictEqual(result, {
@@ -75,7 +71,6 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             'cloudCredentialsSecretName': 'secret1',
             'controlPlane': {'healthCheck': {'enabled': True},
                             'machineFlavor': 'vm.small'},
-            'extra_things': {'enabled': True},
             'kubernetesVersion': 'v1.31.0',
             'machineImageId': '12456789',
             'nodeGroupDefaults': {'healthCheck': {'enabled': True}},
