@@ -82,7 +82,7 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                 {'autoscale': False,
                  'machineCount': 2,
                  'machineFlavor': 'bm.gpus',
-                 'name': 'gpus'},
+                 'name': 'gpus'}
             ],
         })
 
