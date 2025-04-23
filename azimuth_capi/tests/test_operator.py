@@ -6,6 +6,7 @@ import kopf
 from azimuth_capi import operator
 from azimuth_capi.models import v1alpha1 as api
 
+@mock.patch("easykube.Configuration.from_environment", new=mock.MagicMock())
 class TestOperator(unittest.IsolatedAsyncioTestCase):
     # make debugging dict comparisons easier
     maxDiff = None
