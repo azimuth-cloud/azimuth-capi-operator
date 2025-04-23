@@ -339,7 +339,7 @@ def flux_updated(cluster, obj):
     conditions = status.get("conditions", [])
     cluster.status.addons[component] = AddonStatus(
         phase = flux_to_addon_status(conditions),
-        revision = status.get("observedGeneration", 0)
+        revision = conditions.get("observedGeneration", 0)
     ) 
 
 def addon_updated(cluster, obj):
