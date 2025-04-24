@@ -45,12 +45,14 @@ async def apply_settings(**kwargs):
     Apply kopf settings.
     """
     # Create an easykube client from the environment
+    global ekclient
     ekclient = (
         Configuration
             .from_environment(json_encoder = pydantic_encoder)
             .async_client(default_field_manager = settings.easykube_field_manager)
     )
     # Create a Helm client to target the underlying cluster
+    global helm_client
     helm_client = HelmClient(
         default_timeout = settings.helm_client.default_timeout,
         executable = settings.helm_client.executable,
@@ -59,6 +61,7 @@ async def apply_settings(**kwargs):
         unpack_directory = settings.helm_client.unpack_directory
     )
     # Create a registry of custom resources and populate it from the models module
+    global registry
     registry = CustomResourceRegistry(settings.api_group, settings.crd_categories)
     registry.discover_models(models)
 
