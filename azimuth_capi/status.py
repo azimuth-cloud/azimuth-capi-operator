@@ -315,7 +315,8 @@ def kubeconfig_secret_updated(cluster, obj):
     """
     cluster.status.kubeconfig_secret_name = obj["metadata"]["name"]
 
-def flux_to_addon_status(flux_conditions):
+
+def _flux_to_addon_status(flux_conditions):
     addon_phase = AddonPhase.UNKNOWN.value
     addon_revision = 0
     if len(flux_conditions) > 0:
@@ -341,7 +342,8 @@ def flux_updated(cluster, obj):
     component = obj["metadata"]["labels"]["capi.stackhpc.com/component"]
     status = obj.get("status", {})
     conditions = status.get("conditions", [])
-    cluster.status.addons[component] = flux_to_addon_status(conditions)
+    cluster.status.addons[component] = _flux_to_addon_status(conditions)
+
 
 def addon_updated(cluster, obj):
     """
