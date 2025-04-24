@@ -6,6 +6,7 @@ import kopf
 from azimuth_capi import operator
 from azimuth_capi.models import v1alpha1 as api
 
+@mock.patch("easykube.Configuration.from_environment", new=mock.MagicMock())
 class TestOperator(unittest.IsolatedAsyncioTestCase):
     # make debugging dict comparisons easier
     maxDiff = None
@@ -59,6 +60,34 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
         return api.ClusterTemplate(**fake_cluster_template)
 
     def test_generate_helm_values_for_release(self):
+        cluster = self.get_fake_cluster()
+        template = self.get_fake_cluster_template()
+
+        result = operator.generate_helm_values_for_release(template, cluster)
+
+        self.assertDictEqual(result, {
+            'addons': {'ingress': {'enabled': False},
+            'kubernetesDashboard': {'enabled': False},
+            'monitoring': {'enabled': False}},
+            'cloudCredentialsSecretName': 'secret1',
+            'controlPlane': {'healthCheck': {'enabled': True},
+                            'machineFlavor': 'vm.small'},
+            'kubernetesVersion': 'v1.31.0',
+            'machineImageId': '12456789',
+            'nodeGroupDefaults': {'healthCheck': {'enabled': True}},
+            'nodeGroups': [
+                {'autoscale': False,
+                 'machineCount': 2,
+                 'machineFlavor': 'vm.small',
+                 'name': 'vms'},
+                {'autoscale': False,
+                 'machineCount': 2,
+                 'machineFlavor': 'bm.gpus',
+                 'name': 'gpus'}
+            ],
+        })
+
+    def test_generate_helm_values_for_release_with_overrides(self):
         cluster = self.get_fake_cluster()
         template = self.get_fake_cluster_template()
 
