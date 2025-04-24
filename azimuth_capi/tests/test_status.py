@@ -31,7 +31,9 @@ class TestStatus(unittest.TestCase):
         cluster = mock.Mock()
         cluster.status.addons = {}
         flux_kustomization_body = get_flux_test_object({"status": "True", "type": "Ready"})
+
         status.flux_updated(cluster, flux_kustomization_body)
+
         addon_status = cluster.status.addons["foo"]
         self.assertEqual(addon_status.phase, api.cluster.AddonPhase.DEPLOYED)
 
@@ -39,7 +41,9 @@ class TestStatus(unittest.TestCase):
         cluster = mock.Mock()
         cluster.status.addons = {}
         flux_kustomization_body = get_flux_test_object({"status": "False", "type": "Ready"})
+
         status.flux_updated(cluster, flux_kustomization_body)
+
         addon_status = cluster.status.addons["foo"]
         self.assertEqual(addon_status.phase, api.cluster.AddonPhase.FAILED)
 
@@ -47,7 +51,9 @@ class TestStatus(unittest.TestCase):
         cluster = mock.Mock()
         cluster.status.addons = {}
         flux_kustomization_body = get_flux_test_object({"status": "False", "type": "Reconciling"})
+
         status.flux_updated(cluster, flux_kustomization_body)
+
         addon_status = cluster.status.addons["foo"]
         self.assertEqual(addon_status.phase, api.cluster.AddonPhase.PENDING)
 
@@ -55,6 +61,8 @@ class TestStatus(unittest.TestCase):
         cluster = mock.Mock()
         cluster.status.addons = {}
         flux_kustomization_body = get_flux_test_object({"observedGeneration": 1})
+
         status.flux_updated(cluster, flux_kustomization_body)
+        
         addon_status = cluster.status.addons["foo"]
         self.assertEqual(addon_status.revision, 1)
