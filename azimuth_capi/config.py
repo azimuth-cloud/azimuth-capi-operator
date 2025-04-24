@@ -145,11 +145,11 @@ class WebhookConfiguration(Section):
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
-    certfile: t.Optional[FilePath] = Field(None, validate_default = True)
+    certfile: t.Optional[FilePath] = Field(None, validate_default = False)
     #: The path to the key for the TLS certificate
-    keyfile: t.Optional[FilePath] = Field(None, validate_default = True)
+    keyfile: t.Optional[FilePath] = Field(None, validate_default = False)
     #: The host for the webhook server (required for self-signed certificate generation)
-    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = True)
+    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = False)
 
     @field_validator("certfile")
     @classmethod
