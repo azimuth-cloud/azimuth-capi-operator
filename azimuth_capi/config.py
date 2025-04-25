@@ -60,6 +60,14 @@ class CAPIHelmConfig(Section):
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
+    flavor_specific_node_group_overrides: t.Dict[str, t.Dict[str, t.Any]] = Field(
+        default_factory = dict,
+        description = (
+            "Overrides for node groups based on the flavor. "
+            "The key is the flavor name regex, "
+            "and the value is a dictionary of overrides."
+        )
+    )
 
 
 class ZenithConfig(Section):

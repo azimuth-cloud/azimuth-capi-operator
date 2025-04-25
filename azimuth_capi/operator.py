@@ -16,6 +16,7 @@ import yaml
 from easykube import Configuration, ApiError
 import easysemver
 from kube_custom_resource import CustomResourceRegistry
+from pydantic.json import pydantic_encoder
 from pyhelm3 import Client as HelmClient, errors as helm_errors
 
 from . import models, status
@@ -27,35 +28,15 @@ from .zenith import zenith_values, zenith_operator_resources
 
 logger = logging.getLogger(__name__)
 
-
 # Constants for target API versions
 CLUSTER_API_VERSION = "cluster.x-k8s.io/v1beta1"
 CLUSTER_API_CONTROLPLANE_VERSION = f"controlplane.{CLUSTER_API_VERSION}"
 AZIMUTH_SCHEDULING_VERSION = "scheduling.azimuth.stackhpc.com/v1alpha1"
 
-
-# Create an easykube client from the environment
-from pydantic.json import pydantic_encoder
-ekclient = (
-    Configuration
-        .from_environment(json_encoder = pydantic_encoder)
-        .async_client(default_field_manager = settings.easykube_field_manager)
-)
-
-
-# Create a Helm client to target the underlying cluster
-helm_client = HelmClient(
-    default_timeout = settings.helm_client.default_timeout,
-    executable = settings.helm_client.executable,
-    history_max_revisions = settings.helm_client.history_max_revisions,
-    insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-    unpack_directory = settings.helm_client.unpack_directory
-)
-
-
-# Create a registry of custom resources and populate it from the models module
-registry = CustomResourceRegistry(settings.api_group, settings.crd_categories)
-registry.discover_models(models)
+# these are initialised during startup
+ekclient = None
+helm_client = None
+registry = None
 
 
 @kopf.on.startup()
@@ -63,6 +44,27 @@ async def apply_settings(**kwargs):
     """
     Apply kopf settings.
     """
+    # Create an easykube client from the environment
+    global ekclient
+    ekclient = (
+        Configuration
+            .from_environment(json_encoder = pydantic_encoder)
+            .async_client(default_field_manager = settings.easykube_field_manager)
+    )
+    # Create a Helm client to target the underlying cluster
+    global helm_client
+    helm_client = HelmClient(
+        default_timeout = settings.helm_client.default_timeout,
+        executable = settings.helm_client.executable,
+        history_max_revisions = settings.helm_client.history_max_revisions,
+        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
+        unpack_directory = settings.helm_client.unpack_directory
+    )
+    # Create a registry of custom resources and populate it from the models module
+    global registry
+    registry = CustomResourceRegistry(settings.api_group, settings.crd_categories)
+    registry.discover_models(models)
+
     kopf_settings = kwargs["settings"]
     kopf_settings.persistence.finalizer = f"{settings.annotation_prefix}/finalizer"
     kopf_settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(
@@ -409,11 +411,24 @@ def generate_helm_values_for_release(template : api.ClusterTemplate, cluster : a
     """
     Generates the Helm values for the release.
     """
-    return mergeconcat(
+    values = mergeconcat(
         settings.capi_helm.default_values,
         template.spec.values.model_dump(by_alias = True),
         default_loader.load("cluster-values.yaml", spec = cluster.spec, settings = settings)
     )
+    # Apply the flavor specific node group overrides
+    if settings.capi_helm.flavor_specific_node_group_overrides:
+        updated_node_groups = []
+        for i in range(len(values["nodeGroups"])):
+            ng = values["nodeGroups"][i]
+            flavor = ng["machineFlavor"]
+            import fnmatch
+            for pattern, overrides in settings.capi_helm.flavor_specific_node_group_overrides.items():
+                if fnmatch.fnmatch(flavor, pattern):
+                    ng = mergeconcat(ng, overrides)
+            updated_node_groups.append(ng)
+        values["nodeGroups"] = updated_node_groups
+    return values
 
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
