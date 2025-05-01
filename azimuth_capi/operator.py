@@ -735,6 +735,16 @@ async def on_manifests_event(cluster, type, body, **kwargs):
     else:
         status.addon_updated(cluster, body)
 
+@on_related_object_event("kustomize.toolkit.fluxcd.io", "kustomizations")
+async def on_flux_kustomization_event(cluster, type, body, **kwargs):
+    """
+    Executes on events for Flux Kustomization addons.
+    """
+    if type == "DELETED":
+        status.addon_deleted(cluster, body)
+    else:
+        status.flux_updated(cluster, body)
+
 
 @on_related_object_event(
     "v1",
