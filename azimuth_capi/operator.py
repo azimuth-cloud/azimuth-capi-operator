@@ -440,6 +440,16 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
+
+    # To help trigger timeouts if we get stuck,
+    # ensure we set the last_updated time.
+    # But be sure not to reset that if we retrying
+    # the same update after a failure, so we timeout
+    # if we are stuck in a retry loop before the end
+    # of the update function.
+    if not instance.status.last_updated:
+        await save_cluster_status(instance)
+
     # Make sure that the secret exists
     eksecrets = await ekclient.api("v1").resource("secrets")
     secret = await eksecrets.fetch(
@@ -469,6 +479,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
                 for ng in helm_values.get("nodeGroups", [])
             ]
         else:
+            # TODO(johngarbutt) look for when a lease has an error, and go unhealthy
             raise kopf.TemporaryError("lease is not active", delay = 15)
     if settings.zenith.enabled:
         helm_values = mergeconcat(
@@ -499,6 +510,12 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     # order to prevent deletion of cluster templates that are in use
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
+
+    # We might have been stuck in an error loop that has just been
+    # fixed by the operator, so in this case we reset the last_updated
+    # now we are letting the async poll loops take over
+    instance.status.last_updated = dt.datetime.now(dt.timezone.utc)
+    await save_cluster_status(instance)
 
 
 @model_handler(api.Cluster, kopf.on.delete)
@@ -592,6 +609,25 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
         ]
     )
     await save_cluster_status(instance)
+
+
+@model_handler(
+    api.Cluster,
+    kopf.timer,
+    # we don't set idle timeout, as we want to run during changes
+    interval = settings.timer_interval)
+async def check_cluster_timeout(logger, instance, patch, **kwargs):
+    if instance.spec.paused:
+        logger.info("reconciliation is paused - no action taken")
+        return
+
+    # Trigger a timeout check if we are in a transitional state
+    if instance.status.phase in {None, api.ClusterPhase.PENDING,
+                                 api.ClusterPhase.RECONCILING,
+                                 api.ClusterPhase.UPGRADING,
+                                 api.ClusterPhase.UNHEALTHY,
+                                 api.ClusterPhase.UNKNOWN}:
+        await save_cluster_status(instance)
 
 
 def on_related_object_event(
