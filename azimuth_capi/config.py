@@ -60,6 +60,14 @@ class CAPIHelmConfig(Section):
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
     default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
+    flavor_specific_node_group_overrides: t.Dict[str, t.Dict[str, t.Any]] = Field(
+        default_factory = dict,
+        description = (
+            "Overrides for node groups based on the flavor. "
+            "The key is the flavor name regex, "
+            "and the value is a dictionary of overrides."
+        )
+    )
 
 
 class ZenithConfig(Section):
@@ -185,11 +193,11 @@ class WebhookConfiguration(Section):
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
-    certfile: t.Optional[FilePath] = Field(None, validate_default = True)
+    certfile: t.Optional[FilePath] = Field(None, validate_default = False)
     #: The path to the key for the TLS certificate
-    keyfile: t.Optional[FilePath] = Field(None, validate_default = True)
+    keyfile: t.Optional[FilePath] = Field(None, validate_default = False)
     #: The host for the webhook server (required for self-signed certificate generation)
-    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = True)
+    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = False)
 
     @field_validator("certfile")
     @classmethod
@@ -246,6 +254,9 @@ class Configuration(
 
     #: The number of seconds to wait between timer executions
     timer_interval: conint(gt = 0) = 60
+
+    #: The number of minutes to wait befoore marking a cluster as unhealthy
+    cluster_timeout_seconds: conint(gt = 0) = 30 * 60
 
     #: The field manager name to use for server-side apply
     easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"

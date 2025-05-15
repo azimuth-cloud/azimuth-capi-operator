@@ -23,6 +23,13 @@ updates:
     schedule:
       # Check for new versions daily
       interval: daily
+    groups:
+      pip-updates:
+        patterns: ["*"]
     labels:
       - automation
       - pip-update
+    commit-message:
+    # Prefix all commit messages with "pip: "
+      prefix: "pip"
+
