@@ -1,5 +1,7 @@
+import datetime as dt
 import logging
 
+from .config import settings
 from .models.v1alpha1 import (
     ClusterPhase,
     LeasePhase,
@@ -48,29 +50,28 @@ def _reconcile_cluster_phase(cluster):
     Sets the overall cluster phase based on the component phases.
     """
     # Only consider the lease when reconciling the cluster phase if one is set
-    if cluster.spec.lease_name:
+    if (
+        cluster.spec.lease_name and
+        cluster.status.lease_phase not in {LeasePhase.ACTIVE, LeasePhase.UPDATING}
+    ):
         if cluster.status.lease_phase in {
             LeasePhase.CREATING,
             LeasePhase.PENDING,
             LeasePhase.STARTING
         }:
             cluster.status.phase = ClusterPhase.PENDING
-            return
         if cluster.status.lease_phase == LeasePhase.ERROR:
             cluster.status.phase = ClusterPhase.FAILED
-            return
         if cluster.status.lease_phase in {
             LeasePhase.TERMINATING,
             LeasePhase.TERMINATED,
             LeasePhase.DELETING
         }:
             cluster.status.phase = ClusterPhase.UNHEALTHY
-            return
         if cluster.status.lease_phase == LeasePhase.UNKNOWN:
             cluster.status.phase = ClusterPhase.PENDING
-            return
     # At this point, either there is no lease or the lease phase is Active or Updating
-    if cluster.status.networking_phase in {
+    elif cluster.status.networking_phase in {
         NetworkingPhase.PENDING,
         NetworkingPhase.PROVISIONING
     }:
@@ -142,6 +143,30 @@ def _reconcile_cluster_phase(cluster):
         cluster.status.phase = ClusterPhase.UNHEALTHY
     else:
         cluster.status.phase = ClusterPhase.READY
+
+    # If we hit a terminal state, remove the updated timestamp,
+    if cluster.status.phase in {ClusterPhase.READY, ClusterPhase.FAILED}:
+        # reset the timeout timestamp, as we are now in a stable state
+        # if we do not reset the last_updated here, we are unable
+        # to know at the start of an update if we are re-entering
+        # due to an error vs starting for the first time since the
+        # last successful update (or its our fist ever update)
+        cluster.status.last_updated = None
+    else:
+        # if not a terminal state, ensure timestamp has been set
+        if cluster.status.last_updated is None:
+            now = dt.datetime.now(dt.timezone.utc)
+            cluster.status.last_updated = now
+
+    # timeout pending states if we are stuck there too long
+    if cluster.status.phase in {ClusterPhase.PENDING,
+                                ClusterPhase.RECONCILING,
+                                ClusterPhase.UPGRADING}:
+        now = dt.datetime.now(dt.timezone.utc)
+        timeout_after = cluster.status.last_updated + dt.timedelta(
+            seconds=settings.cluster_timeout_seconds)
+        if now > timeout_after:
+            cluster.status.phase = ClusterPhase.UNHEALTHY
 
 
 def lease_updated(cluster, obj):
@@ -314,6 +339,35 @@ def kubeconfig_secret_updated(cluster, obj):
     Updates the status when a kubeconfig secret is updated.
     """
     cluster.status.kubeconfig_secret_name = obj["metadata"]["name"]
+
+
+def _flux_to_addon_status(flux_conditions):
+    addon_phase = AddonPhase.UNKNOWN.value
+    addon_revision = 0
+    if len(flux_conditions) > 0:
+        status = flux_conditions[0].get("status","False")
+        type_status = flux_conditions[0].get("type","Ready")
+        if type_status == "Ready":
+            if status == "True":
+                addon_phase = AddonPhase.DEPLOYED.value
+            else:
+                addon_phase = AddonPhase.FAILED.value
+        else:
+            addon_phase = AddonPhase.PENDING.value
+
+        addon_revision = flux_conditions[0].get("observedGeneration",0)
+
+    return AddonStatus(phase = addon_phase, revision = addon_revision)
+
+
+def flux_updated(cluster, obj):
+    """
+    Updates the status when a Flux addon is updated.
+    """
+    component = obj["metadata"]["labels"]["capi.stackhpc.com/component"]
+    status = obj.get("status", {})
+    conditions = status.get("conditions", [])
+    cluster.status.addons[component] = _flux_to_addon_status(conditions)
 
 
 def addon_updated(cluster, obj):

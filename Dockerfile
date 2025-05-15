@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*
 
-ARG HELM_VERSION=v3.17.0
+ARG HELM_VERSION=v3.17.3
 RUN set -ex; \
     OS_ARCH="$(uname -m)"; \
     case "$OS_ARCH" in \
@@ -19,7 +19,7 @@ RUN set -ex; \
 # Pull and unpack the baked in charts
 ARG OPENSTACK_CLUSTER_CHART_REPO=https://azimuth-cloud.github.io/capi-helm-charts
 ARG OPENSTACK_CLUSTER_CHART_NAME=openstack-cluster
-ARG OPENSTACK_CLUSTER_CHART_VERSION=0.14.0
+ARG OPENSTACK_CLUSTER_CHART_VERSION=0.15.0
 RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
       --repo ${OPENSTACK_CLUSTER_CHART_REPO} \
       --version ${OPENSTACK_CLUSTER_CHART_VERSION} \
@@ -54,13 +54,13 @@ RUN python3 -m venv /venv && \
     /venv/bin/pip install -U pip setuptools
 
 COPY requirements.txt /app/requirements.txt
-RUN /venv/bin/pip install --no-deps --requirement /app/requirements.txt
+RUN /venv/bin/pip install --requirement /app/requirements.txt
 
 # Jinja2 complains if this is installed the "regular" way
 # https://jinja.palletsprojects.com/en/3.1.x/api/#loaders
 # So we install here instead as an editable installation and also copy over the app directory
 COPY . /app
-RUN /venv/bin/pip install --no-deps -e /app
+RUN /venv/bin/pip install -e /app
 
 
 FROM ubuntu:jammy

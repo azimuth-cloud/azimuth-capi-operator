@@ -16,6 +16,7 @@ import yaml
 from easykube import Configuration, ApiError
 import easysemver
 from kube_custom_resource import CustomResourceRegistry
+from pydantic.json import pydantic_encoder
 from pyhelm3 import Client as HelmClient, errors as helm_errors
 
 from . import models, status
@@ -25,38 +26,17 @@ from .template import default_loader
 from .utils import mergeconcat
 from .zenith import zenith_values, zenith_operator_resources
 
-
 logger = logging.getLogger(__name__)
-
 
 # Constants for target API versions
 CLUSTER_API_VERSION = "cluster.x-k8s.io/v1beta1"
 CLUSTER_API_CONTROLPLANE_VERSION = f"controlplane.{CLUSTER_API_VERSION}"
 AZIMUTH_SCHEDULING_VERSION = "scheduling.azimuth.stackhpc.com/v1alpha1"
 
-
-# Create an easykube client from the environment
-from pydantic.json import pydantic_encoder
-ekclient = (
-    Configuration
-        .from_environment(json_encoder = pydantic_encoder)
-        .async_client(default_field_manager = settings.easykube_field_manager)
-)
-
-
-# Create a Helm client to target the underlying cluster
-helm_client = HelmClient(
-    default_timeout = settings.helm_client.default_timeout,
-    executable = settings.helm_client.executable,
-    history_max_revisions = settings.helm_client.history_max_revisions,
-    insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-    unpack_directory = settings.helm_client.unpack_directory
-)
-
-
-# Create a registry of custom resources and populate it from the models module
-registry = CustomResourceRegistry(settings.api_group, settings.crd_categories)
-registry.discover_models(models)
+# these are initialised during startup
+ekclient = None
+helm_client = None
+registry = None
 
 
 @kopf.on.startup()
@@ -64,6 +44,27 @@ async def apply_settings(**kwargs):
     """
     Apply kopf settings.
     """
+    # Create an easykube client from the environment
+    global ekclient
+    ekclient = (
+        Configuration
+            .from_environment(json_encoder = pydantic_encoder)
+            .async_client(default_field_manager = settings.easykube_field_manager)
+    )
+    # Create a Helm client to target the underlying cluster
+    global helm_client
+    helm_client = HelmClient(
+        default_timeout = settings.helm_client.default_timeout,
+        executable = settings.helm_client.executable,
+        history_max_revisions = settings.helm_client.history_max_revisions,
+        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
+        unpack_directory = settings.helm_client.unpack_directory
+    )
+    # Create a registry of custom resources and populate it from the models module
+    global registry
+    registry = CustomResourceRegistry(settings.api_group, settings.crd_categories)
+    registry.discover_models(models)
+
     kopf_settings = kwargs["settings"]
     kopf_settings.persistence.finalizer = f"{settings.annotation_prefix}/finalizer"
     kopf_settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(
@@ -406,6 +407,41 @@ def update_machine_flavor(obj, size_map):
     updated_obj["machineFlavor"] = mapped_flavor
     return updated_obj
 
+def generate_helm_values_for_release(template : api.ClusterTemplate, cluster : api.Cluster, oidc_issuer_url, oidc_client_id, realm_users_group, cluster_users_group):
+    """
+    Generates the Helm values for the release.
+    """
+    values = mergeconcat(
+        settings.capi_helm.default_values,
+        template.spec.values.model_dump(by_alias = True),
+        default_loader.load("cluster-values.yaml", spec = cluster.spec, settings = settings)
+    )
+    values = mergeconcat(
+        settings.capi_helm.default_values,
+        template.spec.values.model_dump(by_alias = True),
+        default_loader.load(
+            "cluster-values.yaml",
+            spec = cluster.spec,
+            oidc_issuer_url = oidc_issuer_url,
+            oidc_client_id = oidc_client_id,
+            realm_users_group = realm_users_group,
+            cluster_users_group = cluster_users_group,
+            settings = settings
+        )
+    )
+    # Apply the flavor specific node group overrides
+    if settings.capi_helm.flavor_specific_node_group_overrides:
+        updated_node_groups = []
+        for i in range(len(values["nodeGroups"])):
+            ng = values["nodeGroups"][i]
+            flavor = ng["machineFlavor"]
+            import fnmatch
+            for pattern, overrides in settings.capi_helm.flavor_specific_node_group_overrides.items():
+                if fnmatch.fnmatch(flavor, pattern):
+                    ng = mergeconcat(ng, overrides)
+            updated_node_groups.append(ng)
+        values["nodeGroups"] = updated_node_groups
+    return values
 
 async def find_realm(cluster: api.Cluster):
     """
@@ -554,11 +590,22 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
+
     # Fetch the template for the cluster
     template = await fetch_model_instance(api.ClusterTemplate, instance.spec.template_name)
     if not template:
         raise kopf.TemporaryError("specified template does not exist")
     # Make sure that the credential secret exists
+
+    # To help trigger timeouts if we get stuck,
+    # ensure we set the last_updated time.
+    # But be sure not to reset that if we retrying
+    # the same update after a failure, so we timeout
+    # if we are stuck in a retry loop before the end
+    # of the update function.
+    if not instance.status.last_updated:
+        await save_cluster_status(instance)
+
     eksecrets = await ekclient.api("v1").resource("secrets")
     secret = await eksecrets.fetch(
         instance.spec.cloud_credentials_secret_name,
@@ -593,19 +640,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         realm_users_group = None
         cluster_users_group = None
     # Generate the Helm values for the release
-    helm_values = mergeconcat(
-        settings.capi_helm.default_values,
-        template.spec.values.model_dump(by_alias = True),
-        default_loader.load(
-            "cluster-values.yaml",
-            spec = instance.spec,
-            oidc_issuer_url = oidc_issuer_url,
-            oidc_client_id = oidc_client_id,
-            realm_users_group = realm_users_group,
-            cluster_users_group = cluster_users_group,
-            settings = settings
-        )
-    )
+    helm_values = generate_helm_values_for_release(template, instance, oidc_issuer_url, oidc_client_id, realm_users_group, cluster_users_group)
     # If a lease name is set, update the flavors in the values from the size map
     if instance.spec.lease_name:
         # Make sure that we adopt the lease
@@ -624,6 +659,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
                 for ng in helm_values.get("nodeGroups", [])
             ]
         else:
+            # TODO(johngarbutt) look for when a lease has an error, and go unhealthy
             raise kopf.TemporaryError("lease is not active", delay = 15)
     if settings.zenith.enabled:
         helm_values = mergeconcat(
@@ -654,6 +690,12 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     # order to prevent deletion of cluster templates that are in use
     labels = patch.setdefault("metadata", {}).setdefault("labels", {})
     labels[f"{settings.api_group}/cluster-template"] = instance.spec.template_name
+
+    # We might have been stuck in an error loop that has just been
+    # fixed by the operator, so in this case we reset the last_updated
+    # now we are letting the async poll loops take over
+    instance.status.last_updated = dt.datetime.now(dt.timezone.utc)
+    await save_cluster_status(instance)
 
 
 @model_handler(api.Cluster, kopf.on.delete)
@@ -749,6 +791,25 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
         ]
     )
     await save_cluster_status(instance)
+
+
+@model_handler(
+    api.Cluster,
+    kopf.timer,
+    # we don't set idle timeout, as we want to run during changes
+    interval = settings.timer_interval)
+async def check_cluster_timeout(logger, instance, patch, **kwargs):
+    if instance.spec.paused:
+        logger.info("reconciliation is paused - no action taken")
+        return
+
+    # Trigger a timeout check if we are in a transitional state
+    if instance.status.phase in {None, api.ClusterPhase.PENDING,
+                                 api.ClusterPhase.RECONCILING,
+                                 api.ClusterPhase.UPGRADING,
+                                 api.ClusterPhase.UNHEALTHY,
+                                 api.ClusterPhase.UNKNOWN}:
+        await save_cluster_status(instance)
 
 
 def on_related_object_event(
@@ -887,6 +948,16 @@ async def on_manifests_event(cluster, type, body, **kwargs):
         status.addon_deleted(cluster, body)
     else:
         status.addon_updated(cluster, body)
+
+@on_related_object_event("kustomize.toolkit.fluxcd.io", "kustomizations")
+async def on_flux_kustomization_event(cluster, type, body, **kwargs):
+    """
+    Executes on events for Flux Kustomization addons.
+    """
+    if type == "DELETED":
+        status.addon_deleted(cluster, body)
+    else:
+        status.flux_updated(cluster, body)
 
 
 async def ensure_user_kubeconfig_secret(instance: api.Cluster, kubeconfig_secret):
