@@ -2,4 +2,4 @@ from .app_template import *
 from .cluster_template import *
 from .cluster import *
 
-__version__ = __name__.rsplit(".", maxsplit = 1)[-1]
+__version__ = __name__.rsplit(".", maxsplit=1)[-1]

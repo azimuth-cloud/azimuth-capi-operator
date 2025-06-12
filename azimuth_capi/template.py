@@ -9,15 +9,16 @@ class Loader:
     """
     Class for returning objects created by rendering YAML templates from this package.
     """
+
     def __init__(self, **globals):
         # Create the package loader for the parent module of this one
-        loader = jinja2.PackageLoader(self.__module__.rsplit(".", maxsplit = 1)[0])
-        self.env = jinja2.Environment(loader = loader, autoescape = False)
+        loader = jinja2.PackageLoader(self.__module__.rsplit(".", maxsplit=1)[0])
+        self.env = jinja2.Environment(loader=loader, autoescape=False)
         self.env.globals.update(globals)
         self.env.filters.update(
-            mergeconcat = utils.mergeconcat,
-            fromyaml = yaml.safe_load,
-            toyaml = yaml.safe_dump
+            mergeconcat=utils.mergeconcat,
+            fromyaml=yaml.safe_load,
+            toyaml=yaml.safe_dump,
         )
 
     def loads(self, template, **params):
@@ -34,4 +35,4 @@ class Loader:
         return yaml.safe_load(self.loads(template, **params))
 
 
-default_loader = Loader(settings = settings)
+default_loader = Loader(settings=settings)

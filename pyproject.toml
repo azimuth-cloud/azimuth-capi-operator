@@ -34,7 +34,6 @@ ignore = [
     "A005",
     "F401",
     "F403",
-    "C901", # TODO: fix and include
 ]
 
 [tool.mypy]

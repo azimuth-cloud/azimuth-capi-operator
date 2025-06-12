@@ -11,21 +11,24 @@ from pydantic import (
     constr,
     model_validator,
     field_validator,
-    ValidationInfo
+    ValidationInfo,
 )
 
-from configomatic import Configuration as BaseConfiguration, Section, LoggingConfiguration
+from configomatic import (
+    Configuration as BaseConfiguration,
+    Section,
+    LoggingConfiguration,
+)
 
 from easysemver import SEMVER_VERSION_REGEX
 
 
 #: Type for a string that validates as a SemVer version
-SemVerVersion = t.Annotated[str, StringConstraints(pattern = SEMVER_VERSION_REGEX)]
+SemVerVersion = t.Annotated[str, StringConstraints(pattern=SEMVER_VERSION_REGEX)]
 
 #: Type for a string that validates as a URL
 AnyHttpUrl = t.Annotated[
-    str,
-    AfterValidator(lambda v: str(TypeAdapter(PyAnyHttpUrl).validate_python(v)))
+    str, AfterValidator(lambda v: str(TypeAdapter(PyAnyHttpUrl).validate_python(v)))
 ]
 
 
@@ -33,12 +36,13 @@ class HelmClientConfiguration(Section):
     """
     Configuration for the Helm client.
     """
+
     #: The default timeout to use with Helm releases
     #: Can be an integer number of seconds or a duration string like 5m, 5h
-    default_timeout: t.Union[int, constr(min_length = 1)] = "1h"
+    default_timeout: t.Union[int, constr(min_length=1)] = "1h"
     #: The executable to use
     #: By default, we assume Helm is on the PATH
-    executable: constr(min_length = 1) = "helm"
+    executable: constr(min_length=1) = "helm"
     #: The maximum number of revisions to retain in the history of releases
     history_max_revisions: int = 10
     #: Indicates whether to verify TLS when pulling charts
@@ -52,21 +56,22 @@ class CAPIHelmConfig(Section):
     """
     Configuration for the CAPI Helm chart used to deploy clusters.
     """
+
     #: The Helm chart repo, name and version to use for the CAPI Helm charts
     #: By default, this points to a local chart that is baked into the Docker image
-    chart_name: constr(min_length = 1) = "/charts/openstack-cluster"
+    chart_name: constr(min_length=1) = "/charts/openstack-cluster"
     chart_repository: t.Optional[AnyHttpUrl] = None
     chart_version: t.Optional[SemVerVersion] = None
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
-    default_values: t.Dict[str, t.Any] = Field(default_factory = dict)
+    default_values: t.Dict[str, t.Any] = Field(default_factory=dict)
     flavor_specific_node_group_overrides: t.Dict[str, t.Dict[str, t.Any]] = Field(
-        default_factory = dict,
-        description = (
+        default_factory=dict,
+        description=(
             "Overrides for node groups based on the flavor. "
             "The key is the flavor name regex, "
             "and the value is a dictionary of overrides."
-        )
+        ),
     )
 
 
@@ -74,37 +79,46 @@ class ZenithConfig(Section):
     """
     Configuration for Zenith support.
     """
+
     #: The admin URL of the Zenith registrar
     #: This is given to the Zenith operator for a cluster
     registrar_admin_url: t.Optional[AnyHttpUrl] = None
     #: The internal admin URL of the Zenith registrar
     #: By default, this is the same as the registrar_admin_url
-    registrar_admin_url_internal: t.Optional[AnyHttpUrl] = Field(None, validate_default = True)
+    registrar_admin_url_internal: t.Optional[AnyHttpUrl] = Field(
+        None, validate_default=True
+    )
     #: The host for the Zenith SSHD service
-    sshd_host: t.Optional[constr(min_length = 1)] = None
+    sshd_host: t.Optional[constr(min_length=1)] = None
     #: The port for the Zenith SSHD service
-    sshd_port: conint(gt = 0) = 22
+    sshd_port: conint(gt=0) = 22
 
     #: The Zenith chart repository, version and names
     #: By default, these point to local charts that are baked into the Docker image
-    apiserver_chart_name: constr(min_length = 1) = "/charts/zenith-apiserver"
-    operator_chart_name: constr(min_length = 1) = "/charts/zenith-operator"
+    apiserver_chart_name: constr(min_length=1) = "/charts/zenith-apiserver"
+    operator_chart_name: constr(min_length=1) = "/charts/zenith-operator"
     chart_repository: t.Optional[AnyHttpUrl] = None
     chart_version: t.Optional[SemVerVersion] = None
 
     #: Defaults for use with the apiserver chart
-    apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
+    apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory=dict)
     #: Defaults for use with the operator chart
-    operator_defaults: t.Dict[str, t.Any] = Field(default_factory = dict)
+    operator_defaults: t.Dict[str, t.Any] = Field(default_factory=dict)
 
     #: Icon URLs for built-in services
-    kubernetes_dashboard_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
-    monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
+    kubernetes_dashboard_icon_url: AnyHttpUrl = (
+        "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
+    )
+    monitoring_icon_url: AnyHttpUrl = (
+        "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
+    )
 
     #: The API version to use when watching Zenith resources on target clusters
-    api_version: constr(pattern =r"^[a-z0-9.-]+/[a-z0-9]+$") = "zenith.stackhpc.com/v1alpha1"
+    api_version: constr(pattern=r"^[a-z0-9.-]+/[a-z0-9]+$") = (
+        "zenith.stackhpc.com/v1alpha1"
+    )
 
-    @model_validator(mode = "after")
+    @model_validator(mode="after")
     def validate_zenith_enabled(self):
         """
         Ensures that the SSHD host is set when the registrar URL is given.
@@ -136,28 +150,30 @@ class IdentityConfig(Section):
     """
     Configuration for the Azimuth identity support.
     """
+
     #: The API version to use for Azimuth identity resources
-    api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
+    api_version: constr(min_length=1) = "identity.azimuth.stackhpc.com/v1alpha1"
     #: The template to use for cluster platform names
-    cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
+    cluster_platform_name_template: constr(min_length=1) = "kube-{cluster_name}"
     #: The template to use for app platform names
-    app_platform_name_template: constr(min_length = 1) = "kubeapp-{app_name}"
+    app_platform_name_template: constr(min_length=1) = "kubeapp-{app_name}"
 
 
 class WebhookConfiguration(Section):
     """
     Configuration for the internal webhook server.
     """
+
     #: The port to run the webhook server on
-    port: conint(ge = 1000) = 8443
+    port: conint(ge=1000) = 8443
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
-    certfile: t.Optional[FilePath] = Field(None, validate_default = False)
+    certfile: t.Optional[FilePath] = Field(None, validate_default=False)
     #: The path to the key for the TLS certificate
-    keyfile: t.Optional[FilePath] = Field(None, validate_default = False)
+    keyfile: t.Optional[FilePath] = Field(None, validate_default=False)
     #: The host for the webhook server (required for self-signed certificate generation)
-    host: t.Optional[constr(min_length = 1)] = Field(None, validate_default = False)
+    host: t.Optional[constr(min_length=1)] = Field(None, validate_default=False)
 
     @field_validator("certfile")
     @classmethod
@@ -192,52 +208,55 @@ class WebhookConfiguration(Section):
 
 class Configuration(
     BaseConfiguration,
-    default_path = "/etc/azimuth/capi-operator.yaml",
-    path_env_var = "AZIMUTH_CAPI_CONFIG",
-    env_prefix = "AZIMUTH_CAPI"
+    default_path="/etc/azimuth/capi-operator.yaml",
+    path_env_var="AZIMUTH_CAPI_CONFIG",
+    env_prefix="AZIMUTH_CAPI",
 ):
     """
     Top-level configuration model.
     """
+
     #: The logging configuration
-    logging: LoggingConfiguration = Field(default_factory = LoggingConfiguration)
+    logging: LoggingConfiguration = Field(default_factory=LoggingConfiguration)
 
     #: The API group of the cluster CRDs
-    api_group: constr(min_length = 1) = "azimuth.stackhpc.com"
+    api_group: constr(min_length=1) = "azimuth.stackhpc.com"
     #: A list of categories to place CRDs into
-    crd_categories: t.List[constr(min_length = 1)] = Field(
-        default_factory = lambda: ["azimuth"]
+    crd_categories: t.List[constr(min_length=1)] = Field(
+        default_factory=lambda: ["azimuth"]
     )
 
     #: The prefix to use for operator annotations
     annotation_prefix: str = "azimuth.stackhpc.com"
 
     #: The number of seconds to wait between timer executions
-    timer_interval: conint(gt = 0) = 60
+    timer_interval: conint(gt=0) = 60
 
     #: The number of minutes to wait befoore marking a cluster as unhealthy
-    cluster_timeout_seconds: conint(gt = 0) = 30 * 60
+    cluster_timeout_seconds: conint(gt=0) = 30 * 60
 
     #: The field manager name to use for server-side apply
-    easykube_field_manager: constr(min_length = 1) = "azimuth-capi-operator"
+    easykube_field_manager: constr(min_length=1) = "azimuth-capi-operator"
 
     #: The amount of time (seconds) before a watch is forcefully restarted
-    watch_timeout: conint(gt = 0) = 600
+    watch_timeout: conint(gt=0) = 600
 
     #: The Helm client configuration
-    helm_client: HelmClientConfiguration = Field(default_factory = HelmClientConfiguration)
+    helm_client: HelmClientConfiguration = Field(
+        default_factory=HelmClientConfiguration
+    )
 
     #: The webhook configuration
-    webhook: WebhookConfiguration = Field(default_factory = WebhookConfiguration)
+    webhook: WebhookConfiguration = Field(default_factory=WebhookConfiguration)
 
     #: The CAPI Helm configuration
-    capi_helm: CAPIHelmConfig = Field(default_factory = CAPIHelmConfig)
+    capi_helm: CAPIHelmConfig = Field(default_factory=CAPIHelmConfig)
 
     #: Configuration for Zenith support
-    zenith: ZenithConfig = Field(default_factory = ZenithConfig)
+    zenith: ZenithConfig = Field(default_factory=ZenithConfig)
 
     #: Configuration for Azimuth identity support
-    identity: IdentityConfig = Field(default_factory = IdentityConfig)
+    identity: IdentityConfig = Field(default_factory=IdentityConfig)
 
 
 settings = Configuration()
