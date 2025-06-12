@@ -317,7 +317,7 @@ def render_openmetrics(*metrics):
 
         for labels, value in metric.records():
             if labels:
-                labelstr = "{{{0}}}".format(
+                labelstr = "{{{}}}".format(
                     ",".join([f'{k}="{escape(v)}"' for k, v in sorted(labels.items())])
                 )
             else:

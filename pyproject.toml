@@ -29,9 +29,7 @@ select = [
     "N",
 ]
 ignore = [
-    "UP038", # slower, will be deprecated
-    "UP045", # Unstable
-    "A005",
+    "UP038", # deprecated
     "F401",
     "F403",
 ]
