@@ -5,7 +5,9 @@ import functools
 import json
 import logging
 import pathlib
+import secrets
 import ssl
+import string
 import sys
 
 import kopf
@@ -574,6 +576,18 @@ async def ensure_platform(instance: api.Cluster, realm):
     kopf.adopt(platform, instance.model_dump())
     return await ekclient.apply_object(platform, force = True)
 
+async def generate_etcd_key(name,namespace):
+    return await ekclient.create_object({
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+                "name": name+"-etcd-key",
+                "namespace": namespace
+            },
+            "data": {
+                "key": base64.b64encode(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32)))
+            }
+        })
 
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
@@ -662,6 +676,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             helm_values,
             await zenith_values(ekclient, instance, instance.spec.addons)
         )
+    _ = await generate_etcd_key(name, namespace)
     # Use Helm to install or upgrade the release
     _ = await helm_client.install_or_upgrade_release(
         name,
@@ -703,6 +718,15 @@ async def on_cluster_delete(logger, instance, name, namespace, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
+    # Cleanup etcd encryption key
+    _ = await ekclient.delete_object({
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": name+"-etcd-key",
+            "namespace": namespace
+        },
+    })
     # Delete the corresponding Helm release
     try:
         await helm_client.uninstall_release(name, namespace = namespace)
