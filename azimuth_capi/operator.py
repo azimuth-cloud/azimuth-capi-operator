@@ -576,8 +576,10 @@ async def ensure_platform(instance: api.Cluster, realm):
     kopf.adopt(platform, instance.model_dump())
     return await ekclient.apply_object(platform, force = True)
 
-async def generate_etcd_key(name,namespace):
-    return await ekclient.create_object({
+# Separate on create handler to ensure etcd key is only generated once on first install
+@model_handler(api.Cluster, kopf.on.create)
+async def generate_etcd_key(logger, instance, name, namespace, patch, **kwargs):
+    await ekclient.create_object({
             "apiVersion": "v1",
             "kind": "Secret",
             "metadata": {
@@ -585,7 +587,7 @@ async def generate_etcd_key(name,namespace):
                 "namespace": namespace
             },
             "data": {
-                "key": base64.b64encode(''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32)))
+                "key": base64.b64encode(secrets.token_bytes(32))
             }
         })
 
@@ -621,6 +623,19 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         instance.spec.cloud_credentials_secret_name,
         namespace = namespace
     )
+
+    # Wait for etcd key to be created
+    try:
+        _ = await eksecrets.fetch(
+            name+"-etcd-key",
+            namespace = namespace
+        )
+    except ApiError as exc:
+        if exc.response.status_code == 404:
+            raise kopf.TemporaryError("Waiting on etcd key creation", delay = 10)
+        else:
+            raise
+
     # Check if OIDC authentication should be enabled
     if settings.identity.oidc_enabled:
         # Wait for the realm to become available
