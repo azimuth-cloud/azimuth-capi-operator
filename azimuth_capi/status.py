@@ -3,17 +3,16 @@ import logging
 
 from .config import settings
 from .models.v1alpha1 import (
+    AddonPhase,
+    AddonStatus,
     ClusterPhase,
+    ControlPlanePhase,
     LeasePhase,
     NetworkingPhase,
-    ControlPlanePhase,
     NodePhase,
-    AddonPhase,
     NodeRole,
     NodeStatus,
-    AddonStatus,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +236,8 @@ def control_plane_updated(cluster, obj):
     else:
         next_phase = ControlPlanePhase.PENDING
     cluster.status.control_plane_phase = next_phase
-    # The Kubernetes version in the control plane object has a leading v that we don't want
+    # The Kubernetes version in the control plane object has a leading v that we don't
+    # want
     # The accurate version is in the status, but we use the spec if that is not set yet
     cluster.status.kubernetes_version = status.get(
         "version", obj["spec"]["version"]
@@ -249,7 +249,8 @@ def control_plane_deleted(cluster, obj):
     Updates the status when a CAPI control plane is deleted.
     """
     cluster.status.control_plane_phase = ControlPlanePhase.UNKNOWN
-    # Also reset the Kubernetes version of the cluster, as it can no longer be determined
+    # Also reset the Kubernetes version of the cluster, as it can no longer be
+    # determined
     cluster.status.kubernetes_version = None
 
 
@@ -258,7 +259,8 @@ def control_plane_absent(cluster):
     Called when the control plane is missing on resume.
     """
     cluster.status.control_plane_phase = ControlPlanePhase.UNKNOWN
-    # Also reset the Kubernetes version of the cluster, as it can no longer be determined
+    # Also reset the Kubernetes version of the cluster, as it can no longer be
+    # determined
     cluster.status.kubernetes_version = None
 
 

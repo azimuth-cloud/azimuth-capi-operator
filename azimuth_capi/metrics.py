@@ -2,9 +2,8 @@ import asyncio
 import datetime
 import functools
 
-from aiohttp import web
-
 import easykube
+from aiohttp import web
 
 from .config import settings
 

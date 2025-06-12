@@ -1,11 +1,9 @@
 import datetime as dt
 import typing as t
 
-from pydantic import Field
-
+from easysemver import SEMVER_RANGE_REGEX, SEMVER_VERSION_REGEX
 from kube_custom_resource import CustomResource, Scope, schema
-
-from easysemver import SEMVER_VERSION_REGEX, SEMVER_RANGE_REGEX
+from pydantic import Field
 
 
 class AppTemplateChartSpec(schema.BaseModel):
@@ -47,7 +45,8 @@ class AppTemplateSpec(schema.BaseModel):
         "",
         description=(
             "A short description of the app template. "
-            "If not given, the description from the Chart.yaml of the chart will be used."
+            "If not given, the description from the Chart.yaml of the chart will be "
+            "used."
         ),
     )
     version_range: schema.constr(pattern=SEMVER_RANGE_REGEX) = Field(
@@ -74,7 +73,9 @@ class AppTemplateSpec(schema.BaseModel):
     )
     default_values: schema.Dict[str, schema.Any] = Field(
         default_factory=dict,
-        description="Default values for deployments of the app, on top of the chart defaults.",
+        description=(
+            "Default values for deployments of the app, on top of the chart defaults."
+        ),
     )
 
 
@@ -109,7 +110,7 @@ class AppTemplateStatus(schema.BaseModel, extra="allow"):
     description: schema.Optional[schema.constr(min_length=1)] = Field(
         None, description="A short description of the app template."
     )
-    versions: t.List[AppTemplateVersion] = Field(
+    versions: list[AppTemplateVersion] = Field(
         default_factory=list, description="The available versions for the app template."
     )
     last_sync: schema.Optional[dt.datetime] = Field(

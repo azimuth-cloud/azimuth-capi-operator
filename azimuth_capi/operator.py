@@ -8,23 +8,23 @@ import pathlib
 import ssl
 import sys
 
-import kopf
+import easysemver
 import httpx
+import kopf
 import pydantic
 import yaml
-
-from easykube import Configuration, ApiError
-import easysemver
+from easykube import ApiError, Configuration
 from kube_custom_resource import CustomResourceRegistry
 from pydantic.json import pydantic_encoder
-from pyhelm3 import Client as HelmClient, errors as helm_errors
+from pyhelm3 import Client as HelmClient
+from pyhelm3 import errors as helm_errors
 
 from . import models, status
 from .config import settings
 from .models import v1alpha1 as api
 from .template import default_loader
 from .utils import mergeconcat
-from .zenith import zenith_values, zenith_operator_resources
+from .zenith import zenith_operator_resources, zenith_values
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,8 @@ async def apply_settings(**kwargs):
     # Give Kubernetes a chance to create the APIs for the CRDs
     await asyncio.sleep(0.5)
     # Check to see if the APIs for the CRDs are up
-    # If they are not, the kopf watches will not start properly so we exit and get restarted
+    # If they are not, the kopf watches will not start properly so we exit and get
+    # restarted
     for crd in registry:
         preferred_version = next(k for k, v in crd.versions.items() if v.storage)
         api_version = f"{crd.api_group}/{preferred_version}"
@@ -206,7 +207,8 @@ async def validate_cluster_template(name, spec, operation, **kwargs):
 
 async def fetch_model_instance(model, name, namespace=None):
     """
-    Fetches and parses the specified model instance, or None if the instance does not exist.
+    Fetches and parses the specified model instance, or None if the instance does not
+    exist.
     """
     ekresource = await ekresource_for_model(model)
     try:
@@ -284,7 +286,7 @@ async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
             "specified cluster template would be a downgrade", code=400
         )
     # Prevent the major version from changing
-    # TODO(mkjpryor) change this if Kubernetes 2.x is ever released and upgrade is allowed
+    # TODO(mkjpryor) change this if Kubernetes 2.x is ever released and upgrade allowed
     if next_version.major != current_version.major:
         raise kopf.AdmissionError(
             "upgrading to a new major version is not supported", code=400
@@ -450,7 +452,8 @@ def generate_helm_values_for_release(
 @model_handler(api.Cluster, kopf.on.update, field="spec")
 async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     """
-    Executes when a new cluster is created or the spec of an existing cluster is updated.
+    Executes when a new cluster is created or the spec of an existing cluster is
+    updated.
     """
     # If cluster reconciliation is paused, there is nothing else to do
     if instance.spec.paused:
@@ -654,8 +657,8 @@ def on_related_object_event(
     **kwargs,
 ):
     """
-    Decorator that registers a function as updating the Azimuth cluster state in response
-    to a CAPI resource changing.
+    Decorator that registers a function as updating the Azimuth cluster state in
+    response to a CAPI resource changing.
     """
     # If no mapper is given, use one that checks the cluster label
     if cluster_name_mapper is None:
@@ -673,7 +676,8 @@ def on_related_object_event(
             cluster_name = cluster_name_mapper(inner["body"])
             if not cluster_name:
                 return
-            # Retry the fetch and updating of the state until it succeeds without conflict
+            # Retry the fetch and updating of the state until it succeeds without
+            # conflict
             # kopf retry logic does not apply to events
             while True:
                 try:
@@ -833,7 +837,8 @@ async def find_realm(cluster: api.Cluster):
         except ApiError as exc:
             if exc.status_code == 404:
                 raise kopf.TemporaryError(
-                    f"Could not find identity realm '{cluster.spec.zenith_identity_realm_name}'"
+                    f"Could not find identity realm "
+                    f"'{cluster.spec.zenith_identity_realm_name}'"
                 )
             else:
                 raise
@@ -882,18 +887,20 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
     "helmreleases",
     # Use the label applied by the addon operator to locate the corresponding cluster
     cluster_label="addons.stackhpc.com/cluster",
-    # This label is only present on Helm releases that correspond to Azimuth platforms
+    # This label is only present on Helm releases that correspond to Azimuth platforms
     labels={"azimuth.stackhpc.com/app-template": kopf.PRESENT},
 )
 async def on_kubernetes_app_event(
     cluster, type, name, namespace, body, annotations, logger, **kwargs
 ):
     """
-    Executes on events for HelmRelease addons that are labelled as representing an Azimuth app.
+    Executes on events for HelmRelease addons that are labelled as representing an
+    Azimuth app.
     """
     if type == "DELETED":
         return
-    # kopf does not retry events, but we need to make sure that this is retried until it succeeds
+    # kopf does not retry events, but we need to make sure that this is retried until it
+    # succeeds
     while True:
         try:
             realm = await find_realm(cluster)
@@ -926,7 +933,7 @@ async def on_kubernetes_app_event(
             kopf.adopt(platform, body)
             await ekclient.apply_object(platform, force=True)
         except kopf.TemporaryError as exc:
-            logger.error(f"{str(exc)} - retrying")
+            logger.error(f"{exc!s} - retrying")
         except Exception:
             logger.exception("Exception while updating platform - retrying")
         else:
@@ -1063,7 +1070,8 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                 ],
                 namespace=namespace,
             )
-            # For subsequent events, we just need to patch the state of the specified service
+            # For subsequent events, we just need to patch the state of the specified
+            # service
             async for event in events:
                 event_type, reservation = event["type"], event.get("object")
                 if not reservation:
@@ -1165,7 +1173,8 @@ async def reconcile_app_template(instance, param, **kwargs):
     next_logo = instance.status.logo
     next_description = instance.status.description
     next_versions = []
-    # For each version, we need to make sure we have a values schema and optionally a UI schema
+    # For each version, we need to make sure we have a values schema and optionally a UI
+    # schema
     for chart_version in chart_versions:
         existing_version = next(
             (
@@ -1180,8 +1189,8 @@ async def reconcile_app_template(instance, param, **kwargs):
             next_versions.append(existing_version)
             continue
         # Use the label, logo and description from the first version that has them
-        # The label goes in a custom annotation as there isn't really a field for it, falling back
-        # to the chart name if it is not present
+        # The label goes in a custom annotation as there isn't really a field for it,
+        # falling back to the chart name if it is not present
         next_label = (
             next_label
             or chart_version.get("annotations", {}).get("azimuth.stackhpc.com/label")

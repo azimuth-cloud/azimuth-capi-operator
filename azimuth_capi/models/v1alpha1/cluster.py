@@ -2,9 +2,8 @@ import datetime as dt
 import ipaddress
 import typing as t
 
-from pydantic import Field, field_validator, ValidationInfo
-
 from kube_custom_resource import CustomResource, schema
+from pydantic import Field, ValidationInfo, field_validator
 
 
 class NodeGroupSpec(schema.BaseModel):
@@ -124,12 +123,14 @@ class ClusterSpec(schema.BaseModel):
     control_plane_machine_size: schema.constr(min_length=1) = Field(
         ..., description="The name of the size to use for control plane machines."
     )
-    node_groups: t.List[NodeGroupSpec] = Field(
+    node_groups: list[NodeGroupSpec] = Field(
         default_factory=list, description="The node groups for the cluster."
     )
     addons: AddonsSpec = Field(
         default_factory=AddonsSpec,
-        description="Describes the optional addons that should be enabled for the cluster.",
+        description=(
+            "Describes the optional addons that should be enabled for the cluster."
+        ),
     )
     created_by_username: schema.Optional[str] = Field(
         None,
@@ -267,7 +268,7 @@ class NodeStatus(schema.BaseModel):
     ip: schema.Optional[str] = Field(
         None, description="The internal IP address of the node."
     )
-    ips: t.List[str] = Field(
+    ips: list[str] = Field(
         default_factory=list, description="The IP addresses of the node."
     )
     kubelet_version: schema.Optional[str] = Field(

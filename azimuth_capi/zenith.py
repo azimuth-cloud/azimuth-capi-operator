@@ -1,5 +1,8 @@
 import base64
 
+import httpx
+import kopf
+import yaml
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
@@ -7,12 +10,7 @@ from cryptography.hazmat.primitives.serialization import (
     PrivateFormat,
     PublicFormat,
 )
-import httpx
-import kopf
-import yaml
-
 from easykube import ApiError
-
 from pyhelm3 import Client as HelmClient
 
 from .config import settings
@@ -42,7 +40,8 @@ async def ensure_zenith_secret(client, cluster, secret_name):
         "capi.stackhpc.com/cluster": cluster_name,
     }
     eksecrets = await client.api("v1").resource("secrets")
-    # Even if the secret already exists, we will patch the labels and annotations to match
+    # Even if the secret already exists, we will patch the labels and annotations to
+    # match
     try:
         _ = await eksecrets.fetch(secret_name, namespace=namespace)
     except ApiError as exc:
@@ -54,7 +53,8 @@ async def ensure_zenith_secret(client, cluster, secret_name):
         public_key_text = public_key.public_bytes(
             Encoding.OpenSSH, PublicFormat.OpenSSH
         ).decode()
-        # Reserve a domain with the Zenith registrar, associating the keys in the process
+        # Reserve a domain with the Zenith registrar, associating the keys in the
+        # process
         async with httpx.AsyncClient(
             base_url=settings.zenith.registrar_admin_url
         ) as zclient:
@@ -148,14 +148,15 @@ async def zenith_apiserver_values(client, cluster):
             ],
             "port": 443,
         },
-        # Disable the load balancer and floating IP for the API server as Zenith is providing
-        # that functionality
+        # Disable the load balancer and floating IP for the API server as Zenith is
+        # providing that functionality
         "apiServer": {
             "enableLoadBalancer": False,
             "associateFloatingIP": False,
         },
         # Inject an additional static pod manifest onto the control plane nodes
-        # This static pod will run a Zenith client that connects to the API server on that node
+        # This static pod will run a Zenith client that connects to the API server on
+        # that node
         "controlPlane": {
             "kubeadmConfigSpec": {
                 "useExperimentalRetryJoin": True,
@@ -185,7 +186,8 @@ async def zenith_apiserver_values(client, cluster):
 
 def zenith_client_values(enabled, name, namespace, **kwargs):
     """
-    Returns the Helm values required to launch a Zenith client for the specified service.
+    Returns the Helm values required to launch a Zenith client for the specified
+    service.
     """
     if enabled:
         full_name = f"{name}-client"

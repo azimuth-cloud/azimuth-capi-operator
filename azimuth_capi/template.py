@@ -1,8 +1,8 @@
 import jinja2
 import yaml
 
-from .config import settings
 from . import utils
+from .config import settings
 
 
 class Loader:
@@ -23,7 +23,8 @@ class Loader:
 
     def loads(self, template, **params):
         """
-        Render the specified template with the given params and return the result as a string.
+        Render the specified template with the given params and return the result as a
+        string.
         """
         return self.env.get_template(template).render(**params)
 

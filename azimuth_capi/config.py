@@ -1,27 +1,28 @@
 import typing as t
 
-from pydantic import (
-    TypeAdapter,
-    Field,
-    AfterValidator,
-    StringConstraints,
-    AnyHttpUrl as PyAnyHttpUrl,
-    FilePath,
-    conint,
-    constr,
-    model_validator,
-    field_validator,
-    ValidationInfo,
-)
-
 from configomatic import (
     Configuration as BaseConfiguration,
-    Section,
-    LoggingConfiguration,
 )
-
+from configomatic import (
+    LoggingConfiguration,
+    Section,
+)
 from easysemver import SEMVER_VERSION_REGEX
-
+from pydantic import (
+    AfterValidator,
+    Field,
+    FilePath,
+    StringConstraints,
+    TypeAdapter,
+    ValidationInfo,
+    conint,
+    constr,
+    field_validator,
+    model_validator,
+)
+from pydantic import (
+    AnyHttpUrl as PyAnyHttpUrl,
+)
 
 #: Type for a string that validates as a SemVer version
 SemVerVersion = t.Annotated[str, StringConstraints(pattern=SEMVER_VERSION_REGEX)]
@@ -39,7 +40,7 @@ class HelmClientConfiguration(Section):
 
     #: The default timeout to use with Helm releases
     #: Can be an integer number of seconds or a duration string like 5m, 5h
-    default_timeout: t.Union[int, constr(min_length=1)] = "1h"
+    default_timeout: int | constr(min_length=1) = "1h"
     #: The executable to use
     #: By default, we assume Helm is on the PATH
     executable: constr(min_length=1) = "helm"
@@ -49,7 +50,7 @@ class HelmClientConfiguration(Section):
     insecure_skip_tls_verify: bool = False
     #: The directory to use for unpacking charts
     #: By default, the system temporary directory is used
-    unpack_directory: t.Optional[str] = None
+    unpack_directory: str | None = None
 
 
 class CAPIHelmConfig(Section):
@@ -60,12 +61,12 @@ class CAPIHelmConfig(Section):
     #: The Helm chart repo, name and version to use for the CAPI Helm charts
     #: By default, this points to a local chart that is baked into the Docker image
     chart_name: constr(min_length=1) = "/charts/openstack-cluster"
-    chart_repository: t.Optional[AnyHttpUrl] = None
-    chart_version: t.Optional[SemVerVersion] = None
+    chart_repository: AnyHttpUrl | None = None
+    chart_version: SemVerVersion | None = None
     #: The default values to use for all clusters
     #: Values defined in templates take precedence
-    default_values: t.Dict[str, t.Any] = Field(default_factory=dict)
-    flavor_specific_node_group_overrides: t.Dict[str, t.Dict[str, t.Any]] = Field(
+    default_values: dict[str, t.Any] = Field(default_factory=dict)
+    flavor_specific_node_group_overrides: dict[str, dict[str, t.Any]] = Field(
         default_factory=dict,
         description=(
             "Overrides for node groups based on the flavor. "
@@ -82,14 +83,14 @@ class ZenithConfig(Section):
 
     #: The admin URL of the Zenith registrar
     #: This is given to the Zenith operator for a cluster
-    registrar_admin_url: t.Optional[AnyHttpUrl] = None
+    registrar_admin_url: AnyHttpUrl | None = None
     #: The internal admin URL of the Zenith registrar
     #: By default, this is the same as the registrar_admin_url
-    registrar_admin_url_internal: t.Optional[AnyHttpUrl] = Field(
+    registrar_admin_url_internal: AnyHttpUrl | None = Field(
         None, validate_default=True
     )
     #: The host for the Zenith SSHD service
-    sshd_host: t.Optional[constr(min_length=1)] = None
+    sshd_host: constr(min_length=1) | None = None
     #: The port for the Zenith SSHD service
     sshd_port: conint(gt=0) = 22
 
@@ -97,13 +98,13 @@ class ZenithConfig(Section):
     #: By default, these point to local charts that are baked into the Docker image
     apiserver_chart_name: constr(min_length=1) = "/charts/zenith-apiserver"
     operator_chart_name: constr(min_length=1) = "/charts/zenith-operator"
-    chart_repository: t.Optional[AnyHttpUrl] = None
-    chart_version: t.Optional[SemVerVersion] = None
+    chart_repository: AnyHttpUrl | None = None
+    chart_version: SemVerVersion | None = None
 
     #: Defaults for use with the apiserver chart
-    apiserver_defaults: t.Dict[str, t.Any] = Field(default_factory=dict)
+    apiserver_defaults: dict[str, t.Any] = Field(default_factory=dict)
     #: Defaults for use with the operator chart
-    operator_defaults: t.Dict[str, t.Any] = Field(default_factory=dict)
+    operator_defaults: dict[str, t.Any] = Field(default_factory=dict)
 
     #: Icon URLs for built-in services
     kubernetes_dashboard_icon_url: AnyHttpUrl = (
@@ -169,11 +170,11 @@ class WebhookConfiguration(Section):
     #: Indicates whether kopf should manage the webhook configurations
     managed: bool = False
     #: The path to the TLS certificate to use
-    certfile: t.Optional[FilePath] = Field(None, validate_default=False)
+    certfile: FilePath | None = Field(None, validate_default=False)
     #: The path to the key for the TLS certificate
-    keyfile: t.Optional[FilePath] = Field(None, validate_default=False)
+    keyfile: FilePath | None = Field(None, validate_default=False)
     #: The host for the webhook server (required for self-signed certificate generation)
-    host: t.Optional[constr(min_length=1)] = Field(None, validate_default=False)
+    host: constr(min_length=1) | None = Field(None, validate_default=False)
 
     @field_validator("certfile")
     @classmethod
@@ -222,7 +223,7 @@ class Configuration(
     #: The API group of the cluster CRDs
     api_group: constr(min_length=1) = "azimuth.stackhpc.com"
     #: A list of categories to place CRDs into
-    crd_categories: t.List[constr(min_length=1)] = Field(
+    crd_categories: list[constr(min_length=1)] = Field(
         default_factory=lambda: ["azimuth"]
     )
 

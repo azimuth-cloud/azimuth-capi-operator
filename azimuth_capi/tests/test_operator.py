@@ -165,7 +165,10 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                                     "taints": [
                                         {
                                             "effect": "NoSchedule",
-                                            "key": "feature.node.kubernetes.io/gpu-dedicated",
+                                            "key": (
+                                                "feature.node.kubernetes.io/"
+                                                "gpu-dedicated"
+                                            ),
                                         }
                                     ],
                                 },
