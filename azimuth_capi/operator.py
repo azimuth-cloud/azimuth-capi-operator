@@ -737,44 +737,44 @@ def on_related_object_event(
         None,
     ),
 )
-async def on_lease_event(cluster, type, body, **kwargs):
+async def on_lease_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for leases associated with an Azimuth cluster.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.lease_deleted(cluster, body)
     else:
         status.lease_updated(cluster, body)
 
 
 @on_related_object_event(CLUSTER_API_VERSION, "clusters")
-async def on_capi_cluster_event(cluster, type, body, **kwargs):
+async def on_capi_cluster_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for CAPI clusters with an associated Azimuth cluster.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.cluster_deleted(cluster, body)
     else:
         status.cluster_updated(cluster, body)
 
 
 @on_related_object_event(CLUSTER_API_CONTROLPLANE_VERSION, "kubeadmcontrolplanes")
-async def on_capi_controlplane_event(cluster, type, body, **kwargs):
+async def on_capi_controlplane_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for CAPI control planes with an associated Azimuth cluster.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.control_plane_deleted(cluster, body)
     else:
         status.control_plane_updated(cluster, body)
 
 
 @on_related_object_event(CLUSTER_API_VERSION, "machines")
-async def on_capi_machine_event(cluster, type, body, **kwargs):
+async def on_capi_machine_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for CAPI machines with an associated Azimuth cluster.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.machine_deleted(cluster, body)
     else:
         # Get the underlying infrastructure machine as we need it for the size
@@ -789,33 +789,33 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):
 
 
 @on_related_object_event("addons.stackhpc.com", "helmreleases")
-async def on_helmrelease_event(cluster, type, body, **kwargs):
+async def on_helmrelease_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for HelmRelease addons.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.addon_deleted(cluster, body)
     else:
         status.addon_updated(cluster, body)
 
 
 @on_related_object_event("addons.stackhpc.com", "manifests")
-async def on_manifests_event(cluster, type, body, **kwargs):
+async def on_manifests_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for Manifests addons.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.addon_deleted(cluster, body)
     else:
         status.addon_updated(cluster, body)
 
 
 @on_related_object_event("kustomize.toolkit.fluxcd.io", "kustomizations")
-async def on_flux_kustomization_event(cluster, type, body, **kwargs):
+async def on_flux_kustomization_event(cluster, event_type, body, **kwargs):
     """
     Executes on events for Flux Kustomization addons.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         status.addon_deleted(cluster, body)
     else:
         status.flux_updated(cluster, body)
@@ -828,11 +828,11 @@ async def on_flux_kustomization_event(cluster, type, body, **kwargs):
     # But it does have cluster.x-k8s.io/cluster-name
     cluster_label="cluster.x-k8s.io/cluster-name",
 )
-async def on_cluster_secret_event(cluster, type, body, name, **kwargs):
+async def on_cluster_secret_event(cluster, event_type, body, name, **kwargs):
     """
     Executes on events for CAPI cluster secrets.
     """
-    if type != "DELETED" and name.endswith("-kubeconfig"):
+    if event_type != "DELETED" and name.endswith("-kubeconfig"):
         status.kubeconfig_secret_updated(cluster, body)
 
 
@@ -905,13 +905,13 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
     labels={"azimuth.stackhpc.com/app-template": kopf.PRESENT},
 )
 async def on_kubernetes_app_event(
-    cluster, type, name, namespace, body, annotations, logger, **kwargs
+    cluster, event_type, name, namespace, body, annotations, logger, **kwargs
 ):
     """
     Executes on events for HelmRelease addons that are labelled as representing an
     Azimuth app.
     """
-    if type == "DELETED":
+    if event_type == "DELETED":
         return
     # kopf does not retry events, but we need to make sure that this is retried until it
     # succeeds
