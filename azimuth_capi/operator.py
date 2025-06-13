@@ -677,9 +677,10 @@ def on_related_object_event(
     if cluster_name_mapper is None:
         # Limit the query to objects that have the cluster label
         kwargs.setdefault("labels", {}).update({cluster_label: kopf.PRESENT})
-        cluster_name_mapper = (
-            lambda obj: obj["metadata"].get("labels", {}).get(cluster_label)
-        )
+        def default_cluster_name_mapper(obj):
+            return obj["metadata"].get("labels", {}).get(cluster_label)
+
+        cluster_name_mapper = default_cluster_name_mapper
 
     def decorator(func):
         @kopf.on.event(*args, **kwargs)
