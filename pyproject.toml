@@ -32,6 +32,7 @@ ignore = [
     "UP038", # deprecated
     "F401",
     "F403",
+    "A002", # causes errors
 ]
 
 [tool.mypy]

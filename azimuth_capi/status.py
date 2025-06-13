@@ -51,6 +51,7 @@ def _is_lease_blocking(cluster):
         LeasePhase.UPDATING,
     }
 
+
 def _handle_lease_phase(cluster):
     phase = cluster.status.lease_phase
     if phase in {LeasePhase.CREATING, LeasePhase.PENDING, LeasePhase.STARTING}:
@@ -62,6 +63,7 @@ def _handle_lease_phase(cluster):
     if phase == LeasePhase.UNKNOWN:
         return ClusterPhase.PENDING
     return None
+
 
 def _handle_networking_phase(cluster):
     phase = cluster.status.networking_phase
@@ -75,12 +77,13 @@ def _handle_networking_phase(cluster):
         return ClusterPhase.PENDING
     return None
 
+
 def _handle_control_plane_phase(cluster):
     phase = cluster.status.control_plane_phase
     if phase in {
         ControlPlanePhase.PENDING,
         ControlPlanePhase.SCALING_UP,
-        ControlPlanePhase.SCALING_DOWN
+        ControlPlanePhase.SCALING_DOWN,
     }:
         if _multiple_kubelet_versions(cluster, NodeRole.CONTROL_PLANE):
             return ClusterPhase.UPGRADING
@@ -94,6 +97,7 @@ def _handle_control_plane_phase(cluster):
     if phase == ControlPlanePhase.UNKNOWN:
         return ClusterPhase.PENDING
     return None
+
 
 def _handle_node_and_addon_phase(cluster):
     if _multiple_kubelet_versions(cluster, NodeRole.WORKER):
@@ -116,20 +120,22 @@ def _handle_node_and_addon_phase(cluster):
     ):
         return ClusterPhase.RECONCILING
     if (
-        cluster.status.control_plane_phase == ControlPlanePhase.UNHEALTHY or
-        _any_node_has_phase(
+        cluster.status.control_plane_phase == ControlPlanePhase.UNHEALTHY
+        or _any_node_has_phase(
             cluster, NodePhase.UNHEALTHY, NodePhase.FAILED, NodePhase.UNKNOWN
-        ) or
-        _any_addon_has_phase(cluster, AddonPhase.FAILED, AddonPhase.UNKNOWN)
+        )
+        or _any_addon_has_phase(cluster, AddonPhase.FAILED, AddonPhase.UNKNOWN)
     ):
         return ClusterPhase.UNHEALTHY
     return ClusterPhase.READY
+
 
 def _maybe_reset_timeout(cluster):
     if cluster.status.phase in {ClusterPhase.READY, ClusterPhase.FAILED}:
         cluster.status.last_updated = None
     elif cluster.status.last_updated is None:
         cluster.status.last_updated = dt.datetime.now(dt.timezone.utc)
+
 
 def _timeout_if_stuck(cluster):
     if cluster.status.phase in {
@@ -143,6 +149,7 @@ def _timeout_if_stuck(cluster):
         )
         if now > timeout_after:
             cluster.status.phase = ClusterPhase.UNHEALTHY
+
 
 def _reconcile_cluster_phase(cluster):
     """

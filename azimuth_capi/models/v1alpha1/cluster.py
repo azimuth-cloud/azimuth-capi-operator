@@ -277,7 +277,7 @@ class NodeStatus(schema.BaseModel):
     node_group: schema.Optional[str] = Field(
         None,
         description=(
-            "The node group that the node belongs to. " "Only used for worker nodes."
+            "The node group that the node belongs to. Only used for worker nodes."
         ),
     )
     created: schema.Optional[dt.datetime] = Field(

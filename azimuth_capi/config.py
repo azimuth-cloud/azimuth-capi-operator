@@ -86,9 +86,7 @@ class ZenithConfig(Section):
     registrar_admin_url: AnyHttpUrl | None = None
     #: The internal admin URL of the Zenith registrar
     #: By default, this is the same as the registrar_admin_url
-    registrar_admin_url_internal: AnyHttpUrl | None = Field(
-        None, validate_default=True
-    )
+    registrar_admin_url_internal: AnyHttpUrl | None = Field(None, validate_default=True)
     #: The host for the Zenith SSHD service
     sshd_host: constr(min_length=1) | None = None
     #: The port for the Zenith SSHD service
@@ -108,12 +106,13 @@ class ZenithConfig(Section):
 
     #: Icon URLs for built-in services
     kubernetes_dashboard_icon_url: AnyHttpUrl = (
-        "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
+        "https://raw.githubusercontent.com"
+        "/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
     )
     monitoring_icon_url: AnyHttpUrl = (
-        "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
+        "https://raw.githubusercontent.com"
+        "/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
     )
-
     #: The API version to use when watching Zenith resources on target clusters
     api_version: constr(pattern=r"^[a-z0-9.-]+/[a-z0-9]+$") = (
         "zenith.stackhpc.com/v1alpha1"

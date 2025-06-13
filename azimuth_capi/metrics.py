@@ -299,7 +299,7 @@ def format_value(value):
     formatted = repr(value)
     dot = formatted.find(".")
     if value > 0 and dot > 6:
-        mantissa = f"{formatted[0]}.{formatted[1:dot]}{formatted[dot + 1:]}".rstrip(
+        mantissa = f"{formatted[0]}.{formatted[1:dot]}{formatted[dot + 1 :]}".rstrip(
             "0."
         )
         return f"{mantissa}e+0{dot - 1}"
