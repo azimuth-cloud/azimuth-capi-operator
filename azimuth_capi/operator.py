@@ -229,85 +229,82 @@ async def fetch_model_instance(model, name, namespace=None):
     include_instance=False,
     id="validate-cluster",
 )
-async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):
+async def validate_cluster(name, namespace, meta, spec, operation, **kwargs):  # noqa: C901
     """
     Validates cluster objects.
     """
     if operation not in {"CREATE", "UPDATE"}:
         return
-
-    spec = _validate_spec_model(spec)
+    try:
+        spec = api.ClusterSpec.model_validate(spec)
+    except pydantic.ValidationError as exc:
+        raise kopf.AdmissionError(str(exc), code=400)
+    # The credentials secret must exist, unless the cluster is deleting
     if not meta.get("deletionTimestamp"):
-        await _ensure_credentials_secret_exists(spec, namespace)
-
+        secrets = await ekclient.api("v1").resource("secrets")
+        try:
+            _ = await secrets.fetch(
+                spec.cloud_credentials_secret_name, namespace=namespace
+            )
+        except ApiError as exc:
+            if exc.status_code == 404:
+                raise kopf.AdmissionError(
+                    "specified cloud credentials secret does not exist", code=400
+                )
+            else:
+                raise
+    # The specified template must exist
     next_template = await fetch_model_instance(api.ClusterTemplate, spec.template_name)
     if not next_template:
         raise kopf.AdmissionError("specified cluster template does not exist", code=400)
-
+    # Load the current state of the cluster
     current_cluster = await fetch_model_instance(api.Cluster, name, namespace=namespace)
-    if current_cluster and (
-        current_cluster.spec.template_name == next_template.metadata.name
+    # If the template is not changing, we are done
+    if current_cluster and current_cluster.spec.template_name == (
+        next_template.metadata.name
     ):
         return
-
+    # If we get to here, the template must not be deprecated
     if next_template.spec.deprecated:
         raise kopf.AdmissionError("specified cluster template is deprecated", code=400)
-
+    # The rest of the validation only applies to upgrades
     if not current_cluster:
         return
-
-    await _validate_upgrade(current_cluster, next_template)
-
-    return next_template
-
-
-def _validate_spec_model(spec):
-    try:
-        return api.ClusterSpec.model_validate(spec)
-    except pydantic.ValidationError as exc:
-        raise kopf.AdmissionError(str(exc), code=400)
-
-
-async def _ensure_credentials_secret_exists(spec, namespace):
-    secrets = await ekclient.api("v1").resource("secrets")
-    try:
-        await secrets.fetch(spec.cloud_credentials_secret_name, namespace=namespace)
-    except ApiError as exc:
-        if exc.status_code == 404:
-            raise kopf.AdmissionError(
-                "specified cloud credentials secret does not exist", code=400
-            )
-        raise
-
-
-async def _validate_upgrade(current_cluster, next_template):
+    # Load the current template
     current_template = await fetch_model_instance(
         api.ClusterTemplate, current_cluster.spec.template_name
     )
-
+    # Get the versions of both templates as SemVer versions
     current_version = easysemver.Version(
         current_template.spec.values.kubernetes_version
     )
     next_version = easysemver.Version(next_template.spec.values.kubernetes_version)
-
+    # The template is not permitted to be a downgrade
     if next_version < current_version:
         raise kopf.AdmissionError(
             "specified cluster template would be a downgrade", code=400
         )
-
+    # Prevent the major version from changing
+    # TODO(mkjpryor) change this if Kubernetes 2.x is ever released and upgrade is
+    # allowed
     if next_version.major != current_version.major:
         raise kopf.AdmissionError(
             "upgrading to a new major version is not supported", code=400
         )
-
+    # The template can only be bumped by one minor version
     if next_version.minor > current_version.minor.increment():
         raise kopf.AdmissionError(
             "upgrading by more than one minor version is not supported", code=400
         )
-
+    # If there are no nodes, we are done
     if not current_cluster.status.nodes:
         return
-
+    # Make sure that the new template is within one minor version of the oldest node
+    # NOTE(mkjpryor) this is stricter than the official Kubernetes skew policy, which
+    #                allows kubelet to be up to three minor versions old, but enforcing
+    #                the stricter constraint here reduces the risk of races in the
+    #                control plane when multiple upgrades are applied without waiting
+    #                for the previous one to finish
     oldest_kubelet_version = min(
         easysemver.Version(node.kubelet_version)
         for node in current_cluster.status.nodes.values()
@@ -321,6 +318,7 @@ async def _validate_upgrade(current_cluster, next_template):
             ),
             code=400,
         )
+    return next_template
 
 
 async def adopt_lease(instance):
