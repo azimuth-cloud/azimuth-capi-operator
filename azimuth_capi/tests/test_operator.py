@@ -1,7 +1,4 @@
 import unittest
-from unittest import mock
-
-import kopf
 
 from azimuth_capi import operator
 from azimuth_capi.models import v1alpha1 as api

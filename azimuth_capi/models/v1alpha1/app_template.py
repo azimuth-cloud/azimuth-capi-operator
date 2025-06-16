@@ -1,5 +1,4 @@
 import datetime as dt
-import typing as t
 
 from easysemver import SEMVER_RANGE_REGEX, SEMVER_VERSION_REGEX
 from kube_custom_resource import CustomResource, Scope, schema
