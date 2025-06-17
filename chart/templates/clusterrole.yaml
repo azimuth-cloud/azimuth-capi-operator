@@ -132,10 +132,11 @@ rules:
       - list
       - get
       - watch
-  # We need to be able to manipulate platforms
+  # We need to be able to manage OIDC clients and platforms
   - apiGroups:
       - identity.azimuth.stackhpc.com
     resources:
+      - oidcclients
       - platforms
     verbs:
       - "*"

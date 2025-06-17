@@ -63,7 +63,7 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
         cluster = self.get_fake_cluster()
         template = self.get_fake_cluster_template()
 
-        result = operator.generate_helm_values_for_release(template, cluster)
+        result = operator.generate_helm_values_for_release(template, cluster, None, None, None, None)
 
         self.assertDictEqual(result, {
             'addons': {'ingress': {'enabled': False},
@@ -114,7 +114,7 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             }
         }
 
-        result = operator.generate_helm_values_for_release(template, cluster)
+        result = operator.generate_helm_values_for_release(template, cluster, None, None, None, None)
 
         self.assertDictEqual(result, {
             'addons': {'ingress': {'enabled': False},
