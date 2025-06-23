@@ -132,16 +132,68 @@ class ZenithConfig(Section):
         return bool(self.registrar_admin_url)
 
 
+class PolicyRule(Section):
+    """
+    Configuration for a rule in a Kubernetes role.
+    """
+    #: The API groups for the resources that the rule applies to
+    api_groups: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The resource names that the rule applies to
+    resources: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The resource names that the rule applies to
+    resource_names: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The non-resource URLs that the rule applies to
+    non_resource_urls: t.List[constr(min_length = 1)] = Field(
+        alias = "nonResourceURLs",
+        default_factory = list
+    )
+    #: The list of verbs that the rule applies to
+    verbs: t.List[constr(min_length = 1)] = Field(default_factory = list)
+
+
+class DefaultUserNamespaceRoleConfig(Section):
+    """
+    Configuration for the default role and binding for OIDC users.
+    """
+    #: The name for the cluster role and the role binding
+    name: constr(min_length = 1) = "oidc:default-users-namespaced"
+    #: The namespaces for the role bindings
+    namespaces: t.List[constr(min_length = 1)] = Field(default_factory = list)
+    #: The rules for the cluster role
+    rules: t.List[PolicyRule] = Field(default_factory = list)
+
+class DefaultUserClusterRoleConfig(Section):
+    """
+    Configuration for the default role and binding for OIDC users.
+    """
+    #: The name for the cluster role and the role binding
+    name: constr(min_length = 1) = "oidc:default-users-cluster"
+    #: The rules for the cluster role
+    rules: t.List[PolicyRule] = Field(default_factory = list)
+
+
 class IdentityConfig(Section):
     """
     Configuration for the Azimuth identity support.
     """
+    #: Indicates whether OIDC authentication should be enabled for clusters
+    oidc_enabled: bool = False
     #: The API version to use for Azimuth identity resources
     api_version: constr(min_length = 1) = "identity.azimuth.stackhpc.com/v1alpha1"
+    #: The template to use for cluster OIDC client IDs
+    cluster_oidc_client_id_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for cluster platform names
     cluster_platform_name_template: constr(min_length = 1) = "kube-{cluster_name}"
     #: The template to use for app platform names
     app_platform_name_template: constr(min_length = 1) = "kubeapp-{app_name}"
+    #: The default namespace-scoped role bindings to give users of the cluster
+    #: These role binding are applied to the platform users group for the realm and the
+    #: managed group that is created for cluster users
+    default_user_namespace_role: t.Optional[DefaultUserNamespaceRoleConfig] = None
+    #: The default cluster-wide role bindings to give users of the cluster
+    #: These role binding are applied to the platform users group for the realm and the
+    #: managed group that is created for cluster users
+    default_user_cluster_role: t.Optional[DefaultUserClusterRoleConfig] = None
 
 
 class WebhookConfiguration(Section):
