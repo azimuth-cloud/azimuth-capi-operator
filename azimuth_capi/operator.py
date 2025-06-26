@@ -474,7 +474,8 @@ async def find_realm(cluster: api.Cluster):
         except ApiError as exc:
             if exc.status_code == 404:
                 raise kopf.TemporaryError(
-                    f"Could not find identity realm '{cluster.spec.zenith_identity_realm_name}'"
+                    "Could not find identity realm "
+                    f"'{cluster.spec.zenith_identity_realm_name}'"
                 )
             else:
                 raise
@@ -574,7 +575,7 @@ async def adopt_oidc_client(instance: api.Cluster):
 
 async def ensure_platform(instance: api.Cluster, realm):
     """
-    Ensures that the platform resource for the cluster exists and matches the current services.
+    Ensures platform resource for the cluster exists and matches the current services.
     """
     platform = {
         "apiVersion": settings.identity.api_version,
@@ -641,8 +642,8 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             realm_users_group = realm["status"].get("platformUsersGroup")
         else:
             raise kopf.TemporaryError("identity realm is not ready", delay=15)
-        # Create the OIDC client for the cluster and wait for the issuer URL and client ID
-        # to be available
+        # Create the OIDC client for the cluster and wait for the issuer URL
+        # and client ID to be available
         oidc_client = await ensure_oidc_client(instance, realm)
         try:
             oidc_issuer_url = oidc_client["status"]["issuerUrl"]

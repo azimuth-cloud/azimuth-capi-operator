@@ -152,17 +152,17 @@ class PolicyRule(Section):
     """
 
     #: The API groups for the resources that the rule applies to
-    api_groups: t.List[constr(min_length=1)] = Field(default_factory=list)
+    api_groups: list[constr(min_length=1)] = Field(default_factory=list)
     #: The resource names that the rule applies to
-    resources: t.List[constr(min_length=1)] = Field(default_factory=list)
+    resources: list[constr(min_length=1)] = Field(default_factory=list)
     #: The resource names that the rule applies to
-    resource_names: t.List[constr(min_length=1)] = Field(default_factory=list)
+    resource_names: list[constr(min_length=1)] = Field(default_factory=list)
     #: The non-resource URLs that the rule applies to
-    non_resource_urls: t.List[constr(min_length=1)] = Field(
+    non_resource_urls: list[constr(min_length=1)] = Field(
         alias="nonResourceURLs", default_factory=list
     )
     #: The list of verbs that the rule applies to
-    verbs: t.List[constr(min_length=1)] = Field(default_factory=list)
+    verbs: list[constr(min_length=1)] = Field(default_factory=list)
 
 
 class DefaultUserNamespaceRoleConfig(Section):
@@ -173,9 +173,9 @@ class DefaultUserNamespaceRoleConfig(Section):
     #: The name for the cluster role and the role binding
     name: constr(min_length=1) = "oidc:default-users-namespaced"
     #: The namespaces for the role bindings
-    namespaces: t.List[constr(min_length=1)] = Field(default_factory=list)
+    namespaces: list[constr(min_length=1)] = Field(default_factory=list)
     #: The rules for the cluster role
-    rules: t.List[PolicyRule] = Field(default_factory=list)
+    rules: list[PolicyRule] = Field(default_factory=list)
 
 
 class DefaultUserClusterRoleConfig(Section):
@@ -186,7 +186,7 @@ class DefaultUserClusterRoleConfig(Section):
     #: The name for the cluster role and the role binding
     name: constr(min_length=1) = "oidc:default-users-cluster"
     #: The rules for the cluster role
-    rules: t.List[PolicyRule] = Field(default_factory=list)
+    rules: list[PolicyRule] = Field(default_factory=list)
 
 
 class IdentityConfig(Section):
@@ -207,11 +207,11 @@ class IdentityConfig(Section):
     #: The default namespace-scoped role bindings to give users of the cluster
     #: These role binding are applied to the platform users group for the realm and the
     #: managed group that is created for cluster users
-    default_user_namespace_role: t.Optional[DefaultUserNamespaceRoleConfig] = None
+    default_user_namespace_role: DefaultUserNamespaceRoleConfig | None = None
     #: The default cluster-wide role bindings to give users of the cluster
     #: These role binding are applied to the platform users group for the realm and the
     #: managed group that is created for cluster users
-    default_user_cluster_role: t.Optional[DefaultUserClusterRoleConfig] = None
+    default_user_cluster_role: DefaultUserClusterRoleConfig | None = None
 
 
 class WebhookConfiguration(Section):
