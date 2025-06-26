@@ -416,22 +416,29 @@ def update_machine_flavor(obj, size_map):
     return updated_obj
 
 
-def generate_helm_values_for_release(template : api.ClusterTemplate, cluster : api.Cluster, oidc_issuer_url, oidc_client_id, realm_users_group, cluster_users_group):
+def generate_helm_values_for_release(
+    template: api.ClusterTemplate,
+    cluster: api.Cluster,
+    oidc_issuer_url,
+    oidc_client_id,
+    realm_users_group,
+    cluster_users_group,
+):
     """
     Generates the Helm values for the release.
     """
     values = mergeconcat(
         settings.capi_helm.default_values,
-        template.spec.values.model_dump(by_alias = True),
+        template.spec.values.model_dump(by_alias=True),
         default_loader.load(
             "cluster-values.yaml",
-            spec = cluster.spec,
-            oidc_issuer_url = oidc_issuer_url,
-            oidc_client_id = oidc_client_id,
-            realm_users_group = realm_users_group,
-            cluster_users_group = cluster_users_group,
-            settings = settings
-        )
+            spec=cluster.spec,
+            oidc_issuer_url=oidc_issuer_url,
+            oidc_client_id=oidc_client_id,
+            realm_users_group=realm_users_group,
+            cluster_users_group=cluster_users_group,
+            settings=settings,
+        ),
     )
     # Apply the flavor specific node group overrides
     if settings.capi_helm.flavor_specific_node_group_overrides:
@@ -451,6 +458,7 @@ def generate_helm_values_for_release(template : api.ClusterTemplate, cluster : a
         values["nodeGroups"] = updated_node_groups
     return values
 
+
 async def find_realm(cluster: api.Cluster):
     """
     Return the identity realm for the given cluster.
@@ -461,7 +469,7 @@ async def find_realm(cluster: api.Cluster):
         try:
             return await ekrealms.fetch(
                 cluster.spec.zenith_identity_realm_name,
-                namespace = cluster.metadata.namespace
+                namespace=cluster.metadata.namespace,
             )
         except ApiError as exc:
             if exc.status_code == 404:
@@ -472,7 +480,7 @@ async def find_realm(cluster: api.Cluster):
                 raise
     else:
         # Otherwise, try to discover a realm in the namespace
-        realm = await ekrealms.first(namespace = cluster.metadata.namespace)
+        realm = await ekrealms.first(namespace=cluster.metadata.namespace)
         if realm:
             return realm
         else:
@@ -488,7 +496,7 @@ async def ensure_oidc_client(instance: api.Cluster, realm):
         "kind": "OIDCClient",
         "metadata": {
             "name": settings.identity.cluster_oidc_client_id_template.format(
-                cluster_name = instance.metadata.name,
+                cluster_name=instance.metadata.name,
             ),
             "namespace": instance.metadata.namespace,
             "labels": {
@@ -503,7 +511,7 @@ async def ensure_oidc_client(instance: api.Cluster, realm):
         },
     }
     kopf.adopt(oidc_client, instance.model_dump())
-    return await ekclient.apply_object(oidc_client, force = True)
+    return await ekclient.apply_object(oidc_client, force=True)
 
 
 async def adopt_oidc_client(instance: api.Cluster):
@@ -513,13 +521,15 @@ async def adopt_oidc_client(instance: api.Cluster):
     This is to ensure that the owner reference is repopulated if it is missing,
     e.g. after a Velero restore.
     """
-    ekoidcclients = await ekclient.api(settings.identity.api_version).resource("oidcclients")
+    ekoidcclients = await ekclient.api(settings.identity.api_version).resource(
+        "oidcclients"
+    )
     try:
         oidc_client = await ekoidcclients.fetch(
             settings.identity.cluster_oidc_client_id_template.format(
-                cluster_name = instance.metadata.name
+                cluster_name=instance.metadata.name
             ),
-            namespace = instance.metadata.namespace
+            namespace=instance.metadata.namespace,
         )
     except ApiError as exc:
         if exc.status_code == 404:
@@ -558,7 +568,7 @@ async def adopt_oidc_client(instance: api.Cluster):
         await ekoidcclients.json_patch(
             oidc_client.metadata.name,
             patch_data,
-            namespace = oidc_client.metadata.namespace
+            namespace=oidc_client.metadata.namespace,
         )
 
 
@@ -571,7 +581,7 @@ async def ensure_platform(instance: api.Cluster, realm):
         "kind": "Platform",
         "metadata": {
             "name": settings.identity.cluster_platform_name_template.format(
-                cluster_name = instance.metadata.name,
+                cluster_name=instance.metadata.name,
             ),
             "namespace": instance.metadata.namespace,
         },
@@ -585,7 +595,7 @@ async def ensure_platform(instance: api.Cluster, realm):
             "fqdn": service.fqdn,
         }
     kopf.adopt(platform, instance.model_dump())
-    return await ekclient.apply_object(platform, force = True)
+    return await ekclient.apply_object(platform, force=True)
 
 
 @model_handler(api.Cluster, kopf.on.create)
@@ -601,7 +611,9 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         return
 
     # Fetch the template for the cluster
-    template = await fetch_model_instance(api.ClusterTemplate, instance.spec.template_name)
+    template = await fetch_model_instance(
+        api.ClusterTemplate, instance.spec.template_name
+    )
     if not template:
         raise kopf.TemporaryError("specified template does not exist")
     # Make sure that the credential secret exists
@@ -628,7 +640,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             # The platform users group is an optional part of a realm
             realm_users_group = realm["status"].get("platformUsersGroup")
         else:
-            raise kopf.TemporaryError("identity realm is not ready", delay = 15)
+            raise kopf.TemporaryError("identity realm is not ready", delay=15)
         # Create the OIDC client for the cluster and wait for the issuer URL and client ID
         # to be available
         oidc_client = await ensure_oidc_client(instance, realm)
@@ -636,20 +648,27 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             oidc_issuer_url = oidc_client["status"]["issuerUrl"]
             oidc_client_id = oidc_client["status"]["clientId"]
         except KeyError:
-            raise kopf.TemporaryError("OIDC client is not ready", delay = 15)
+            raise kopf.TemporaryError("OIDC client is not ready", delay=15)
         # Create the platform and wait for the root group to be set
         platform = await ensure_platform(instance, realm)
         try:
             cluster_users_group = platform["status"]["rootGroup"]
         except KeyError:
-            raise kopf.TemporaryError("identity platform is not ready", delay = 15)
+            raise kopf.TemporaryError("identity platform is not ready", delay=15)
     else:
         oidc_issuer_url = None
         oidc_client_id = None
         realm_users_group = None
         cluster_users_group = None
     # Generate the Helm values for the release
-    helm_values = generate_helm_values_for_release(template, instance, oidc_issuer_url, oidc_client_id, realm_users_group, cluster_users_group)
+    helm_values = generate_helm_values_for_release(
+        template,
+        instance,
+        oidc_issuer_url,
+        oidc_client_id,
+        realm_users_group,
+        cluster_users_group,
+    )
     # If a lease name is set, update the flavors in the values from the size map
     if instance.spec.lease_name:
         # Make sure that we adopt the lease
@@ -854,12 +873,10 @@ def on_related_object_event(
             while True:
                 try:
                     cluster = await fetch_model_instance(
-                        api.Cluster,
-                        cluster_name,
-                        namespace = inner["namespace"]
+                        api.Cluster, cluster_name, namespace=inner["namespace"]
                     )
                     if cluster:
-                        await func(cluster = cluster, **inner)
+                        await func(cluster=cluster, **inner)
                         await save_cluster_status(cluster)
                 except ApiError as exc:
                     # On a conflict response, go round again
@@ -985,12 +1002,14 @@ async def ensure_user_kubeconfig_secret(instance: api.Cluster, kubeconfig_secret
     # Get the OIDC client for the cluster and extract the issuer URL and client ID
     # Let any 404s or KeyErrors propagate as they _should not_ ever happen and we want
     # to know if they do
-    ekoidcclients = await ekclient.api(settings.identity.api_version).resource("oidcclients")
+    ekoidcclients = await ekclient.api(settings.identity.api_version).resource(
+        "oidcclients"
+    )
     oidc_client = await ekoidcclients.fetch(
         settings.identity.cluster_oidc_client_id_template.format(
-            cluster_name = instance.metadata.name
+            cluster_name=instance.metadata.name
         ),
-        namespace = instance.metadata.namespace
+        namespace=instance.metadata.namespace,
     )
     oidc_issuer_url = oidc_client["status"]["issuerUrl"]
     oidc_client_id = oidc_client["status"]["clientId"]
@@ -1053,9 +1072,9 @@ async def ensure_user_kubeconfig_secret(instance: api.Cluster, kubeconfig_secret
             },
             "stringData": {
                 "value": yaml.safe_dump(kubeconfig_user),
-            }
+            },
         },
-        force = True
+        force=True,
     )
 
 
