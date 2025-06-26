@@ -1,18 +1,16 @@
 import base64
 
+import httpx
+import kopf
+import yaml
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
     NoEncryption,
     PrivateFormat,
-    PublicFormat
+    PublicFormat,
 )
-import httpx
-import kopf
-import yaml
-
 from easykube import ApiError
-
 from pyhelm3 import Client as HelmClient
 
 from .config import settings
@@ -42,21 +40,30 @@ async def ensure_zenith_secret(client, cluster, secret_name):
         "capi.stackhpc.com/cluster": cluster_name,
     }
     eksecrets = await client.api("v1").resource("secrets")
-    # Even if the secret already exists, we will patch the labels and annotations to match
+    # Even if the secret already exists, we will patch the labels and annotations to
+    # match
     try:
-        _ = await eksecrets.fetch(secret_name, namespace = namespace)
+        _ = await eksecrets.fetch(secret_name, namespace=namespace)
     except ApiError as exc:
         if exc.status_code != 404:
             raise
         # Generate an SSH keypair
         private_key = Ed25519PrivateKey.generate()
         public_key = private_key.public_key()
-        public_key_text = public_key.public_bytes(Encoding.OpenSSH, PublicFormat.OpenSSH).decode()
-        # Reserve a domain with the Zenith registrar, associating the keys in the process
-        async with httpx.AsyncClient(base_url = settings.zenith.registrar_admin_url) as zclient:
-            response = await zclient.post("/admin/reserve", json = {
-                "public_keys": [public_key_text],
-            })
+        public_key_text = public_key.public_bytes(
+            Encoding.OpenSSH, PublicFormat.OpenSSH
+        ).decode()
+        # Reserve a domain with the Zenith registrar, associating the keys in the
+        # process
+        async with httpx.AsyncClient(
+            base_url=settings.zenith.registrar_admin_url
+        ) as zclient:
+            response = await zclient.post(
+                "/admin/reserve",
+                json={
+                    "public_keys": [public_key_text],
+                },
+            )
             response.raise_for_status()
             response_data = response.json()
         # Put the public and private keys into the named secret
@@ -72,20 +79,18 @@ async def ensure_zenith_secret(client, cluster, secret_name):
             },
             "stringData": {
                 "id_ed25519": (
-                    private_key
-                        .private_bytes(Encoding.PEM, PrivateFormat.OpenSSH, NoEncryption())
-                        .decode()
+                    private_key.private_bytes(
+                        Encoding.PEM, PrivateFormat.OpenSSH, NoEncryption()
+                    ).decode()
                 ),
                 "id_ed25519.pub": public_key_text,
             },
         }
-        kopf.adopt(secret_data, cluster.model_dump(by_alias = True))
-        return await eksecrets.create(secret_data, namespace = namespace)
+        kopf.adopt(secret_data, cluster.model_dump(by_alias=True))
+        return await eksecrets.create(secret_data, namespace=namespace)
     else:
         return await eksecrets.patch(
-            secret_name,
-            { "metadata": { "labels": labels } },
-            namespace = namespace
+            secret_name, {"metadata": {"labels": labels}}, namespace=namespace
         )
 
 
@@ -95,21 +100,23 @@ async def zenith_apiserver_values(client, cluster):
     """
     name = cluster.metadata.name
     # First, reserve a subdomain for the API server
-    apiserver_secret = await ensure_zenith_secret(client, cluster, f"{name}-zenith-apiserver")
+    apiserver_secret = await ensure_zenith_secret(
+        client, cluster, f"{name}-zenith-apiserver"
+    )
     # Get the static pod definition for the Zenith client for the API server
     client = HelmClient(
-        default_timeout = settings.helm_client.default_timeout,
-        executable = settings.helm_client.executable,
-        history_max_revisions = settings.helm_client.history_max_revisions,
-        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-        unpack_directory = settings.helm_client.unpack_directory
+        default_timeout=settings.helm_client.default_timeout,
+        executable=settings.helm_client.executable,
+        history_max_revisions=settings.helm_client.history_max_revisions,
+        insecure_skip_tls_verify=settings.helm_client.insecure_skip_tls_verify,
+        unpack_directory=settings.helm_client.unpack_directory,
     )
     resources = list(
         await client.template_resources(
             await client.get_chart(
                 settings.zenith.apiserver_chart_name,
-                repo = settings.zenith.chart_repository,
-                version = settings.zenith.chart_version
+                repo=settings.zenith.chart_repository,
+                version=settings.zenith.chart_version,
             ),
             "zenith-apiserver",
             mergeconcat(
@@ -125,28 +132,31 @@ async def zenith_apiserver_values(client, cluster):
                             "port": settings.zenith.sshd_port,
                         },
                     },
-                }
+                },
             ),
-            namespace = "kube-system"
+            namespace="kube-system",
         )
     )
     configmap = next(r for r in resources if r["kind"] == "ConfigMap")
     pod = next(r for r in resources if r["kind"] == "Pod")
-    # Return the values required to enable Zenith support
+    # Return the values required to enable Zenith support
     return {
         # The control plane will use the allocated Zenith FQDN on port 443
         "controlPlaneEndpoint": {
-            "host": apiserver_secret.metadata.annotations["azimuth.stackhpc.com/zenith-fqdn"],
+            "host": apiserver_secret.metadata.annotations[
+                "azimuth.stackhpc.com/zenith-fqdn"
+            ],
             "port": 443,
         },
-        # Disable the load balancer and floating IP for the API server as Zenith is providing
-        # that functionality
+        # Disable the load balancer and floating IP for the API server as Zenith is
+        # providing that functionality
         "apiServer": {
             "enableLoadBalancer": False,
             "associateFloatingIP": False,
         },
         # Inject an additional static pod manifest onto the control plane nodes
-        # This static pod will run a Zenith client that connects to the API server on that node
+        # This static pod will run a Zenith client that connects to the API server on
+        # that node
         "controlPlane": {
             "kubeadmConfigSpec": {
                 "useExperimentalRetryJoin": True,
@@ -158,7 +168,8 @@ async def zenith_apiserver_values(client, cluster):
                         "owner": "root:root",
                         "permissions": "0600",
                     },
-                ] + [
+                ]
+                + [
                     {
                         "path": f"/etc/zenith/{name}",
                         "content": b64encode(data),
@@ -175,7 +186,8 @@ async def zenith_apiserver_values(client, cluster):
 
 def zenith_client_values(enabled, name, namespace, **kwargs):
     """
-    Returns the Helm values required to launch a Zenith client for the specified service.
+    Returns the Helm values required to launch a Zenith client for the specified
+    service.
     """
     if enabled:
         full_name = f"{name}-client"
@@ -188,9 +200,7 @@ def zenith_client_values(enabled, name, namespace, **kwargs):
                             "namespace": namespace,
                             "manifests": {
                                 "zenith-client.yaml": default_loader.loads(
-                                    "zenith-client.yaml",
-                                    name = full_name,
-                                    **kwargs
+                                    "zenith-client.yaml", name=full_name, **kwargs
                                 ),
                             },
                         },
@@ -213,35 +223,35 @@ async def zenith_values(client, cluster, addons):
             addons.dashboard,
             "kubernetes-dashboard",
             "kubernetes-dashboard",
-            upstream_service_name = "kubernetes-dashboard",
-            upstream_port = 443,
-            upstream_scheme = "https",
+            upstream_service_name="kubernetes-dashboard",
+            upstream_port=443,
+            upstream_scheme="https",
             # When OIDC is enabled, disable the auth proxy and make users enter a token
-            mitm_proxy_enabled = not settings.identity.oidc_enabled,
+            mitm_proxy_enabled=not settings.identity.oidc_enabled,
             # The following two arguments are only used when mitm_proxy_enabled = True
-            mitm_proxy_auth_inject_type = "ServiceAccount",
-            mitm_proxy_auth_inject_service_account = {
+            mitm_proxy_auth_inject_type="ServiceAccount",
+            mitm_proxy_auth_inject_service_account={
                 "clusterRoleName": "cluster-admin",
             },
-            label = "Kubernetes Dashboard",
-            icon_url = settings.zenith.kubernetes_dashboard_icon_url
+            label="Kubernetes Dashboard",
+            icon_url=settings.zenith.kubernetes_dashboard_icon_url,
         ),
         zenith_client_values(
             addons.monitoring,
             "kube-prometheus-stack",
             "monitoring-system",
-            upstream_service_name = "kube-prometheus-stack-grafana",
-            upstream_port = 80,
-            mitm_proxy_enabled = True,
-            mitm_proxy_auth_inject_type = "Basic",
-            mitm_proxy_auth_inject_basic = {
+            upstream_service_name="kube-prometheus-stack-grafana",
+            upstream_port=80,
+            mitm_proxy_enabled=True,
+            mitm_proxy_auth_inject_type="Basic",
+            mitm_proxy_auth_inject_basic={
                 "secretName": "kube-prometheus-stack-grafana",
                 "usernameKey": "admin-user",
                 "passwordKey": "admin-password",
             },
-            label = "Monitoring",
-            icon_url = settings.zenith.monitoring_icon_url
-        )
+            label="Monitoring",
+            icon_url=settings.zenith.monitoring_icon_url,
+        ),
     )
 
 
@@ -255,18 +265,18 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
     clouds = yaml.safe_load(base64.b64decode(clouds_b64).decode())
     project_id = clouds["clouds"]["openstack"]["auth"]["project_id"]
     client = HelmClient(
-        default_timeout = settings.helm_client.default_timeout,
-        executable = settings.helm_client.executable,
-        history_max_revisions = settings.helm_client.history_max_revisions,
-        insecure_skip_tls_verify = settings.helm_client.insecure_skip_tls_verify,
-        unpack_directory = settings.helm_client.unpack_directory
+        default_timeout=settings.helm_client.default_timeout,
+        executable=settings.helm_client.executable,
+        history_max_revisions=settings.helm_client.history_max_revisions,
+        insecure_skip_tls_verify=settings.helm_client.insecure_skip_tls_verify,
+        unpack_directory=settings.helm_client.unpack_directory,
     )
     return list(
         await client.template_resources(
             await client.get_chart(
                 settings.zenith.operator_chart_name,
-                repo = settings.zenith.chart_repository,
-                version = settings.zenith.chart_version
+                repo=settings.zenith.chart_repository,
+                version=settings.zenith.chart_version,
             ),
             name,
             mergeconcat(
@@ -284,8 +294,8 @@ async def zenith_operator_resources(name, namespace, cloud_credentials_secret):
                             "tenancy-id": project_id,
                         },
                     },
-                }
+                },
             ),
-            namespace = namespace
+            namespace=namespace,
         )
     )
