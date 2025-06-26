@@ -5,7 +5,9 @@ import functools
 import json
 import logging
 import pathlib
+import secrets
 import ssl
+import string
 import sys
 
 import kopf
@@ -574,7 +576,6 @@ async def ensure_platform(instance: api.Cluster, realm):
     kopf.adopt(platform, instance.model_dump())
     return await ekclient.apply_object(platform, force = True)
 
-
 @model_handler(api.Cluster, kopf.on.create)
 @model_handler(api.Cluster, kopf.on.update, field = "spec")
 async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
@@ -607,6 +608,29 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
         instance.spec.cloud_credentials_secret_name,
         namespace = namespace
     )
+
+    # Wait for etcd key to be created
+    try:
+        _ = await eksecrets.fetch(
+            name+"-etcd-key",
+            namespace = namespace
+        )
+    except ApiError as exc:
+        if exc.response.status_code == 404:
+            await ekclient.create_object({
+                "apiVersion": "v1",
+                "kind": "Secret",
+                "metadata": {
+                    "name": name+"-etcd-key",
+                    "namespace": namespace
+                },
+                "data": {
+                    "key": base64.b64encode(secrets.token_bytes(32))
+                }
+            })
+        else:
+            raise
+
     # Check if OIDC authentication should be enabled
     if settings.identity.oidc_enabled:
         # Wait for the realm to become available
@@ -703,6 +727,15 @@ async def on_cluster_delete(logger, instance, name, namespace, **kwargs):
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
+    # Cleanup etcd encryption key
+    _ = await ekclient.delete_object({
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": name+"-etcd-key",
+            "namespace": namespace
+        },
+    })
     # Delete the corresponding Helm release
     try:
         await helm_client.uninstall_release(name, namespace = namespace)
