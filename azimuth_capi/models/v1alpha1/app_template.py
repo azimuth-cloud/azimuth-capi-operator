@@ -1,24 +1,20 @@
 import datetime as dt
-import typing as t
 
-from pydantic import Field
-
+from easysemver import SEMVER_RANGE_REGEX, SEMVER_VERSION_REGEX
 from kube_custom_resource import CustomResource, Scope, schema
-
-from easysemver import SEMVER_VERSION_REGEX, SEMVER_RANGE_REGEX
+from pydantic import Field
 
 
 class AppTemplateChartSpec(schema.BaseModel):
     """
     The spec for a chart reference for a Kubernetes app template.
     """
+
     repo: schema.AnyHttpUrl = Field(
-        ...,
-        description = "The Helm repository that the chart is in."
+        ..., description="The Helm repository that the chart is in."
     )
-    name: schema.constr(pattern =r"^[a-z0-9-]+$") = Field(
-        ...,
-        description = "The name of the chart."
+    name: schema.constr(pattern=r"^[a-z0-9-]+$") = Field(
+        ..., description="The name of the chart."
     )
 
 
@@ -26,57 +22,59 @@ class AppTemplateSpec(schema.BaseModel):
     """
     The spec for an Kubernetes app template.
     """
+
     chart: AppTemplateChartSpec = Field(
-        ...,
-        description = "The chart to use for the Kubernetes app."
+        ..., description="The chart to use for the Kubernetes app."
     )
     label: str = Field(
         "",
-        description = (
+        description=(
             "The human-readable label for the app template. "
             "If not given, this will be taken from the Chart.yaml of the chart."
-        )
+        ),
     )
     logo: str = Field(
         "",
-        description = (
+        description=(
             "The URL of the logo for the app template. "
             "If not given, the URL from the Chart.yaml of the chart will be used."
-        )
+        ),
     )
     description: str = Field(
         "",
-        description = (
+        description=(
             "A short description of the app template. "
-            "If not given, the description from the Chart.yaml of the chart will be used."
-        )
+            "If not given, the description from the "
+            "Chart.yaml of the chart will be used."
+        ),
     )
-    version_range: schema.constr(pattern = SEMVER_RANGE_REGEX) = Field(
+    version_range: schema.constr(pattern=SEMVER_RANGE_REGEX) = Field(
         ">=0.0.0",
-        description = (
+        description=(
             "The range of versions to make available. "
             "If not given, all non-prerelease versions will be made available. "
             "If given, it must be a comma-separated list of constraints, where each "
             "constraint is an operator followed by a version. "
             "The supported operators are ==, !=, >, >=, < and <=."
-        )
+        ),
     )
-    keep_versions: schema.conint(gt = 0) = Field(
-        5,
-        description = "The number of versions to keep. Defaults to 5."
+    keep_versions: schema.conint(gt=0) = Field(
+        5, description="The number of versions to keep. Defaults to 5."
     )
-    sync_frequency: schema.conint(gt = 0) = Field(
+    sync_frequency: schema.conint(gt=0) = Field(
         86400,  # 24 hours
-        description = (
+        description=(
             "The number of seconds to wait before synchronising the versions again. "
             "Defaults to 86400 (24 hours) if not given. "
             "Note that this is only a best effort, and how soon after the sync "
             "frequency an update occurs is determined by the operator configuration."
-        )
+        ),
     )
     default_values: schema.Dict[str, schema.Any] = Field(
-        default_factory = dict,
-        description = "Default values for deployments of the app, on top of the chart defaults."
+        default_factory=dict,
+        description=(
+            "Default values for deployments of the app, on top of the chart defaults."
+        ),
     )
 
 
@@ -84,51 +82,47 @@ class AppTemplateVersion(schema.BaseModel):
     """
     The available versions for the app template.
     """
-    name: schema.constr(pattern = SEMVER_VERSION_REGEX) = Field(
-        ...,
-        description = "The name of the version."
+
+    name: schema.constr(pattern=SEMVER_VERSION_REGEX) = Field(
+        ..., description="The name of the version."
     )
     values_schema: schema.Dict[str, schema.Any] = Field(
-        default_factory = dict,
-        description = "The schema to use to validate the values."
+        default_factory=dict, description="The schema to use to validate the values."
     )
     ui_schema: schema.Dict[str, schema.Any] = Field(
-        default_factory = dict,
-        description = "The schema to use when rendering the user interface."
+        default_factory=dict,
+        description="The schema to use when rendering the user interface.",
     )
 
 
-class AppTemplateStatus(schema.BaseModel, extra = "allow"):
+class AppTemplateStatus(schema.BaseModel, extra="allow"):
     """
     The status of the app template.
     """
-    label: schema.Optional[schema.constr(min_length = 1)] = Field(
-        None,
-        description = "The human-readable label for the app template."
+
+    label: schema.Optional[schema.constr(min_length=1)] = Field(
+        None, description="The human-readable label for the app template."
     )
-    logo: schema.Optional[schema.constr(min_length = 1)] = Field(
-        None,
-        description = "The URL of the logo for the app template."
+    logo: schema.Optional[schema.constr(min_length=1)] = Field(
+        None, description="The URL of the logo for the app template."
     )
-    description: schema.Optional[schema.constr(min_length = 1)] = Field(
-        None,
-        description = "A short description of the app template."
+    description: schema.Optional[schema.constr(min_length=1)] = Field(
+        None, description="A short description of the app template."
     )
-    versions: t.List[AppTemplateVersion] = Field(
-        default_factory = list,
-        description = "The available versions for the app template."
+    versions: list[AppTemplateVersion] = Field(
+        default_factory=list, description="The available versions for the app template."
     )
     last_sync: schema.Optional[dt.datetime] = Field(
         None,
-        description = "The time that the last successful sync of versions took place."
+        description="The time that the last successful sync of versions took place.",
     )
 
 
 class AppTemplate(
     CustomResource,
-    scope = Scope.CLUSTER,
-    subresources = {"status": {}},
-    printer_columns = [
+    scope=Scope.CLUSTER,
+    subresources={"status": {}},
+    printer_columns=[
         {
             "name": "Chart name",
             "type": "string",
@@ -161,10 +155,11 @@ class AppTemplate(
             "type": "date",
             "jsonPath": ".status.lastSync",
         },
-    ]
+    ],
 ):
     """
     An Kubernetes app template.
     """
+
     spec: AppTemplateSpec
-    status: AppTemplateStatus = Field(default_factory = AppTemplateStatus)
+    status: AppTemplateStatus = Field(default_factory=AppTemplateStatus)
