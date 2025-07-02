@@ -44,3 +44,4 @@ jobs:
             --strict --summary
       - name: Run manifest snapshot test
         run: docker run -i --rm -v $(pwd):/apps helmunittest/helm-unittest chart
+        # foo
