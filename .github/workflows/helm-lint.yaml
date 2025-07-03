@@ -1,5 +1,3 @@
-# NOTE: This workflow can be run locally using https://github.com/nektos/act with:
-# act -W .github/workflows/helm-lint.yaml workflow_call -s GITHUB_TOKEN=$(gh auth token)
 name: Helm Lint
 on:
   workflow_call:
@@ -38,7 +36,7 @@ jobs:
         # Additional schemas required for cert-manager
       - name: Run template validation
         run: |-
-          helm dependency build && helm template foo chart \
+          helm dependency build chart/ && helm template foo chart \
             | docker run -i --rm ghcr.io/yannh/kubeconform:latest \
             -schema-location default \
             -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \

@@ -3,7 +3,7 @@ apiVersion: v2
 name: azimuth-capi-operator
 description: Helm chart for deploying the Azimuth CAPI operator.
 type: application
-# The version and appVersion are updated by the chart build script
+# The version and appVersion are updated by the chart build script
 version: 0.1.0
 appVersion: main
 
