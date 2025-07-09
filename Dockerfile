@@ -1,4 +1,4 @@
-FROM ubuntu:jammy AS helm
+FROM ubuntu:24.04 AS helm
 
 RUN apt-get update && \
     apt-get install -y curl && \
@@ -44,7 +44,7 @@ RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
     rm -rf /charts/*.tgz
 
 
-FROM ubuntu:jammy AS python-builder
+FROM ubuntu:24.04 AS python-builder
 
 RUN apt-get update && \
     apt-get install -y python3 python3-venv && \
@@ -63,7 +63,7 @@ COPY . /app
 RUN /venv/bin/pip install -e /app
 
 
-FROM ubuntu:jammy
+FROM ubuntu:24.04
 
 # Don't buffer stdout and stderr as it breaks realtime logging
 ENV PYTHONUNBUFFERED=1
@@ -101,5 +101,4 @@ COPY --from=python-builder /venv /venv
 COPY --from=python-builder /app /app
 
 USER $APP_UID
-ENTRYPOINT ["/usr/bin/tini", "-g", "--"]
 CMD ["/venv/bin/python", "-m", "azimuth_capi"]
