@@ -19,7 +19,7 @@ RUN set -ex; \
 # Pull and unpack the baked in charts
 ARG OPENSTACK_CLUSTER_CHART_REPO=https://azimuth-cloud.github.io/capi-helm-charts
 ARG OPENSTACK_CLUSTER_CHART_NAME=openstack-cluster
-ARG OPENSTACK_CLUSTER_CHART_VERSION=0.16.0
+ARG OPENSTACK_CLUSTER_CHART_VERSION=0.16.1
 RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
       --repo ${OPENSTACK_CLUSTER_CHART_REPO} \
       --version ${OPENSTACK_CLUSTER_CHART_VERSION} \
