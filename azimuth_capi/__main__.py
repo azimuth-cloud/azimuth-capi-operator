@@ -12,7 +12,7 @@ async def main():
     # This import is required to pick up the operator handlers
     from . import operator  # noqa: F401
 
-    kopf.configure(log_prefix=True)
+    kopf.configure(log_prefix=True, verbose=True)
     tasks = await kopf.spawn_tasks(
         clusterwide=True, liveness_endpoint="http://0.0.0.0:8000/healthz"
     )
