@@ -358,6 +358,9 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     last_updated: schema.Optional[dt.datetime] = Field(
         default=None, description="Used to trigger the timeout of pending states"
     )
+    finished: bool = Field(
+        True, description="semaphore"
+    )
 
 
 class Cluster(
