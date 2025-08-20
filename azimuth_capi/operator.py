@@ -1123,12 +1123,14 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):  # noqa:
         else:
             status.kubeconfig_secret_updated(cluster, body)
 
+
 async def update_platforms_for_cluster(instance: api.Cluster):
     """
     Updates Platform CR's with Zenith services from Cluster's services
     """
     realm = await find_realm(instance)
     await ensure_platform(instance, realm)
+
 
 @on_related_object_event(
     "addons.stackhpc.com",
