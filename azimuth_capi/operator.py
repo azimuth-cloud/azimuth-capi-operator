@@ -1292,7 +1292,6 @@ async def monitor_cluster_services(instance, name, namespace, **kwargs):
     ekclient_target = Configuration.from_kubeconfig_data(
         kubeconfig_data, json_encoder=pydantic_encoder
     ).async_client(default_field_manager=settings.easykube_field_manager)
-    ekclusterstatus = await ekresource_for_model(api.Cluster, "status")
     async with ekclient_target:
         try:
             ekzenithapi = ekclient_target.api(settings.zenith.api_version)
