@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y wget && \
     rm -rf /var/lib/apt/lists/*
 
-ARG HELM_VERSION=v3.18.4
+ARG HELM_VERSION=v3.18.6
 RUN set -ex; \
     OS_ARCH="$(uname -m)"; \
     case "$OS_ARCH" in \
@@ -28,7 +28,7 @@ RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
     rm -rf /charts/*.tgz
 
 ARG ZENITH_CHART_REPO=https://azimuth-cloud.github.io/zenith
-ARG ZENITH_CHART_VERSION=0.15.1
+ARG ZENITH_CHART_VERSION=0.16.0
 ARG ZENITH_APISERVER_CHART_NAME=zenith-apiserver
 ARG ZENITH_OPERATOR_CHART_NAME=zenith-operator
 RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
