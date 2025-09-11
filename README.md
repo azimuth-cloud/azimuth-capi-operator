@@ -93,12 +93,12 @@ sequenceDiagram
       machines--)capi:
       capi->>cluster: Get known machines from status.nodes
       cluster--)capi:
-      capi->>cluster: Remove unkown nodes from status.nodes
+      capi->>cluster: Remove unknown nodes from status.nodes
       capi->>addons: Get addons with annotations for cluster
       addons--)capi:
       capi->>cluster: Get known addons from status.addons
       cluster--)capi:
-      capi->>cluster: Remove unkown nodes from status.addons
+      capi->>cluster: Remove unknown nodes from status.addons
     and On resume or updates to status.services
       capi->>cluster: Get spec.zenith_identity_realm_name
       cluster--)capi:
