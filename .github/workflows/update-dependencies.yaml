@@ -34,7 +34,7 @@ jobs:
     name: ${{ matrix.key }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Check for most recent GitHub release
         id: next
@@ -89,7 +89,7 @@ jobs:
     name: ${{ matrix.key }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract repo and chart
         id: chart-info
