@@ -114,6 +114,14 @@ jobs:
           updates: |
             ${{ matrix.chart_version_jsonpath }}=${{ steps.next.outputs.version }}
 
+      - name: Update manifest snapshots
+        run: |-
+          helm dependency update chart && \
+            docker run -i --rm --user $(id -u) \
+            -v $(pwd):/apps \
+            helmunittest/helm-unittest -u \
+            chart
+
       - name: Generate app token for PR
         uses: azimuth-cloud/github-actions/generate-app-token@master
         id: generate-app-token
