@@ -20,14 +20,14 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/version: v1.4.11
-        chart: reloader-2.2.6
+        app.kubernetes.io/version: v1.4.12
+        chart: reloader-2.2.7
         group: com.stakater.platform
-        helm.sh/chart: reloader-2.2.6
+        helm.sh/chart: reloader-2.2.7
         heritage: Helm
         provider: stakater
         release: RELEASE-NAME
-        version: v1.4.11
+        version: v1.4.12
       name: RELEASE-NAME-reloader
       namespace: NAMESPACE
     spec:
@@ -44,14 +44,14 @@ templated manifests should match snapshot:
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: reloader
-            app.kubernetes.io/version: v1.4.11
-            chart: reloader-2.2.6
+            app.kubernetes.io/version: v1.4.12
+            chart: reloader-2.2.7
             group: com.stakater.platform
-            helm.sh/chart: reloader-2.2.6
+            helm.sh/chart: reloader-2.2.7
             heritage: Helm
             provider: stakater
             release: RELEASE-NAME
-            version: v1.4.11
+            version: v1.4.12
         spec:
           containers:
             - args:
@@ -79,7 +79,7 @@ templated manifests should match snapshot:
                       fieldPath: metadata.namespace
                 - name: RELOADER_DEPLOYMENT_NAME
                   value: RELEASE-NAME-reloader
-              image: ghcr.io/stakater/reloader:v1.4.11
+              image: ghcr.io/stakater/reloader:v1.4.12
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 5
@@ -122,9 +122,9 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/version: v1.4.11
-        chart: reloader-2.2.6
-        helm.sh/chart: reloader-2.2.6
+        app.kubernetes.io/version: v1.4.12
+        chart: reloader-2.2.7
+        helm.sh/chart: reloader-2.2.7
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader-role
@@ -185,9 +185,9 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/version: v1.4.11
-        chart: reloader-2.2.6
-        helm.sh/chart: reloader-2.2.6
+        app.kubernetes.io/version: v1.4.12
+        chart: reloader-2.2.7
+        helm.sh/chart: reloader-2.2.7
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader-metadata-role
@@ -215,9 +215,9 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/version: v1.4.11
-        chart: reloader-2.2.6
-        helm.sh/chart: reloader-2.2.6
+        app.kubernetes.io/version: v1.4.12
+        chart: reloader-2.2.7
+        helm.sh/chart: reloader-2.2.7
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader-role-binding
@@ -242,9 +242,9 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/version: v1.4.11
-        chart: reloader-2.2.6
-        helm.sh/chart: reloader-2.2.6
+        app.kubernetes.io/version: v1.4.12
+        chart: reloader-2.2.7
+        helm.sh/chart: reloader-2.2.7
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader-metadata-role-binding
@@ -269,9 +269,9 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: reloader
-        app.kubernetes.io/version: v1.4.11
-        chart: reloader-2.2.6
-        helm.sh/chart: reloader-2.2.6
+        app.kubernetes.io/version: v1.4.12
+        chart: reloader-2.2.7
+        helm.sh/chart: reloader-2.2.7
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader
