@@ -60,6 +60,9 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
         cluster = self.get_fake_cluster()
         template = self.get_fake_cluster_template()
 
+        # Check these addons are always off, even when requested
+        cluster.spec.addons = api.AddonsSpec(dashboard=True, ingress=True)
+
         result = operator.generate_helm_values_for_release(
             template, cluster, None, None, None, None
         )
