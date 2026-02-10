@@ -61,7 +61,9 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
         template = self.get_fake_cluster_template()
 
         # Check these addons are always off, even when requested
-        cluster.spec.addons = api.AddonsSpec(dashboard=True, ingress=True)
+        cluster.spec.addons = api.AddonsSpec(
+            dashboard=True, ingress=True, ingress_controller_load_balancer_ip="1.2.3.4"
+        )
 
         result = operator.generate_helm_values_for_release(
             template, cluster, None, None, None, None
