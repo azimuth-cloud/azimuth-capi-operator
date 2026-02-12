@@ -69,11 +69,10 @@ class AddonsSpec(schema.BaseModel):
 
     # TODO: remove when we bump the version of the CRD
     dashboard: bool = Field(
-        False, description="Indicates if the Kubernetes dashboard should be enabled."
+        False,
+        description="RETIRED: field is ignored, k8s dashboard has been retired.",
     )
-    # TODO: remove when we bump the version of the CRD
     ingress: bool = Field(False, description="Indicates if ingress should be enabled.")
-    # TODO: remove when we bump the version of the CRD
     ingress_controller_load_balancer_ip: schema.Optional[ipaddress.IPv4Address] = Field(
         None,
         description="The IP address to use for the ingress controller load balancer.",

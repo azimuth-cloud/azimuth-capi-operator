@@ -30,10 +30,16 @@ nodeGroups:
 {% endfor %}
 
 addons:
-  kubernetesDashboard:
-    enabled: False
   ingress:
-    enabled: False
+    enabled: {{ "true" if spec.addons.ingress else "false" }}
+{% if spec.addons.ingress_controller_load_balancer_ip %}
+    nginx:
+      release:
+        values:
+          controller:
+            service:
+              loadBalancerIP: "{{ spec.addons.ingress_controller_load_balancer_ip }}"
+{% endif %}
   monitoring:
     enabled: {{ "true" if spec.addons.monitoring else "false" }}
 {% if spec.addons.monitoring %}

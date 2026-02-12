@@ -62,7 +62,11 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
 
         # Check these addons are always off, even when requested
         cluster.spec.addons = api.AddonsSpec(
-            dashboard=True, ingress=True, ingress_controller_load_balancer_ip="1.2.3.4"
+            monitoring=True,
+            # NOTE: we are checking this does nothing
+            dashboard=True,
+            ingress=True,
+            ingress_controller_load_balancer_ip="1.2.3.4",
         )
 
         result = operator.generate_helm_values_for_release(
@@ -73,9 +77,62 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             result,
             {
                 "addons": {
-                    "ingress": {"enabled": False},
-                    "kubernetesDashboard": {"enabled": False},
-                    "monitoring": {"enabled": False},
+                    "ingress": {
+                        "enabled": True,
+                        "nginx": {
+                            "release": {
+                                "values": {
+                                    "controller": {
+                                        "service": {"loadBalancerIP": "1.2.3.4"}
+                                    }
+                                }
+                            }
+                        },
+                    },
+                    "monitoring": {
+                        "enabled": True,
+                        "kubePrometheusStack": {
+                            "release": {
+                                "values": {
+                                    "alertmanager": {
+                                        "alertmanagerSpec": {
+                                            "storage": {
+                                                "volumeClaimTemplate": {
+                                                    "spec": {
+                                                        "resources": {
+                                                            "requests": {
+                                                                "storage": "10Gi"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "prometheus": {
+                                        "prometheusSpec": {
+                                            "storageSpec": {
+                                                "volumeClaimTemplate": {
+                                                    "spec": {
+                                                        "resources": {
+                                                            "requests": {
+                                                                "storage": "10Gi"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                }
+                            }
+                        },
+                        "lokiStack": {
+                            "release": {
+                                "values": {"loki": {"persistence": {"size": "10Gi"}}}
+                            }
+                        },
+                    },
                 },
                 "cloudCredentialsSecretName": "secret1",
                 "controlPlane": {
@@ -138,7 +195,6 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             {
                 "addons": {
                     "ingress": {"enabled": False},
-                    "kubernetesDashboard": {"enabled": False},
                     "monitoring": {"enabled": False},
                 },
                 "cloudCredentialsSecretName": "secret1",
