@@ -220,23 +220,6 @@ async def zenith_values(client, cluster, addons):
         await zenith_apiserver_values(client, cluster),
         # Produce the values required to install Zenith clients for the cluster services
         zenith_client_values(
-            addons.dashboard,
-            "kubernetes-dashboard",
-            "kubernetes-dashboard",
-            upstream_service_name="kubernetes-dashboard",
-            upstream_port=443,
-            upstream_scheme="https",
-            # When OIDC is enabled, disable the auth proxy and make users enter a token
-            mitm_proxy_enabled=not settings.identity.oidc_enabled,
-            # The following two arguments are only used when mitm_proxy_enabled = True
-            mitm_proxy_auth_inject_type="ServiceAccount",
-            mitm_proxy_auth_inject_service_account={
-                "clusterRoleName": "cluster-admin",
-            },
-            label="Kubernetes Dashboard",
-            icon_url=settings.zenith.kubernetes_dashboard_icon_url,
-        ),
-        zenith_client_values(
             addons.monitoring,
             "kube-prometheus-stack",
             "monitoring-system",
