@@ -43,7 +43,7 @@ spec:
               Kubernetes cluster
               {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
               still has ngnix-ingress deployed.
-            summary: Kubernetes cluster still has ngnix-ingress deployed.
+            summary: Kubernetes cluster still has nginx-ingress deployed.
           labels:
             severity: info
 
@@ -55,7 +55,7 @@ spec:
             description: >-
               Kubernetes cluster
               {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
-              still has kubernetes dashboard deployed.
+              still has kubernetes-dashboard deployed.
             summary: Kubernetes cluster still has kubernetes dashboard deployed.
           labels:
             severity: info
