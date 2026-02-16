@@ -17,13 +17,17 @@ templated manifests should match snapshot:
         meta.helm.sh/release-namespace: NAMESPACE
       labels:
         app: RELEASE-NAME-reloader
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        chart: reloader-1.1.0
+        app.kubernetes.io/name: reloader
+        app.kubernetes.io/version: v1.4.13
+        chart: reloader-2.2.8
         group: com.stakater.platform
+        helm.sh/chart: reloader-2.2.8
         heritage: Helm
         provider: stakater
         release: RELEASE-NAME
-        version: v1.1.0
+        version: v1.4.13
       name: RELEASE-NAME-reloader
       namespace: NAMESPACE
     spec:
@@ -37,32 +41,45 @@ templated manifests should match snapshot:
         metadata:
           labels:
             app: RELEASE-NAME-reloader
+            app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/managed-by: Helm
-            chart: reloader-1.1.0
+            app.kubernetes.io/name: reloader
+            app.kubernetes.io/version: v1.4.13
+            chart: reloader-2.2.8
             group: com.stakater.platform
+            helm.sh/chart: reloader-2.2.8
             heritage: Helm
             provider: stakater
             release: RELEASE-NAME
-            version: v1.1.0
+            version: v1.4.13
         spec:
           containers:
             - args:
+                - --log-level=info
                 - --reload-on-create=true
                 - --sync-after-restart=true
               env:
                 - name: GOMAXPROCS
                   valueFrom:
                     resourceFieldRef:
+                      divisor: "1"
                       resource: limits.cpu
                 - name: GOMEMLIMIT
                   valueFrom:
                     resourceFieldRef:
+                      divisor: "1"
                       resource: limits.memory
                 - name: KUBERNETES_NAMESPACE
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-              image: ghcr.io/stakater/reloader:v1.1.0
+                - name: RELOADER_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: RELOADER_DEPLOYMENT_NAME
+                  value: RELEASE-NAME-reloader
+              image: ghcr.io/stakater/reloader:v1.4.13
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 5
@@ -102,8 +119,12 @@ templated manifests should match snapshot:
         meta.helm.sh/release-namespace: NAMESPACE
       labels:
         app: RELEASE-NAME-reloader
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        chart: reloader-1.1.0
+        app.kubernetes.io/name: reloader
+        app.kubernetes.io/version: v1.4.13
+        chart: reloader-2.2.8
+        helm.sh/chart: reloader-2.2.8
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader-role
@@ -130,16 +151,6 @@ templated manifests should match snapshot:
           - update
           - patch
       - apiGroups:
-          - extensions
-        resources:
-          - deployments
-          - daemonsets
-        verbs:
-          - list
-          - get
-          - update
-          - patch
-      - apiGroups:
           - batch
         resources:
           - cronjobs
@@ -152,6 +163,9 @@ templated manifests should match snapshot:
           - jobs
         verbs:
           - create
+          - delete
+          - list
+          - get
       - apiGroups:
           - ""
         resources:
@@ -160,6 +174,36 @@ templated manifests should match snapshot:
           - create
           - patch
   4: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      annotations:
+        meta.helm.sh/release-name: RELEASE-NAME
+        meta.helm.sh/release-namespace: NAMESPACE
+      labels:
+        app: RELEASE-NAME-reloader
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: reloader
+        app.kubernetes.io/version: v1.4.13
+        chart: reloader-2.2.8
+        helm.sh/chart: reloader-2.2.8
+        heritage: Helm
+        release: RELEASE-NAME
+      name: RELEASE-NAME-reloader-metadata-role
+      namespace: NAMESPACE
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - configmaps
+        verbs:
+          - list
+          - get
+          - watch
+          - create
+          - update
+  5: |
     apiVersion: rbac.authorization.k8s.io/v1beta1
     kind: RoleBinding
     metadata:
@@ -168,8 +212,12 @@ templated manifests should match snapshot:
         meta.helm.sh/release-namespace: NAMESPACE
       labels:
         app: RELEASE-NAME-reloader
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        chart: reloader-1.1.0
+        app.kubernetes.io/name: reloader
+        app.kubernetes.io/version: v1.4.13
+        chart: reloader-2.2.8
+        helm.sh/chart: reloader-2.2.8
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader-role-binding
@@ -182,7 +230,34 @@ templated manifests should match snapshot:
       - kind: ServiceAccount
         name: RELEASE-NAME-reloader
         namespace: NAMESPACE
-  5: |
+  6: |
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      annotations:
+        meta.helm.sh/release-name: RELEASE-NAME
+        meta.helm.sh/release-namespace: NAMESPACE
+      labels:
+        app: RELEASE-NAME-reloader
+        app.kubernetes.io/instance: RELEASE-NAME
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: reloader
+        app.kubernetes.io/version: v1.4.13
+        chart: reloader-2.2.8
+        helm.sh/chart: reloader-2.2.8
+        heritage: Helm
+        release: RELEASE-NAME
+      name: RELEASE-NAME-reloader-metadata-role-binding
+      namespace: NAMESPACE
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: RELEASE-NAME-reloader-metadata-role
+    subjects:
+      - kind: ServiceAccount
+        name: RELEASE-NAME-reloader
+        namespace: NAMESPACE
+  7: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -191,13 +266,17 @@ templated manifests should match snapshot:
         meta.helm.sh/release-namespace: NAMESPACE
       labels:
         app: RELEASE-NAME-reloader
+        app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/managed-by: Helm
-        chart: reloader-1.1.0
+        app.kubernetes.io/name: reloader
+        app.kubernetes.io/version: v1.4.13
+        chart: reloader-2.2.8
+        helm.sh/chart: reloader-2.2.8
         heritage: Helm
         release: RELEASE-NAME
       name: RELEASE-NAME-reloader
       namespace: NAMESPACE
-  6: |
+  8: |
     apiVersion: cert-manager.io/v1
     kind: Certificate
     metadata:
@@ -216,7 +295,7 @@ templated manifests should match snapshot:
         kind: Issuer
         name: release-name-azimuth-capi-operator
       secretName: release-name-azimuth-capi-operator-cert
-  7: |
+  9: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
@@ -433,7 +512,7 @@ templated manifests should match snapshot:
           - update
           - create
           - delete
-  8: |
+  10: |
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -452,7 +531,7 @@ templated manifests should match snapshot:
       - kind: ServiceAccount
         name: release-name-azimuth-capi-operator
         namespace: NAMESPACE
-  9: |
+  11: |
     apiVersion: v1
     data:
       azimuth_capi_operator_apps_dashboard.json: |
@@ -5507,7 +5586,7 @@ templated manifests should match snapshot:
         grafana_dashboard: "1"
         helm.sh/chart: azimuth-capi-operator-0.1.0
       name: release-name-azimuth-capi-operator-dashboards
-  10: |
+  12: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -5580,7 +5659,7 @@ templated manifests should match snapshot:
                 secretName: release-name-azimuth-capi-operator-cert
             - emptyDir: {}
               name: tmp
-  11: |
+  13: |
     apiVersion: cert-manager.io/v1
     kind: Issuer
     metadata:
@@ -5593,7 +5672,7 @@ templated manifests should match snapshot:
       name: release-name-azimuth-capi-operator
     spec:
       selfSigned: {}
-  12: |
+  14: |
     apiVersion: monitoring.coreos.com/v1
     kind: PrometheusRule
     metadata:
@@ -5640,7 +5719,7 @@ templated manifests should match snapshot:
               for: 5m
               labels:
                 severity: info
-  13: |
+  15: |
     apiVersion: v1
     kind: Secret
     metadata:
@@ -5673,7 +5752,7 @@ templated manifests should match snapshot:
           managed: false
           certfile: /etc/azimuth/cert/tls.crt
           keyfile: /etc/azimuth/cert/tls.key
-  14: |
+  16: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -5698,7 +5777,7 @@ templated manifests should match snapshot:
         app.kubernetes.io/instance: RELEASE-NAME
         app.kubernetes.io/name: azimuth-capi-operator
       type: ClusterIP
-  15: |
+  17: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -5709,7 +5788,7 @@ templated manifests should match snapshot:
         app.kubernetes.io/version: main
         helm.sh/chart: azimuth-capi-operator-0.1.0
       name: release-name-azimuth-capi-operator
-  16: |
+  18: |
     apiVersion: monitoring.coreos.com/v1
     kind: ServiceMonitor
     metadata:
@@ -5729,7 +5808,7 @@ templated manifests should match snapshot:
         matchLabels:
           app.kubernetes.io/instance: RELEASE-NAME
           app.kubernetes.io/name: azimuth-capi-operator
-  17: |
+  19: |
     apiVersion: admissionregistration.k8s.io/v1
     kind: ValidatingWebhookConfiguration
     metadata:
