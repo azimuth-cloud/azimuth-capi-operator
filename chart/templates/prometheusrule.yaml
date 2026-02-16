@@ -33,4 +33,30 @@ spec:
             summary: Kubernetes app has taken more than one hour to deploy.
           labels:
             severity: warning
+
+        - alert: AzimuthKubernetesNgnixIngressNotRemoved
+          expr: >-
+            sum(azimuth_kube_cluster_addon_phase{addon="ingress-nginx"}) by(cluster_namespace, cluster_name) > 0
+          for: 5m
+          annotations:
+            description: >-
+              Kubernetes cluster
+              {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
+              still has ngnix-ingress deployed.
+            summary: Kubernetes cluster still has ngnix-ingress deployed.
+          labels:
+            severity: info
+
+        - alert: AzimuthKubernetesDashboardNotRemoved
+          expr: >-
+            sum(azimuth_kube_cluster_addon_phase{addon="kubernetes-dashboard"}) by(cluster_namespace, cluster_name) > 0
+          for: 5m
+          annotations:
+            description: >-
+              Kubernetes cluster
+              {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
+              still has kubernetes dashboard deployed.
+            summary: Kubernetes cluster still has kubernetes dashboard deployed.
+          labels:
+            severity: info
 {{- end }}
