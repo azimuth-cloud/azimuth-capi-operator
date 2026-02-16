@@ -5706,14 +5706,14 @@ templated manifests should match snapshot:
             - alert: AzimuthKubernetesNgnixIngressNotRemoved
               annotations:
                 description: Kubernetes cluster {{ $labels.cluster_namespace }}/{{ $labels.cluster_name }} still has ngnix-ingress deployed.
-                summary: Kubernetes cluster still has ngnix-ingress deployed.
+                summary: Kubernetes cluster still has nginx-ingress deployed.
               expr: sum(azimuth_kube_cluster_addon_phase{addon="ingress-nginx"}) by(cluster_namespace, cluster_name) > 0
               for: 5m
               labels:
                 severity: info
             - alert: AzimuthKubernetesDashboardNotRemoved
               annotations:
-                description: Kubernetes cluster {{ $labels.cluster_namespace }}/{{ $labels.cluster_name }} still has kubernetes dashboard deployed.
+                description: Kubernetes cluster {{ $labels.cluster_namespace }}/{{ $labels.cluster_name }} still has kubernetes-dashboard deployed.
                 summary: Kubernetes cluster still has kubernetes dashboard deployed.
               expr: sum(azimuth_kube_cluster_addon_phase{addon="kubernetes-dashboard"}) by(cluster_namespace, cluster_name) > 0
               for: 5m
