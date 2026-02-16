@@ -11,5 +11,5 @@ dependencies:
   # stakater/reloader to reload when certificates change
   - name: reloader
     repository: https://stakater.github.io/stakater-charts
-    version: 2.2.7
+    version: 2.2.8
     condition: reloader.enabled
