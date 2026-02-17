@@ -67,8 +67,10 @@ class AddonsSpec(schema.BaseModel):
     The spec for the addons of the cluster.
     """
 
+    # TODO: remove when we bump the version of the CRD
     dashboard: bool = Field(
-        False, description="Indicates if the Kubernetes dashboard should be enabled."
+        False,
+        description="RETIRED: field is ignored, k8s dashboard has been retired.",
     )
     ingress: bool = Field(False, description="Indicates if ingress should be enabled.")
     ingress_controller_load_balancer_ip: schema.Optional[ipaddress.IPv4Address] = Field(

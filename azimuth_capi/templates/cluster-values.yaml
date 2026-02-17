@@ -30,8 +30,6 @@ nodeGroups:
 {% endfor %}
 
 addons:
-  kubernetesDashboard:
-    enabled: {{ "true" if spec.addons.dashboard else "false" }}
   ingress:
     enabled: {{ "true" if spec.addons.ingress else "false" }}
 {% if spec.addons.ingress_controller_load_balancer_ip %}
