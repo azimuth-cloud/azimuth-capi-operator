@@ -105,7 +105,6 @@ class ZenithConfig(Section):
     operator_defaults: dict[str, t.Any] = Field(default_factory=dict)
 
     #: Icon URLs for built-in services
-    kubernetes_dashboard_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/kubernetes/icon/color/kubernetes-icon-color.png"
     monitoring_icon_url: AnyHttpUrl = "https://raw.githubusercontent.com/cncf/artwork/master/projects/prometheus/icon/color/prometheus-icon-color.png"
 
     #: The API version to use when watching Zenith resources on target clusters
