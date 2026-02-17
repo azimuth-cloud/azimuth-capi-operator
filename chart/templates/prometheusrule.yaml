@@ -42,7 +42,7 @@ spec:
             description: >-
               Kubernetes cluster
               {{ "{{" }} $labels.cluster_namespace {{ "}}" }}/{{ "{{" }} $labels.cluster_name {{ "}}" }}
-              still has ngnix-ingress deployed.
+              still has nginx-ingress deployed.
             summary: Kubernetes cluster still has nginx-ingress deployed.
           labels:
             severity: info
