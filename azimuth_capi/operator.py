@@ -842,6 +842,7 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
         ],
     )
     await save_cluster_status(instance)
+    await update_platforms_for_cluster(instance)
 
 
 @model_handler(
@@ -1123,11 +1124,9 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):  # noqa:
             status.kubeconfig_secret_updated(cluster, body)
 
 
-@model_handler(api.Cluster, kopf.on.resume)
-@model_handler(api.Cluster, kopf.on.update, field="status.services")
-async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
+async def update_platforms_for_cluster(instance: api.Cluster):
     """
-    Executed whenever the cluster services change.
+    Updates Platform CR's with Zenith services from Cluster's services
     """
     realm = await find_realm(instance)
     await ensure_platform(instance, realm)
@@ -1274,8 +1273,8 @@ def get_service_status(reservation):
     )
 
 
-@model_handler(api.Cluster, kopf.daemon, include_instance=False, cancellation_timeout=1)
-async def monitor_cluster_services(name, namespace, **kwargs):
+@model_handler(api.Cluster, kopf.daemon, cancellation_timeout=1)
+async def monitor_cluster_services(instance, name, namespace, **kwargs):
     """
     Daemon that monitors Zenith reservations
     """
@@ -1293,7 +1292,6 @@ async def monitor_cluster_services(name, namespace, **kwargs):
     ekclient_target = Configuration.from_kubeconfig_data(
         kubeconfig_data, json_encoder=pydantic_encoder
     ).async_client(default_field_manager=settings.easykube_field_manager)
-    ekclusterstatus = await ekresource_for_model(api.Cluster, "status")
     async with ekclient_target:
         try:
             ekzenithapi = ekclient_target.api(settings.zenith.api_version)
@@ -1315,17 +1313,9 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                     "labels", {}
                 ):
                     cluster_services[service_name] = service_status
-            await ekclusterstatus.json_patch(
-                name,
-                [
-                    {
-                        "op": "replace",
-                        "path": "/status/services",
-                        "value": cluster_services,
-                    },
-                ],
-                namespace=namespace,
-            )
+            instance.status.services = cluster_services
+            await save_cluster_status(instance)
+            await update_platforms_for_cluster(instance)
             # For subsequent events, we just need to patch the state of the specified
             # service
             async for event in events:
@@ -1342,29 +1332,14 @@ async def monitor_cluster_services(name, namespace, **kwargs):
                         if addon and "capi.stackhpc.com/cluster" in addon.metadata.get(
                             "labels", {}
                         ):
-                            await ekclusterstatus.patch(
-                                name,
-                                {
-                                    "status": {
-                                        "services": {
-                                            service_name: service_status,
-                                        },
-                                    },
-                                },
-                                namespace=namespace,
-                            )
+                            instance.status.services[service_name] = service_status
+                            await save_cluster_status(instance)
+                            await update_platforms_for_cluster(instance)
                 elif event_type == "DELETED":
                     service_name = get_service_name(reservation)
-                    await ekclusterstatus.json_patch(
-                        name,
-                        [
-                            {
-                                "op": "remove",
-                                "path": f"/status/services/{service_name}",
-                            },
-                        ],
-                        namespace=namespace,
-                    )
+                    del instance.status.services[service_name]
+                    await save_cluster_status(instance)
+                    await update_platforms_for_cluster(instance)
                     await annotate_addon_for_reservation(
                         name, namespace, reservation, service_name
                     )
