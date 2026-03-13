@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y wget && \
     rm -rf /var/lib/apt/lists/*
 
-ARG HELM_VERSION=v4.1.1
+ARG HELM_VERSION=v4.1.3
 RUN set -ex; \
     OS_ARCH="$(uname -m)"; \
     case "$OS_ARCH" in \
