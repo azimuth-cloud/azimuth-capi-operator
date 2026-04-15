@@ -127,7 +127,7 @@ class ClusterSpec(schema.BaseModel):
     control_plane_machine_count: schema.Optional[schema.conint(ge=1)] = Field(
         None,
         description=(
-            "The number of control plane machines. "
+            "The number of control plane machines."
             "If not given, the value from the cluster template is used."
         ),
     )
