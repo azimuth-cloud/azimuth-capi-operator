@@ -10,6 +10,9 @@ on:
 
 jobs:
   propose_github_release_updates:
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -77,6 +80,9 @@ jobs:
 
   propose_helm_chart_updates:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     strategy:
       matrix:
         include:
