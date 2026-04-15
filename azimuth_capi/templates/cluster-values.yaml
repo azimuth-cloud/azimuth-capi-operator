@@ -9,6 +9,9 @@ oidc:
 
 controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
+{% if spec.control_plane_machine_count %}
+  machineCount: {{ spec.control_plane_machine_count }}
+{% endif %}
   healthCheck:
     enabled: {{ "true" if spec.autohealing else "false" }}
 
