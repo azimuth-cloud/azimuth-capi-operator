@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get install -y wget && \
     rm -rf /var/lib/apt/lists/*
 
-ARG HELM_VERSION=v4.1.1
+ARG HELM_VERSION=v4.1.4
 RUN set -ex; \
     OS_ARCH="$(uname -m)"; \
     case "$OS_ARCH" in \
@@ -19,7 +19,7 @@ RUN set -ex; \
 # Pull and unpack the baked in charts
 ARG OPENSTACK_CLUSTER_CHART_REPO=https://azimuth-cloud.github.io/capi-helm-charts
 ARG OPENSTACK_CLUSTER_CHART_NAME=openstack-cluster
-ARG OPENSTACK_CLUSTER_CHART_VERSION=0.22.1-dev.0.bump-infra-providers.31
+ARG OPENSTACK_CLUSTER_CHART_VERSION=0.23.1-dev.0.bump-capo-capi.19
 RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
       --repo ${OPENSTACK_CLUSTER_CHART_REPO} \
       --version ${OPENSTACK_CLUSTER_CHART_VERSION} \
@@ -28,7 +28,7 @@ RUN helm pull ${OPENSTACK_CLUSTER_CHART_NAME} \
     rm -rf /charts/*.tgz
 
 ARG ZENITH_CHART_REPO=https://azimuth-cloud.github.io/zenith
-ARG ZENITH_CHART_VERSION=0.16.3
+ARG ZENITH_CHART_VERSION=0.17.0
 ARG ZENITH_APISERVER_CHART_NAME=zenith-apiserver
 ARG ZENITH_OPERATOR_CHART_NAME=zenith-operator
 RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
