@@ -237,3 +237,21 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                 ],
             },
         )
+
+    def test_generate_helm_values_with_control_plane_count(self):
+        cluster = self.get_fake_cluster()
+        cluster.spec.control_plane_machine_count = 1
+        template = self.get_fake_cluster_template()
+
+        result = operator.generate_helm_values_for_release(
+            template, cluster, None, None, None, None
+        )
+
+        self.assertEqual(
+            result["controlPlane"],
+            {
+                "healthCheck": {"enabled": True},
+                "machineFlavor": "vm.small",
+                "machineCount": 1,
+            },
+        )
