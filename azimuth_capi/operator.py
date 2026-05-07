@@ -714,7 +714,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
             helm_values, await zenith_values(ekclient, instance, instance.spec.addons)
         )
     # Use Helm to install or upgrade the release
-    _ = await helm_client.install_or_upgrade_release(
+    _ = await helm_client.ensure_release(
         name,
         await helm_client.get_chart(
             settings.capi_helm.chart_name,
