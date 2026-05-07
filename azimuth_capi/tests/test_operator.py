@@ -88,6 +88,13 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                                 }
                             }
                         },
+                        "traefik": {
+                            "release": {
+                                "values": {
+                                    "service": {"spec": {"loadBalancerIP": "1.2.3.4"}}
+                                }
+                            }
+                        },
                     },
                     "monitoring": {
                         "enabled": True,
