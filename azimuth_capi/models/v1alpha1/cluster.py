@@ -131,6 +131,14 @@ class ClusterSpec(schema.BaseModel):
             "If not given, the value from the cluster template is used."
         ),
     )
+    control_plane_etcd_volume_size: schema.Optional[schema.conint(ge=1)] = Field(
+        None,
+        description=(
+            "The size (in GB) of the Cinder volume used for etcd "
+            "when control_plane_machine_count is set. "
+            "Defaults to 20 if not specified."
+        ),
+    )
     node_groups: list[NodeGroupSpec] = Field(
         default_factory=list, description="The node groups for the cluster."
     )
