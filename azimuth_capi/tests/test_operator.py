@@ -260,5 +260,6 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                 "healthCheck": {"enabled": True},
                 "machineFlavor": "vm.small",
                 "machineCount": 1,
+                "etcd": {"blockDevice": {"size": 20}},
             },
         )

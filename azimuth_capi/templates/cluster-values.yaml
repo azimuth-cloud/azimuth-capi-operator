@@ -11,6 +11,9 @@ controlPlane:
   machineFlavor: "{{ spec.control_plane_machine_size }}"
 {% if spec.control_plane_machine_count %}
   machineCount: {{ spec.control_plane_machine_count }}
+  etcd:
+    blockDevice:
+      size: {{ spec.control_plane_etcd_volume_size or 20 }}
 {% endif %}
   healthCheck:
     enabled: {{ "true" if spec.autohealing else "false" }}
