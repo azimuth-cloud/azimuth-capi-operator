@@ -48,7 +48,11 @@ async def apply_settings(**kwargs):
     # Create an easykube client from the environment
     global ekclient
     ekclient = Configuration.from_environment(
-        json_encoder=pydantic_encoder
+        json_encoder=pydantic_encoder,
+        limits=httpx.Limits(
+            max_connections=settings.connection_pool.max_connections,
+            max_keepalive_connections=settings.connection_pool.max_keepalive_connections,
+        ),
     ).async_client(default_field_manager=settings.easykube_field_manager)
     # Create a Helm client to target the underlying cluster
     global helm_client

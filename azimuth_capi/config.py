@@ -33,6 +33,17 @@ AnyHttpUrl = t.Annotated[
 ]
 
 
+class ConnectionPoolConfiguration(Section):
+    """
+    Configuration for the httpx connection pool used by the Kubernetes client.
+    """
+
+    #: Maximum number of concurrent connections in the pool
+    max_connections: conint(gt=0) = 100
+    #: Maximum number of keepalive connections in the pool
+    max_keepalive_connections: conint(gt=0) = 20
+
+
 class HelmClientConfiguration(Section):
     """
     Configuration for the Helm client.
@@ -289,6 +300,11 @@ class Configuration(
 
     #: The amount of time (seconds) before a watch is forcefully restarted
     watch_timeout: conint(gt=0) = 600
+
+    #: The connection pool configuration for the Kubernetes client
+    connection_pool: ConnectionPoolConfiguration = Field(
+        default_factory=ConnectionPoolConfiguration
+    )
 
     #: The Helm client configuration
     helm_client: HelmClientConfiguration = Field(
