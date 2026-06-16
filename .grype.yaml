@@ -1,0 +1,35 @@
+---
+ignore:
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5006
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5023
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5017
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5020
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of the affected symbols in Helm
+  # (Profile.ToASCII, Profile.ToUnicode, ToASCII, ToUnicode)
+  - vulnerability: GO-2026-5026
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5005
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5021
+    package:
+      location: /usr/bin/helm
+  # Not relevant: No use of SSH in azimuth-capi-operator
+  - vulnerability: GO-2026-5019
+    package:
+      location: /usr/bin/helm
