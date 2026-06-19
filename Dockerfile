@@ -1,4 +1,5 @@
-FROM ubuntu:24.04 AS helm
+# ubuntu 24.04
+FROM ubuntu@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS helm
 
 RUN apt-get update && \
     apt-get install -y wget && \
@@ -44,7 +45,7 @@ RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
     rm -rf /charts/*.tgz
 
 
-FROM ubuntu:24.04 AS python-builder
+FROM ubuntu@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS python-builder
 
 RUN apt-get update && \
     apt-get install -y python3 python3-venv && \
@@ -63,7 +64,7 @@ COPY . /app
 RUN /venv/bin/pip install -e /app
 
 
-FROM ubuntu:24.04
+FROM ubuntu@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54
 
 # Don't buffer stdout and stderr as it breaks realtime logging
 ENV PYTHONUNBUFFERED=1
