@@ -2,7 +2,7 @@
 FROM ubuntu@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS helm
 
 RUN apt-get update && \
-    apt-get install -y wget && \
+    apt-get install --no-install-recommends --no-install-suggests -y ca-certificates wget && \
     rm -rf /var/lib/apt/lists/*
 
 ARG HELM_VERSION=v4.2.2
@@ -48,7 +48,7 @@ RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
 FROM ubuntu@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS python-builder
 
 RUN apt-get update && \
-    apt-get install -y python3 python3-venv && \
+    apt-get install --no-install-recommends --no-install-suggests -y python3 python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /venv && \
