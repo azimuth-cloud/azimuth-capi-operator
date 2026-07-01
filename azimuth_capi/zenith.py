@@ -235,6 +235,15 @@ async def zenith_values(client, cluster, addons):
             label="Monitoring",
             icon_url=settings.zenith.monitoring_icon_url,
         ),
+        zenith_client_values(
+            addons.dashboard,
+            "headlamp",
+            "headlamp",
+            upstream_service_name=cluster.spec.label,
+            upstream_port=4466,
+            label="Headlamp dashboard",
+            icon_url=settings.zenith.headlamp_icon_url,
+        ),
     )
 
 
