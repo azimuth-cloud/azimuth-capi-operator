@@ -60,10 +60,8 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
         cluster = self.get_fake_cluster()
         template = self.get_fake_cluster_template()
 
-        # Check these addons are always off, even when requested
         cluster.spec.addons = api.AddonsSpec(
             monitoring=True,
-            # NOTE: we are checking this does nothing
             dashboard=True,
             ingress=True,
             ingress_controller_load_balancer_ip="1.2.3.4",
@@ -77,6 +75,7 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             result,
             {
                 "addons": {
+                    "headlamp": {"enabled": True},
                     "ingress": {
                         "enabled": True,
                         "nginx": {
@@ -201,6 +200,7 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
             result,
             {
                 "addons": {
+                    "headlamp": {"enabled": False},
                     "ingress": {"enabled": False},
                     "monitoring": {"enabled": False},
                 },
