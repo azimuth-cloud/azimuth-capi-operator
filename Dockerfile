@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get install --no-install-recommends --no-install-suggests -y ca-certificates wget && \
     rm -rf /var/lib/apt/lists/*
 
-ARG HELM_VERSION=v4.2.2
+ARG HELM_VERSION=v4.2.3
 RUN set -ex; \
     OS_ARCH="$(uname -m)"; \
     case "$OS_ARCH" in \
