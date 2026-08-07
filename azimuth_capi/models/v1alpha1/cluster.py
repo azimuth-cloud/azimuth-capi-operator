@@ -298,6 +298,13 @@ class NodeStatus(schema.BaseModel):
     created: schema.Optional[dt.datetime] = Field(
         None, description="The datetime at which the node was created."
     )
+    certificates_expiry_date: schema.Optional[dt.datetime] = Field(
+        None,
+        description=(
+            "The expiry date of the kube-api server certificate for the machine, "
+            "if known."
+        ),
+    )
 
 
 class AddonStatus(schema.BaseModel):
@@ -356,6 +363,26 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     )
     control_plane_phase: ControlPlanePhase = Field(
         ControlPlanePhase.UNKNOWN.value, description="The phase of the control plane."
+    )
+    control_plane_certificate_expiry_date: schema.Optional[dt.datetime] = Field(
+        None,
+        description=(
+            "The earliest known kube-api server certificate expiry date among the "
+            "control plane machines."
+        ),
+    )
+    control_plane_certificate_rotation_days: schema.Optional[int] = Field(
+        None,
+        description=(
+            "The number of days before certificate expiry at which automatic "
+            "control plane rotation starts."
+        ),
+    )
+    control_plane_certificate_rotation_date: schema.Optional[dt.datetime] = Field(
+        None,
+        description=(
+            "The expected start date for automatic control plane certificate rotation."
+        ),
     )
     node_count: int = Field(0, description="The number of nodes in the cluster.")
     nodes: schema.Dict[str, NodeStatus] = Field(

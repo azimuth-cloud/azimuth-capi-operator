@@ -44,6 +44,30 @@ def _any_addon_has_phase(cluster, *phases):
     return any(addon.phase in phases for addon in cluster.status.addons.values())
 
 
+def _update_control_plane_certificate_status(cluster):
+    """
+    Derive cluster level certificate information from control plane machines.
+    """
+    expiry_dates = [
+        node.certificates_expiry_date
+        for node in cluster.status.nodes.values()
+        if (
+            node.role == NodeRole.CONTROL_PLANE
+            and node.certificates_expiry_date is not None
+        )
+    ]
+    expiry_date = min(expiry_dates, default=None)
+    cluster.status.control_plane_certificate_expiry_date = expiry_date
+
+    rotation_days = cluster.status.control_plane_certificate_rotation_days
+    if expiry_date is not None and rotation_days is not None:
+        cluster.status.control_plane_certificate_rotation_date = (
+            expiry_date - dt.timedelta(days=rotation_days)
+        )
+    else:
+        cluster.status.control_plane_certificate_rotation_date = None
+
+
 def _reconcile_cluster_phase(cluster):  # noqa: C901
     """
     Sets the overall cluster phase based on the component phases.
@@ -242,6 +266,9 @@ def control_plane_updated(cluster, obj):
     cluster.status.kubernetes_version = status.get(
         "version", obj["spec"]["version"]
     ).lstrip("v")
+    cluster.status.control_plane_certificate_rotation_days = (
+        obj.get("spec", {}).get("rolloutBefore", {}).get("certificatesExpiryDays")
+    )
 
 
 def control_plane_deleted(cluster, obj):
@@ -252,6 +279,7 @@ def control_plane_deleted(cluster, obj):
     # Also reset the Kubernetes version of the cluster, as it can no longer be
     # determined
     cluster.status.kubernetes_version = None
+    cluster.status.control_plane_certificate_rotation_days = None
 
 
 def control_plane_absent(cluster):
@@ -262,6 +290,7 @@ def control_plane_absent(cluster):
     # Also reset the Kubernetes version of the cluster, as it can no longer be
     # determined
     cluster.status.kubernetes_version = None
+    cluster.status.control_plane_certificate_rotation_days = None
 
 
 def machine_updated(cluster, obj, infra_machine):
@@ -312,6 +341,9 @@ def machine_updated(cluster, obj, infra_machine):
         node_group=labels.get("capi.stackhpc.com/node-group"),
         # Use the timestamp from the metadata for the created time
         created=obj["metadata"]["creationTimestamp"],
+        # CAPI derives this from the kube-apiserver certificate on control plane
+        # machines. It is absent for workers and may be absent on older clusters.
+        certificates_expiry_date=status.get("certificatesExpiryDate"),
     )
 
 
@@ -405,6 +437,7 @@ def finalise(cluster):
     """
     Apply final derived elements to the status.
     """
+    _update_control_plane_certificate_status(cluster)
     _reconcile_cluster_phase(cluster)
     cluster.status.node_count = len(cluster.status.nodes)
     cluster.status.addon_count = len(cluster.status.addons)
