@@ -879,6 +879,7 @@ def on_related_object_event(
     Decorator that registers a function as updating the Azimuth cluster state in
     response to a CAPI resource changing.
     """
+
     # If no mapper is given, use one that checks the cluster label
     if cluster_name_mapper is None:
         # Limit the query to objects that have the cluster label
@@ -940,6 +941,7 @@ async def on_lease_event(cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for leases associated with an Azimuth cluster.
     """
+    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.lease_deleted(cluster, body)
     else:
@@ -951,6 +953,7 @@ async def on_capi_cluster_event(cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI clusters with an associated Azimuth cluster.
     """
+    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.cluster_deleted(cluster, body)
     else:
@@ -962,6 +965,7 @@ async def on_capi_controlplane_event(cluster, type, body, **kwargs):  # noqa: A0
     """
     Executes on events for CAPI control planes with an associated Azimuth cluster.
     """
+    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.control_plane_deleted(cluster, body)
     else:
@@ -973,6 +977,7 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI machines with an associated Azimuth cluster.
     """
+    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.machine_deleted(cluster, body)
     else:

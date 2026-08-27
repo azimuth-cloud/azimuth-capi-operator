@@ -164,7 +164,6 @@ class ClusterSpec(schema.BaseModel):
         description="User id of user that updated the cluster.",
     )
 
-
 class ClusterPhase(str, schema.Enum):
     """
     The overall phase of the cluster.
@@ -339,11 +338,56 @@ class ServiceStatus(schema.BaseModel):
         None, description="A brief description of the service."
     )
 
+class V2Condition(schema.BaseModel):
+    """
+    conditions represents the observations of a Cluster's current state.
+    Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
+    ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
+    RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting, Paused.
+    Additionally, a TopologyReconciled condition will be added in case the Cluster is
+    referencing a ClusterClass / defining a managed Topology.
+    """
+
+    last_transition_time: str = Field(
+        description=(
+            "The last time the condition transitioned from one status to another"
+        )
+    )
+    message: str = Field(
+        description="a human readable message indicating details about the transition"
+    )
+    observed_generation: schema.Optional[int] = Field(
+        description="the .metadata.generation that the condition was set based upon"
+    )
+    reason: str = Field(
+        description=(
+            "programmatic identifier indicating the reason for the condition's last transition"
+        )
+    )
+    status: str = Field(
+        description="status of the condition, one of True, False, Unknown."
+    )
+    type: str = Field(
+        description="type of condition in CamelCase or in foo.example.com/CamelCase."
+    )
+
 
 class ClusterStatus(schema.BaseModel, extra="allow"):
     """
     The status of the cluster.
     """
+
+    observed_generation: schema.Optional[int] = Field(
+        None, description="The observed generation of the underlying capi object"
+    )
+
+    v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
+        None,description="represents the observations of a Cluster's current state"
+    )
+
+    new_phase: schema.Optional[str] = Field(
+        None, description="phase represents the current phase of cluster actuation."
+    )
 
     kubernetes_version: schema.Optional[str] = Field(
         None, description="The Kubernetes version of the cluster, if known."

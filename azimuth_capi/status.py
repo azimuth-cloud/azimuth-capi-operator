@@ -212,6 +212,17 @@ def cluster_updated(cluster, obj):
     cluster.status.networking_phase = NetworkingPhase(phase)
 
 
+def cluster_status_check(cluster,obj):
+    """
+    Gathers overall cluster phase and all cluster conditions on a lease event,
+    machine event or controlplane event
+    """
+    status = obj.get("status",{})
+    cluster.status.observed_generation =status.get("observedGeneration",0)
+    cluster.status.v2beta2_conditions = status.get("v1beta2",{}).get("conditions",{})
+
+    cluster.status.new_phase = status.get("phase","Unknown")
+
 def cluster_deleted(cluster, obj):
     """
     Updates the status when a CAPI cluster is deleted.
@@ -269,7 +280,6 @@ def control_plane_updated(cluster, obj):
     cluster.status.control_plane_certificate_rotation_days = (
         obj.get("spec", {}).get("rolloutBefore", {}).get("certificatesExpiryDays")
     )
-
 
 def control_plane_deleted(cluster, obj):
     """
