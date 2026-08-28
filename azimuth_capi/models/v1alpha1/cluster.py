@@ -164,6 +164,7 @@ class ClusterSpec(schema.BaseModel):
         description="User id of user that updated the cluster.",
     )
 
+
 class ClusterPhase(str, schema.Enum):
     """
     The overall phase of the cluster.
@@ -340,6 +341,7 @@ class ServiceStatus(schema.BaseModel):
         None, description="A brief description of the service."
     )
 
+
 class V2Condition(schema.BaseModel):
     """
     conditions represents the observations of a Cluster's current state.
@@ -387,11 +389,13 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     )
 
     v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
-        None,description="represents the observations of a Cluster's current state"
+        None, description="represents the observations of a Cluster's current state"
     )
 
-    new_phase: schema.Optional[str] = Field(
-        None, description="phase represents the current phase of cluster actuation."
+    v1beta_phase: schema.Optional[str] = Field(
+        None, description=(
+            "transparently represents the current phase of capi cluster actuation."
+        )
     )
 
     kubernetes_version: schema.Optional[str] = Field(

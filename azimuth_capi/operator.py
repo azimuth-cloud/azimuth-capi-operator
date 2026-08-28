@@ -952,7 +952,7 @@ async def on_capi_cluster_event(cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI clusters with an associated Azimuth cluster.
     """
-    status.cluster_status_check(cluster,body)
+    status.cluster_status_check(cluster, body)
     if type == "DELETED":
         status.cluster_deleted(cluster, body)
     else:
@@ -1117,7 +1117,7 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):  # noqa:
     """
     Executes on events for CAPI cluster secrets.
     """
-    status.cluster_status_check(cluster,body)
+    status.cluster_status_check(cluster, body)
     if type != "DELETED" and name.endswith("-kubeconfig"):
         if settings.identity.oidc_enabled:
             user_kubeconfig_secret = await ensure_user_kubeconfig_secret(cluster, body)

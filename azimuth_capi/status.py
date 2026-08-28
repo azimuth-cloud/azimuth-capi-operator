@@ -1,7 +1,7 @@
 import datetime as dt
 import logging
 
-#from .config import settings
+# from .config import settings
 from .models.v1alpha1 import (
     AddonPhase,
     AddonStatus,
@@ -75,7 +75,7 @@ def _reconcile_cluster_phase(cluster):
     Provisioned,Deleting,Failed,Unknown (taken from source NOT API spec)
     """
     temp_phase = ClusterPhase.UNKNOWN
-    match cluster.status.new_phase:
+    match cluster.status.v1beta_phase:
         case "Pending":
             temp_phase = ClusterPhase.PENDING
         case "Provisioning":
@@ -87,6 +87,7 @@ def _reconcile_cluster_phase(cluster):
         case "Failed":
             temp_phase = ClusterPhase.FAILED
     cluster.status.phase = temp_phase
+
 
 def lease_updated(cluster, obj):
     """
@@ -112,25 +113,21 @@ def cluster_updated(cluster, obj):
     cluster.status.networking_phase = NetworkingPhase(phase)
 
 
-def cluster_status_check(cluster,obj):
+def cluster_status_check(cluster, obj):
     """
     Gathers overall cluster phase and all cluster conditions on a lease event,
     machine event or controlplane event
     """
-    if(obj.get("kind","") == "Cluster"):
-        obj_status = obj.get("status",{})
-        cluster.status.observed_generation =(
-            obj_status.get("observedGeneration",0)
-        )
-        cluster.status.v2beta2_conditions =(
-            obj_status.get("v1beta2",{}).get("conditions",{})
+    if obj.get("kind", "") == "Cluster":
+        obj_status = obj.get("status", {})
+        cluster.status.observed_generation = obj_status.get("observedGeneration", 0)
+        cluster.status.v2beta2_conditions = obj_status.get("v1beta2", {}).get(
+            "conditions", {}
         )
 
-        cluster.status.new_phase = obj_status.get("phase","Unknown")
+        cluster.status.v1beta_phase = obj_status.get("phase", "Unknown")
 
         _reconcile_cluster_phase(cluster)
-    else:
-        print("splendid, incorrect type passed:", obj.get("kind","Unknown"))
 
 def cluster_deleted(cluster, obj):
     """
@@ -189,6 +186,7 @@ def control_plane_updated(cluster, obj):
     cluster.status.control_plane_certificate_rotation_days = (
         obj.get("spec", {}).get("rolloutBefore", {}).get("certificatesExpiryDays")
     )
+
 
 def control_plane_deleted(cluster, obj):
     """
