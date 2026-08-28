@@ -70,10 +70,123 @@ def _update_control_plane_certificate_status(cluster):
 
 def _reconcile_cluster_phase(cluster):
     """
-    Sets the overall cluster phase based on the component phases.
-    New cluster.status.phase _appears_ to be an enum of Pending,Provisioning,
-    Provisioned,Deleting,Failed,Unknown (taken from source NOT API spec)
+    UPDATE
     """
+    # Only consider the lease when reconciling the cluster phase if one is set
+    if cluster.spec.lease_name and cluster.status.lease_phase not in {
+        LeasePhase.ACTIVE,
+        LeasePhase.UPDATING,
+    }:
+        if cluster.status.lease_phase in {
+            LeasePhase.CREATING,
+            LeasePhase.PENDING,
+            LeasePhase.STARTING,
+        }:
+            cluster.status.phase = ClusterPhase.PENDING
+        if cluster.status.lease_phase == LeasePhase.ERROR:
+            cluster.status.phase = ClusterPhase.FAILED
+        if cluster.status.lease_phase in {
+            LeasePhase.TERMINATING,
+            LeasePhase.TERMINATED,
+            LeasePhase.DELETING,
+        }:
+            cluster.status.phase = ClusterPhase.UNHEALTHY
+        if cluster.status.lease_phase == LeasePhase.UNKNOWN:
+            cluster.status.phase = ClusterPhase.PENDING
+    # At this point, either there is no lease or the lease phase is Active or Updating
+    elif cluster.status.networking_phase in {
+        NetworkingPhase.PENDING,
+        NetworkingPhase.PROVISIONING,
+    }:
+        cluster.status.phase = ClusterPhase.RECONCILING
+    elif cluster.status.networking_phase == NetworkingPhase.DELETING:
+        cluster.status.phase = ClusterPhase.DELETING
+    elif cluster.status.networking_phase == NetworkingPhase.FAILED:
+        cluster.status.phase = ClusterPhase.FAILED
+    elif cluster.status.networking_phase == NetworkingPhase.UNKNOWN:
+        cluster.status.phase = ClusterPhase.PENDING
+    # The networking phase is Provisioned
+    elif cluster.status.control_plane_phase in {
+        ControlPlanePhase.PENDING,
+        ControlPlanePhase.SCALING_UP,
+        ControlPlanePhase.SCALING_DOWN,
+    }:
+        # If the control plane is scaling but there are control plane nodes with
+        # different versions, that is still part of an upgrade
+        if _multiple_kubelet_versions(cluster, NodeRole.CONTROL_PLANE):
+            cluster.status.phase = ClusterPhase.UPGRADING
+        else:
+            cluster.status.phase = ClusterPhase.RECONCILING
+    elif cluster.status.control_plane_phase == ControlPlanePhase.UPGRADING:
+        cluster.status.phase = ClusterPhase.UPGRADING
+    elif cluster.status.control_plane_phase == ControlPlanePhase.DELETING:
+        cluster.status.phase = ClusterPhase.DELETING
+    elif cluster.status.control_plane_phase == ControlPlanePhase.FAILED:
+        cluster.status.phase = ClusterPhase.FAILED
+    elif cluster.status.control_plane_phase == ControlPlanePhase.UNKNOWN:
+        cluster.status.phase = ClusterPhase.PENDING
+    # The control plane phase is Ready or Unhealthy
+    # If there are workers with different versions, assume an upgrade is in progress
+    elif _multiple_kubelet_versions(cluster, NodeRole.WORKER):
+        cluster.status.phase = ClusterPhase.UPGRADING
+    elif _any_node_has_phase(
+        cluster,
+        NodePhase.PENDING,
+        NodePhase.PROVISIONING,
+        NodePhase.DELETING,
+        NodePhase.DELETED,
+    ):
+        cluster.status.phase = ClusterPhase.RECONCILING
+    # All nodes are either Ready, Unhealthy, Failed or Unknown
+    elif _any_addon_has_phase(
+        cluster,
+        AddonPhase.PENDING,
+        AddonPhase.PREPARING,
+        AddonPhase.INSTALLING,
+        AddonPhase.UPGRADING,
+        AddonPhase.UNINSTALLING,
+    ):
+        cluster.status.phase = ClusterPhase.RECONCILING
+    # All addons are either Ready, Failed or Unknown
+    # Now we know that there is no reconciliation happening, consider cluster health
+    elif (
+        cluster.status.control_plane_phase == ControlPlanePhase.UNHEALTHY
+        or _any_node_has_phase(
+            cluster, NodePhase.UNHEALTHY, NodePhase.FAILED, NodePhase.UNKNOWN
+        )
+        or _any_addon_has_phase(cluster, AddonPhase.FAILED, AddonPhase.UNKNOWN)
+    ):
+        cluster.status.phase = ClusterPhase.UNHEALTHY
+    else:
+        cluster.status.phase = ClusterPhase.READY
+
+    # If we hit a terminal state, remove the updated timestamp,
+    if cluster.status.phase in {ClusterPhase.READY, ClusterPhase.FAILED}:
+        # reset the timeout timestamp, as we are now in a stable state
+        # if we do not reset the last_updated here, we are unable
+        # to know at the start of an update if we are re-entering
+        # due to an error vs starting for the first time since the
+        # last successful update (or its our fist ever update)
+        cluster.status.last_updated = None
+    else:
+        # if not a terminal state, ensure timestamp has been set
+        if cluster.status.last_updated is None:
+            now = dt.datetime.now(dt.timezone.utc)
+            cluster.status.last_updated = now
+
+    # timeout pending states if we are stuck there too long
+    if cluster.status.phase in {
+        ClusterPhase.PENDING,
+        ClusterPhase.RECONCILING,
+        ClusterPhase.UPGRADING,
+    }:
+        now = dt.datetime.now(dt.timezone.utc)
+        timeout_after = cluster.status.last_updated + dt.timedelta(
+            seconds=settings.cluster_timeout_seconds
+        )
+        if now > timeout_after:
+            cluster.status.phase = ClusterPhase.UNHEALTHY
+
     temp_phase = ClusterPhase.UNKNOWN
     match cluster.status.v1beta_phase:
         case "Pending":
@@ -115,8 +228,7 @@ def cluster_updated(cluster, obj):
 
 def cluster_status_check(cluster, obj):
     """
-    Gathers overall cluster phase and all cluster conditions on a lease event,
-    machine event or controlplane event
+    Gathers overall cluster phase and all cluster conditions when cluster status changes
     """
     if obj.get("kind", "") == "Cluster":
         obj_status = obj.get("status", {})

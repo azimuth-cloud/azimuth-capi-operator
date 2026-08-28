@@ -181,7 +181,6 @@ class ClusterPhase(str, schema.Enum):
     FAILED = "Failed"
     UNKNOWN = "Unknown"
 
-
 class LeasePhase(str, schema.Enum):
     """
     The phase of the lease for a cluster.
@@ -268,6 +267,25 @@ class NodeRole(str, schema.Enum):
     UNKNOWN = "Unknown"
 
 
+class ConditionStatus(str, schema.Enum):
+    """
+    the status of a condition
+    """
+    TRUE = "True"
+    FALSE = "False"
+    UNKNOWN = "Unknown"
+
+
+class ConditionSeverity(str, schema.Enum):
+    """
+    the severity of a condition
+    """
+    ERROR = "Error"
+    WARNING = "Warning"
+    INFO = "Info"
+    NONE = "None"
+
+
 class NodeStatus(schema.BaseModel):
     """
     The status of a node in the cluster.
@@ -344,12 +362,7 @@ class ServiceStatus(schema.BaseModel):
 
 class V2Condition(schema.BaseModel):
     """
-    conditions represents the observations of a Cluster's current state.
-    Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
-    ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
-    RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting, Paused.
-    Additionally, a TopologyReconciled condition will be added in case the Cluster is
-    referencing a ClusterClass / defining a managed Topology.
+    defines an observation of a Cluster API resource operational state.
     """
 
     last_transition_time: str = Field(
@@ -358,7 +371,7 @@ class V2Condition(schema.BaseModel):
         )
     )
     message: str = Field(
-        description="Details about the Cluster transition."
+        description="Details about the Cluster transition. (may be empty)"
     )
     observed_generation: schema.Optional[int] = Field(
         description="the Cluster generation that the condition was set based upon."
@@ -366,17 +379,25 @@ class V2Condition(schema.BaseModel):
     reason: str = Field(
         description=(
             """
-            programmatic identifier indicating the reason
-            for the condition's last transition
+            programmatic identifier indicating the reason for the last change
+            in condition.
             """
         )
     )
-    status: str = Field(
-        description="Status of the condition, one of True, False, Unknown."
+    severity: schema.Optional[ConditionSeverity] = Field(
+        ConditionSeverity.NONE, description= "severity of the condition"
+    )
+    status: ConditionStatus = Field(
+        ConditionStatus.UNKNOWN, description="Status of the condition, one of True, False, Unknown."
     )
     type: str = Field(
         description="type of condition in CamelCase or in foo.example.com/CamelCase."
     )
+    #Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
+    #ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
+    #RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting, Paused.
+    #Additionally, a TopologyReconciled condition will be added in case the Cluster is
+    #referencing a ClusterClass / defining a managed Topology.
 
 
 class ClusterStatus(schema.BaseModel, extra="allow"):
@@ -389,11 +410,13 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     )
 
     v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
-        None, description="represents the observations of a Cluster's current state"
+        None, description=(
+            "list of observations of Cluster API resources operational states."
+        )
     )
 
-    v1beta_phase: schema.Optional[str] = Field(
-        None,
+    v1beta_phase: schema.Optional[ClusterPhase] = Field(
+        ClusterPhase.UNKNOWN,
         description=(
             "transparently represents the current phase of capi cluster actuation."
         ),
