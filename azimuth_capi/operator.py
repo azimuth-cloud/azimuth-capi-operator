@@ -941,7 +941,6 @@ async def on_lease_event(cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for leases associated with an Azimuth cluster.
     """
-    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.lease_deleted(cluster, body)
     else:
@@ -965,7 +964,6 @@ async def on_capi_controlplane_event(cluster, type, body, **kwargs):  # noqa: A0
     """
     Executes on events for CAPI control planes with an associated Azimuth cluster.
     """
-    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.control_plane_deleted(cluster, body)
     else:
@@ -977,7 +975,6 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI machines with an associated Azimuth cluster.
     """
-    status.cluster_status_check(cluster,body)
     if type == "DELETED":
         status.machine_deleted(cluster, body)
     else:
@@ -1120,6 +1117,7 @@ async def on_cluster_secret_event(cluster, type, body, name, **kwargs):  # noqa:
     """
     Executes on events for CAPI cluster secrets.
     """
+    status.cluster_status_check(cluster,body)
     if type != "DELETED" and name.endswith("-kubeconfig"):
         if settings.identity.oidc_enabled:
             user_kubeconfig_secret = await ensure_user_kubeconfig_secret(cluster, body)
