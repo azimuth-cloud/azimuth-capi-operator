@@ -1,7 +1,7 @@
 import datetime as dt
 import logging
 
-from .config import settings
+#from .config import settings
 from .models.v1alpha1 import (
     AddonPhase,
     AddonStatus,
@@ -68,7 +68,7 @@ def _update_control_plane_certificate_status(cluster):
         cluster.status.control_plane_certificate_rotation_date = None
 
 
-def _reconcile_cluster_phase(cluster):  # noqa: C901
+def _reconcile_cluster_phase(cluster):
     """
     Sets the overall cluster phase based on the component phases.
     New cluster.status.phase _appears_ to be an enum of Pending,Provisioning,
@@ -79,9 +79,9 @@ def _reconcile_cluster_phase(cluster):  # noqa: C901
         case "Pending":
             temp_phase = ClusterPhase.PENDING
         case "Provisioning":
-            temp_phase = ClusterPhase.RECONCILING
+            temp_phase = ClusterPhase.PROVISIONING
         case "Provisioned":
-            temp_phase = ClusterPhase.READY
+            temp_phase = ClusterPhase.PROVISIONED
         case "Deleting":
             temp_phase = ClusterPhase.DELETING
         case "Failed":

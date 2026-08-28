@@ -170,6 +170,8 @@ class ClusterPhase(str, schema.Enum):
     """
 
     PENDING = "Pending"
+    PROVISIONING = "Provisioning"
+    PROVISIONED = "Provisioned"
     RECONCILING = "Reconciling"
     UPGRADING = "Upgrading"
     READY = "Ready"
