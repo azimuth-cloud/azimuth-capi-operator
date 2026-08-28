@@ -361,7 +361,10 @@ class V2Condition(schema.BaseModel):
     )
     reason: str = Field(
         description=(
-            "programmatic identifier indicating the reason for the condition's last transition"
+            """
+            programmatic identifier indicating the reason
+            for the condition's last transition
+            """
         )
     )
     status: str = Field(
