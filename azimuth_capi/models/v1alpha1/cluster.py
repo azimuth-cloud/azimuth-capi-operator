@@ -354,14 +354,14 @@ class V2Condition(schema.BaseModel):
 
     last_transition_time: str = Field(
         description=(
-            "The last time the condition transitioned from one status to another"
+            "The last time the Cluster condition transitioned from one status to another."
         )
     )
     message: str = Field(
-        description="a human readable message indicating details about the transition"
+        description="Details about the Cluster transition."
     )
     observed_generation: schema.Optional[int] = Field(
-        description="the .metadata.generation that the condition was set based upon"
+        description="the Cluster generation that the condition was set based upon."
     )
     reason: str = Field(
         description=(
@@ -372,7 +372,7 @@ class V2Condition(schema.BaseModel):
         )
     )
     status: str = Field(
-        description="status of the condition, one of True, False, Unknown."
+        description="Status of the condition, one of True, False, Unknown."
     )
     type: str = Field(
         description="type of condition in CamelCase or in foo.example.com/CamelCase."
@@ -385,7 +385,7 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     """
 
     observed_generation: schema.Optional[int] = Field(
-        None, description="The observed generation of the underlying capi object"
+        None, description="The observed generation of the CAPI Cluster object."
     )
 
     v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
