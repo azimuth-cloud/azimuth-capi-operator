@@ -129,6 +129,7 @@ def cluster_status_check(cluster, obj):
 
         _reconcile_cluster_phase(cluster)
 
+
 def cluster_deleted(cluster, obj):
     """
     Updates the status when a CAPI cluster is deleted.

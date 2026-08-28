@@ -393,9 +393,10 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     )
 
     v1beta_phase: schema.Optional[str] = Field(
-        None, description=(
+        None,
+        description=(
             "transparently represents the current phase of capi cluster actuation."
-        )
+        ),
     )
 
     kubernetes_version: schema.Optional[str] = Field(
