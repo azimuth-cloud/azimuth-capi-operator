@@ -1,7 +1,9 @@
 import datetime as dt
 import logging
 
-# from .config import settings
+from azimuth_capi.models.v1alpha1.cluster import Cluster
+
+from .config import settings
 from .models.v1alpha1 import (
     AddonPhase,
     AddonStatus,
@@ -68,7 +70,7 @@ def _update_control_plane_certificate_status(cluster):
         cluster.status.control_plane_certificate_rotation_date = None
 
 
-def _reconcile_cluster_phase(cluster):
+def _reconcile_cluster_phase(cluster): # noqa: C901
     """
     UPDATE
     """
@@ -199,7 +201,6 @@ def _reconcile_cluster_phase(cluster):
             temp_phase = ClusterPhase.DELETING
         case "Failed":
             temp_phase = ClusterPhase.FAILED
-    cluster.status.phase = temp_phase
 
 
 def lease_updated(cluster, obj):

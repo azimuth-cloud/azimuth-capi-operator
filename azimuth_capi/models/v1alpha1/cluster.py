@@ -367,7 +367,9 @@ class V2Condition(schema.BaseModel):
 
     last_transition_time: str = Field(
         description=(
-            "The last time the Cluster condition transitioned from one status to another."
+            """
+            The last time the Cluster condition transitioned from one status to another.
+            """
         )
     )
     message: str = Field(
@@ -388,16 +390,17 @@ class V2Condition(schema.BaseModel):
         ConditionSeverity.NONE, description= "severity of the condition"
     )
     status: ConditionStatus = Field(
-        ConditionStatus.UNKNOWN, description="Status of the condition, one of True, False, Unknown."
+        ConditionStatus.UNKNOWN, description=(
+            "Status of the condition, one of True, False, Unknown."
+        )
     )
     type: str = Field(
         description="type of condition in CamelCase or in foo.example.com/CamelCase."
     )
     #Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
     #ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
-    #RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting, Paused.
-    #Additionally, a TopologyReconciled condition will be added in case the Cluster is
-    #referencing a ClusterClass / defining a managed Topology.
+    #RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting,
+    #Paused,TopologyReconciled
 
 
 class ClusterStatus(schema.BaseModel, extra="allow"):
