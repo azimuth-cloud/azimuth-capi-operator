@@ -5,6 +5,7 @@ from .config import settings
 from .models.v1alpha1 import (
     AddonPhase,
     AddonStatus,
+    Cluster,
     ClusterPhase,
     ControlPlanePhase,
     LeasePhase,
@@ -12,7 +13,6 @@ from .models.v1alpha1 import (
     NodePhase,
     NodeRole,
     NodeStatus,
-    Cluster,
 )
 
 logger = logging.getLogger(__name__)
@@ -188,19 +188,6 @@ def _reconcile_cluster_phase(cluster : Cluster): # noqa: C901
         if now > timeout_after:
             cluster.status.phase = ClusterPhase.UNHEALTHY
 
-    temp_phase = ClusterPhase.UNKNOWN
-    match cluster.status.v1beta_phase:
-        case "Pending":
-            temp_phase = ClusterPhase.PENDING
-        case "Provisioning":
-            temp_phase = ClusterPhase.PROVISIONING
-        case "Provisioned":
-            temp_phase = ClusterPhase.PROVISIONED
-        case "Deleting":
-            temp_phase = ClusterPhase.DELETING
-        case "Failed":
-            temp_phase = ClusterPhase.FAILED
-
 
 def lease_updated(cluster : Cluster, obj):
     """
@@ -221,25 +208,17 @@ def cluster_updated(cluster : Cluster, obj):
     """
     Updates the status when a CAPI cluster is updated.
     """
-    # Just set the networking phase
-    phase = obj.get("status", {}).get("phase", "Unknown")
+    obj_status = obj.get("status", {})
+    #Set the networking phase
+    phase = obj_status.get("phase", "Unknown")
     cluster.status.networking_phase = NetworkingPhase(phase)
 
-
-def cluster_status_check(cluster : Cluster, obj):
-    """
-    Gathers overall cluster phase and all cluster conditions when cluster status changes
-    """
-    if obj.get("kind", "") == "Cluster":
-        obj_status = obj.get("status", {})
-        cluster.status.observed_generation = obj_status.get("observedGeneration", 0)
-        cluster.status.v2beta2_conditions = obj_status.get("v1beta2", {}).get(
-            "conditions", {}
-        )
-
-        cluster.status.v1beta_phase = obj_status.get("phase", "Unknown")
-
-        _reconcile_cluster_phase(cluster)
+    #Update cluster generation and conditions
+    cluster.status.v1beta_phase = obj_status.get("phase", "Unknown")
+    cluster.status.observed_generation = obj_status.get("observedGeneration", 0)
+    cluster.status.v2beta2_conditions = obj_status.get("v1beta2", {}).get(
+        "conditions", {}
+    )
 
 
 def cluster_deleted(cluster : Cluster, obj):
@@ -247,6 +226,7 @@ def cluster_deleted(cluster : Cluster, obj):
     Updates the status when a CAPI cluster is deleted.
     """
     cluster.status.networking_phase = NetworkingPhase.UNKNOWN
+    cluster.status.v1beta_phase = ClusterPhase.UNKNOWN
 
 
 def cluster_absent(cluster : Cluster):
@@ -254,6 +234,7 @@ def cluster_absent(cluster : Cluster):
     Called when the CAPI cluster is missing on resume.
     """
     cluster.status.networking_phase = NetworkingPhase.UNKNOWN
+    cluster.status.v1beta_phase = ClusterPhase.UNKNOWN
 
 
 def control_plane_updated(cluster : Cluster, obj):
@@ -403,6 +384,9 @@ def kubeconfig_secret_updated(cluster : Cluster, obj):
 
 
 def _flux_to_addon_status(flux_conditions):
+    """
+    Creates an AddonStatus for a flux object based on a list of its conditions
+    """
     addon_phase = AddonPhase.UNKNOWN.value
     addon_revision = 0
     if len(flux_conditions) > 0:

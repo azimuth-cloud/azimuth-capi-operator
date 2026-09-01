@@ -952,7 +952,6 @@ async def on_capi_cluster_event(cluster : api.Cluster, type, body, **kwargs):  #
     """
     Executes on events for CAPI clusters with an associated Azimuth cluster.
     """
-    status.cluster_status_check(cluster, body)
     if type == "DELETED":
         status.cluster_deleted(cluster, body)
     else:
@@ -976,7 +975,7 @@ async def on_capi_machine_event(cluster : api.Cluster, type, body, **kwargs):  #
     Executes on events for CAPI machines with an associated Azimuth cluster.
     """
     if type == "DELETED":
-        status.machine_deleted(cluster : api.Cluster, body)
+        status.machine_deleted(cluster, body)
     else:
         # Get the underlying infrastructure machine as we need it for the size
         infra_ref = body["spec"]["infrastructureRef"]
@@ -1117,7 +1116,6 @@ async def on_cluster_secret_event(cluster : api.Cluster, type, body, name, **kwa
     """
     Executes on events for CAPI cluster secrets.
     """
-    status.cluster_status_check(cluster, body)
     if type != "DELETED" and name.endswith("-kubeconfig"):
         if settings.identity.oidc_enabled:
             user_kubeconfig_secret = await ensure_user_kubeconfig_secret(cluster, body)
