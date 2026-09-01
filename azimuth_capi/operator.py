@@ -128,7 +128,7 @@ async def ekresource_for_model(model, subresource=None):
     return await api.resource(resource)
 
 
-async def save_cluster_status(cluster):
+async def save_cluster_status(cluster : api.Cluster):
     """
     Save the status of this addon using the given easykube client.
     """
@@ -937,7 +937,7 @@ def on_related_object_event(
         None,
     ),
 )
-async def on_lease_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_lease_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for leases associated with an Azimuth cluster.
     """
@@ -948,7 +948,7 @@ async def on_lease_event(cluster, type, body, **kwargs):  # noqa: A002
 
 
 @on_related_object_event(CLUSTER_API_VERSION, "clusters")
-async def on_capi_cluster_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_capi_cluster_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI clusters with an associated Azimuth cluster.
     """
@@ -960,7 +960,7 @@ async def on_capi_cluster_event(cluster, type, body, **kwargs):  # noqa: A002
 
 
 @on_related_object_event(CLUSTER_API_CONTROLPLANE_VERSION, "kubeadmcontrolplanes")
-async def on_capi_controlplane_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_capi_controlplane_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI control planes with an associated Azimuth cluster.
     """
@@ -971,12 +971,12 @@ async def on_capi_controlplane_event(cluster, type, body, **kwargs):  # noqa: A0
 
 
 @on_related_object_event(CLUSTER_API_VERSION, "machines")
-async def on_capi_machine_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_capi_machine_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI machines with an associated Azimuth cluster.
     """
     if type == "DELETED":
-        status.machine_deleted(cluster, body)
+        status.machine_deleted(cluster : api.Cluster, body)
     else:
         # Get the underlying infrastructure machine as we need it for the size
         infra_ref = body["spec"]["infrastructureRef"]
@@ -990,7 +990,7 @@ async def on_capi_machine_event(cluster, type, body, **kwargs):  # noqa: A002
 
 
 @on_related_object_event("addons.stackhpc.com", "helmreleases")
-async def on_helmrelease_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_helmrelease_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for HelmRelease addons.
     """
@@ -1001,7 +1001,7 @@ async def on_helmrelease_event(cluster, type, body, **kwargs):  # noqa: A002
 
 
 @on_related_object_event("addons.stackhpc.com", "manifests")
-async def on_manifests_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_manifests_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for Manifests addons.
     """
@@ -1012,7 +1012,7 @@ async def on_manifests_event(cluster, type, body, **kwargs):  # noqa: A002
 
 
 @on_related_object_event("kustomize.toolkit.fluxcd.io", "kustomizations")
-async def on_flux_kustomization_event(cluster, type, body, **kwargs):  # noqa: A002
+async def on_flux_kustomization_event(cluster : api.Cluster, type, body, **kwargs):  # noqa: A002
     """
     Executes on events for Flux Kustomization addons.
     """
@@ -1113,7 +1113,7 @@ async def ensure_user_kubeconfig_secret(instance: api.Cluster, kubeconfig_secret
     # But it does have cluster.x-k8s.io/cluster-name
     cluster_label="cluster.x-k8s.io/cluster-name",
 )
-async def on_cluster_secret_event(cluster, type, body, name, **kwargs):  # noqa: A002
+async def on_cluster_secret_event(cluster : api.Cluster, type, body, name, **kwargs):  # noqa: A002
     """
     Executes on events for CAPI cluster secrets.
     """
@@ -1145,7 +1145,7 @@ async def on_cluster_services_updated(instance: api.Cluster, **kwargs):
     labels={"azimuth.stackhpc.com/app-template": kopf.PRESENT},
 )
 async def on_kubernetes_app_event(
-    cluster,
+    cluster : api.Cluster,
     type,  # noqa: A002
     name,
     namespace,
