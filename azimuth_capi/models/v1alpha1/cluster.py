@@ -181,6 +181,7 @@ class ClusterPhase(str, schema.Enum):
     FAILED = "Failed"
     UNKNOWN = "Unknown"
 
+
 class LeasePhase(str, schema.Enum):
     """
     The phase of the lease for a cluster.
@@ -271,6 +272,7 @@ class ConditionStatus(str, schema.Enum):
     """
     the status of a condition
     """
+
     TRUE = "True"
     FALSE = "False"
     UNKNOWN = "Unknown"
@@ -280,6 +282,7 @@ class ConditionSeverity(str, schema.Enum):
     """
     the severity of a condition
     """
+
     ERROR = "Error"
     WARNING = "Warning"
     INFO = "Info"
@@ -387,20 +390,19 @@ class V2Condition(schema.BaseModel):
         )
     )
     severity: schema.Optional[ConditionSeverity] = Field(
-        ConditionSeverity.NONE, description= "severity of the condition"
+        ConditionSeverity.NONE, description="severity of the condition"
     )
     status: ConditionStatus = Field(
-        ConditionStatus.UNKNOWN, description=(
-            "Status of the condition, one of True, False, Unknown."
-        )
+        ConditionStatus.UNKNOWN,
+        description=("Status of the condition, one of True, False, Unknown."),
     )
     type: str = Field(
         description="type of condition in CamelCase or in foo.example.com/CamelCase."
     )
-    #Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
-    #ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
-    #RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting,
-    #Paused,TopologyReconciled
+    # Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
+    # ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
+    # RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting,
+    # Paused,TopologyReconciled
 
 
 class ClusterStatus(schema.BaseModel, extra="allow"):
@@ -413,9 +415,10 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     )
 
     v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
-        None, description=(
+        None,
+        description=(
             "list of observations of Cluster API resources operational states."
-        )
+        ),
     )
 
     v1beta_phase: schema.Optional[ClusterPhase] = Field(
