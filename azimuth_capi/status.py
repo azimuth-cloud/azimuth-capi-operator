@@ -71,7 +71,7 @@ def _update_control_plane_certificate_status(cluster: Cluster):
 
 def _reconcile_cluster_phase(cluster: Cluster):  # noqa: C901
     """
-    UPDATE
+    Sets the overall cluster phase based on the component phases.
     """
     # Only consider the lease when reconciling the cluster phase if one is set
     if cluster.spec.lease_name and cluster.status.lease_phase not in {
@@ -215,7 +215,6 @@ def cluster_updated(cluster: Cluster, obj):
 
     # Update cluster generation and conditions
     cluster.status.v1beta_phase = obj_status.get("phase", "Unknown")
-    cluster.status.observed_generation = obj_status.get("observedGeneration", 0)
     cluster.status.v2beta2_conditions = obj_status.get("v1beta2", {}).get(
         "conditions", {}
     )

@@ -378,9 +378,6 @@ class V2Condition(schema.BaseModel):
     message: str = Field(
         description="Details about the Cluster transition. (may be empty)"
     )
-    observed_generation: schema.Optional[int] = Field(
-        description="the Cluster generation that the condition was set based upon."
-    )
     reason: str = Field(
         description=(
             """
@@ -409,10 +406,6 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     """
     The status of the cluster.
     """
-
-    observed_generation: schema.Optional[int] = Field(
-        None, description="The observed generation of the CAPI Cluster object."
-    )
 
     v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
         None,
