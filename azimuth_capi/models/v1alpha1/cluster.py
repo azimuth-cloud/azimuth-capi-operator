@@ -384,7 +384,7 @@ class V2Condition(schema.BaseModel):
     reason: str = Field(
         description=(
             """
-            programmatic identifier indicating the reason for the last change
+            Programmatic identifier indicating the reason for the last change
             in condition.
             """
         )
@@ -417,14 +417,14 @@ class ClusterStatus(schema.BaseModel, extra="allow"):
     v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
         None,
         description=(
-            "list of observations of Cluster API resources operational states."
+            "List of observations of Cluster API resources operational states."
         ),
     )
 
     v1beta_phase: schema.Optional[ClusterPhase] = Field(
         ClusterPhase.UNKNOWN,
         description=(
-            "transparently represents the current phase of capi cluster actuation."
+            "Transparently represents the current phase of capi cluster actuation."
         ),
     )
 
