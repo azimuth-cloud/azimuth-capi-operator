@@ -365,7 +365,7 @@ class ServiceStatus(schema.BaseModel):
 
 class V2Condition(schema.BaseModel):
     """
-    defines an observation of a Cluster API resource operational state.
+    Defines an observation of a Cluster API resource operational state.
     """
 
     last_transition_time: str = Field(
@@ -376,7 +376,7 @@ class V2Condition(schema.BaseModel):
         )
     )
     message: str = Field(
-        description="Details about the Cluster transition. (may be empty)"
+        description="Details about the Cluster transition, (may be empty)."
     )
     reason: str = Field(
         description=(
@@ -394,7 +394,7 @@ class V2Condition(schema.BaseModel):
         description=("Status of the condition, one of True, False, Unknown."),
     )
     type: str = Field(
-        description="type of condition in CamelCase or in foo.example.com/CamelCase."
+        description="Type of condition in CamelCase or in foo.example.com/CamelCase."
     )
     # Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
     # ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,

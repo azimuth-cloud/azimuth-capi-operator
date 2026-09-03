@@ -879,7 +879,6 @@ def on_related_object_event(
     Decorator that registers a function as updating the Azimuth cluster state in
     response to a CAPI resource changing.
     """
-
     # If no mapper is given, use one that checks the cluster label
     if cluster_name_mapper is None:
         # Limit the query to objects that have the cluster label
