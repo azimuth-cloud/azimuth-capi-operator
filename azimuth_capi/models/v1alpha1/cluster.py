@@ -171,6 +171,8 @@ class ClusterPhase(str, schema.Enum):
     """
 
     PENDING = "Pending"
+    PROVISIONING = "Provisioning"
+    PROVISIONED = "Provisioned"
     RECONCILING = "Reconciling"
     UPGRADING = "Upgrading"
     READY = "Ready"
@@ -266,6 +268,27 @@ class NodeRole(str, schema.Enum):
     UNKNOWN = "Unknown"
 
 
+class ConditionStatus(str, schema.Enum):
+    """
+    the status of a condition
+    """
+
+    TRUE = "True"
+    FALSE = "False"
+    UNKNOWN = "Unknown"
+
+
+class ConditionSeverity(str, schema.Enum):
+    """
+    the severity of a condition
+    """
+
+    ERROR = "Error"
+    WARNING = "Warning"
+    INFO = "Info"
+    NONE = "None"
+
+
 class NodeStatus(schema.BaseModel):
     """
     The status of a node in the cluster.
@@ -340,10 +363,63 @@ class ServiceStatus(schema.BaseModel):
     )
 
 
+class V2Condition(schema.BaseModel):
+    """
+    Defines an observation of a Cluster API resource operational state.
+    """
+
+    last_transition_time: str = Field(
+        description=(
+            """
+            The last time the Cluster condition transitioned from one status to another.
+            """
+        )
+    )
+    message: str = Field(
+        description="Details about the Cluster transition, (may be empty)."
+    )
+    reason: str = Field(
+        description=(
+            """
+            Programmatic identifier indicating the reason for the last change
+            in condition.
+            """
+        )
+    )
+    severity: schema.Optional[ConditionSeverity] = Field(
+        ConditionSeverity.NONE, description="severity of the condition"
+    )
+    status: ConditionStatus = Field(
+        ConditionStatus.UNKNOWN,
+        description=("Status of the condition, one of True, False, Unknown."),
+    )
+    type: str = Field(
+        description="Type of condition in CamelCase or in foo.example.com/CamelCase."
+    )
+    # Known condition types are Available, InfrastructureReady, ControlPlaneInitialized,
+    # ControlPlaneAvailable, WorkersAvailable, MachinesReady MachinesUpToDate,
+    # RemoteConnectionProbe, ScalingUp, ScalingDown, Remediating, Deleting,
+    # Paused,TopologyReconciled
+
+
 class ClusterStatus(schema.BaseModel, extra="allow"):
     """
     The status of the cluster.
     """
+
+    v2beta2_conditions: schema.Optional[list[V2Condition]] = Field(
+        None,
+        description=(
+            "List of observations of Cluster API resources operational states."
+        ),
+    )
+
+    v1beta_phase: schema.Optional[ClusterPhase] = Field(
+        ClusterPhase.UNKNOWN,
+        description=(
+            "Transparently represents the current phase of capi cluster actuation."
+        ),
+    )
 
     kubernetes_version: schema.Optional[str] = Field(
         None, description="The Kubernetes version of the cluster, if known."

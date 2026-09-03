@@ -5,6 +5,7 @@ from .config import settings
 from .models.v1alpha1 import (
     AddonPhase,
     AddonStatus,
+    Cluster,
     ClusterPhase,
     ControlPlanePhase,
     LeasePhase,
@@ -17,14 +18,14 @@ from .models.v1alpha1 import (
 logger = logging.getLogger(__name__)
 
 
-def _any_node_has_phase(cluster, *phases):
+def _any_node_has_phase(cluster: Cluster, *phases):
     """
     Returns true if any node has one of the given phases.
     """
     return any(node.phase in phases for node in cluster.status.nodes.values())
 
 
-def _multiple_kubelet_versions(cluster, role):
+def _multiple_kubelet_versions(cluster: Cluster, role):
     """
     Returns true if nodes with the given role have different kubelet versions,
     false otherwise.
@@ -37,14 +38,14 @@ def _multiple_kubelet_versions(cluster, role):
     return len(versions) > 1
 
 
-def _any_addon_has_phase(cluster, *phases):
+def _any_addon_has_phase(cluster: Cluster, *phases):
     """
     Returns true if any addon has one of the given phases.
     """
     return any(addon.phase in phases for addon in cluster.status.addons.values())
 
 
-def _update_control_plane_certificate_status(cluster):
+def _update_control_plane_certificate_status(cluster: Cluster):
     """
     Derive cluster level certificate information from control plane machines.
     """
@@ -68,7 +69,7 @@ def _update_control_plane_certificate_status(cluster):
         cluster.status.control_plane_certificate_rotation_date = None
 
 
-def _reconcile_cluster_phase(cluster):  # noqa: C901
+def _reconcile_cluster_phase(cluster: Cluster):  # noqa: C901
     """
     Sets the overall cluster phase based on the component phases.
     """
@@ -188,7 +189,7 @@ def _reconcile_cluster_phase(cluster):  # noqa: C901
             cluster.status.phase = ClusterPhase.UNHEALTHY
 
 
-def lease_updated(cluster, obj):
+def lease_updated(cluster: Cluster, obj):
     """
     Updates the status when a lease is updated.
     """
@@ -196,37 +197,46 @@ def lease_updated(cluster, obj):
     cluster.status.lease_phase = LeasePhase(phase)
 
 
-def lease_deleted(cluster, obj):
+def lease_deleted(cluster: Cluster, obj):
     """
     Updates the status when a lease is deleted.
     """
     cluster.status.lease_phase = LeasePhase.UNKNOWN
 
 
-def cluster_updated(cluster, obj):
+def cluster_updated(cluster: Cluster, obj):
     """
     Updates the status when a CAPI cluster is updated.
     """
-    # Just set the networking phase
-    phase = obj.get("status", {}).get("phase", "Unknown")
+    obj_status = obj.get("status", {})
+    # Set the networking phase
+    phase = obj_status.get("phase", "Unknown")
     cluster.status.networking_phase = NetworkingPhase(phase)
 
+    # Update cluster generation and conditions
+    cluster.status.v1beta_phase = obj_status.get("phase", "Unknown")
+    cluster.status.v2beta2_conditions = obj_status.get("v1beta2", {}).get(
+        "conditions", {}
+    )
 
-def cluster_deleted(cluster, obj):
+
+def cluster_deleted(cluster: Cluster, obj):
     """
     Updates the status when a CAPI cluster is deleted.
     """
     cluster.status.networking_phase = NetworkingPhase.UNKNOWN
+    cluster.status.v1beta_phase = ClusterPhase.UNKNOWN
 
 
-def cluster_absent(cluster):
+def cluster_absent(cluster: Cluster):
     """
     Called when the CAPI cluster is missing on resume.
     """
     cluster.status.networking_phase = NetworkingPhase.UNKNOWN
+    cluster.status.v1beta_phase = ClusterPhase.UNKNOWN
 
 
-def control_plane_updated(cluster, obj):
+def control_plane_updated(cluster: Cluster, obj):
     """
     Updates the status when a CAPI control plane is updated.
     """
@@ -271,7 +281,7 @@ def control_plane_updated(cluster, obj):
     )
 
 
-def control_plane_deleted(cluster, obj):
+def control_plane_deleted(cluster: Cluster, obj):
     """
     Updates the status when a CAPI control plane is deleted.
     """
@@ -282,7 +292,7 @@ def control_plane_deleted(cluster, obj):
     cluster.status.control_plane_certificate_rotation_days = None
 
 
-def control_plane_absent(cluster):
+def control_plane_absent(cluster: Cluster):
     """
     Called when the control plane is missing on resume.
     """
@@ -293,7 +303,7 @@ def control_plane_absent(cluster):
     cluster.status.control_plane_certificate_rotation_days = None
 
 
-def machine_updated(cluster, obj, infra_machine):
+def machine_updated(cluster: Cluster, obj, infra_machine):
     """
     Updates the status when a CAPI machine is updated.
     """
@@ -347,7 +357,7 @@ def machine_updated(cluster, obj, infra_machine):
     )
 
 
-def machine_deleted(cluster, obj):
+def machine_deleted(cluster: Cluster, obj):
     """
     Updates the status when a CAPI machine is deleted.
     """
@@ -355,7 +365,7 @@ def machine_deleted(cluster, obj):
     cluster.status.nodes.pop(obj["metadata"]["name"], None)
 
 
-def remove_unknown_nodes(cluster, machines):
+def remove_unknown_nodes(cluster: Cluster, machines):
     """
     Given the current set of machines, remove any unknown nodes from the status.
     """
@@ -365,7 +375,7 @@ def remove_unknown_nodes(cluster, machines):
         cluster.status.nodes.pop(name)
 
 
-def kubeconfig_secret_updated(cluster, obj):
+def kubeconfig_secret_updated(cluster: Cluster, obj):
     """
     Updates the status when a kubeconfig secret is updated.
     """
@@ -373,6 +383,9 @@ def kubeconfig_secret_updated(cluster, obj):
 
 
 def _flux_to_addon_status(flux_conditions):
+    """
+    Creates an AddonStatus for a flux object based on a list of its conditions
+    """
     addon_phase = AddonPhase.UNKNOWN.value
     addon_revision = 0
     if len(flux_conditions) > 0:
@@ -391,7 +404,7 @@ def _flux_to_addon_status(flux_conditions):
     return AddonStatus(phase=addon_phase, revision=addon_revision)
 
 
-def flux_updated(cluster, obj):
+def flux_updated(cluster: Cluster, obj):
     """
     Updates the status when a Flux addon is updated.
     """
@@ -401,7 +414,7 @@ def flux_updated(cluster, obj):
     cluster.status.addons[component] = _flux_to_addon_status(conditions)
 
 
-def addon_updated(cluster, obj):
+def addon_updated(cluster: Cluster, obj):
     """
     Updates the status when an addon is updated.
     """
@@ -413,7 +426,7 @@ def addon_updated(cluster, obj):
     )
 
 
-def addon_deleted(cluster, obj):
+def addon_deleted(cluster: Cluster, obj):
     """
     Updates the status when an addon is deleted.
     """
@@ -421,7 +434,7 @@ def addon_deleted(cluster, obj):
     cluster.status.addons.pop(component, None)
 
 
-def remove_unknown_addons(cluster, addons):
+def remove_unknown_addons(cluster: Cluster, addons):
     """
     Given the current set of addons, remove any unknown addons from the status.
     """
@@ -433,7 +446,7 @@ def remove_unknown_addons(cluster, addons):
         cluster.status.addons.pop(component)
 
 
-def finalise(cluster):
+def finalise(cluster: Cluster):
     """
     Apply final derived elements to the status.
     """
