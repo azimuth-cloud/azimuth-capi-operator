@@ -325,13 +325,17 @@ def machine_updated(cluster: Cluster, obj, infra_machine):
         node_phase = NodePhase.PROVISIONING
     else:
         node_phase = NodePhase(phase)
+    # CAPO v1beta1 uses a string, v1beta2 uses an ID or a name filter.
+    flavor = infra_machine.spec.flavor
+    if isinstance(flavor, dict):
+        flavor = flavor.get("filter", {}).get("name") or flavor.get("id")
     # Replace the node object in the node set
     cluster.status.nodes[obj["metadata"]["name"]] = NodeStatus(
         # The node role should be in the labels
         role=NodeRole(labels["capi.stackhpc.com/component"]),
         phase=node_phase,
         # This assumes an OpenStackMachine for now
-        size=infra_machine.spec.flavor,
+        size=flavor,
         ip=next(
             (
                 a["address"]
