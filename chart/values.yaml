@@ -1,6 +1,27 @@
 # Configuration for the operator
 # For all available options, see azimuth_capi/config.py
 config:
+  capiHelm:
+    # Set the node provider ID from the instance UUID and stop relying on OCCM to
+    # initialise nodes, which avoids a bootstrap-time circular dependency
+    defaultValues:
+      kubeletCloudProvider: ""
+      controlPlane:
+        kubeadmConfigSpec:
+          initConfiguration:
+            nodeRegistration:
+              kubeletExtraArgs:
+                provider-id: "openstack:///{{ instance_id }}"
+          joinConfiguration:
+            nodeRegistration:
+              kubeletExtraArgs:
+                provider-id: "openstack:///{{ instance_id }}"
+      nodeGroupDefaults:
+        kubeadmConfigSpec:
+          joinConfiguration:
+            nodeRegistration:
+              kubeletExtraArgs:
+                provider-id: "openstack:///{{ instance_id }}"
   # By default, give OIDC users a role with the same rules as cluster-admin
   identity:
     defaultUserClusterRole:
