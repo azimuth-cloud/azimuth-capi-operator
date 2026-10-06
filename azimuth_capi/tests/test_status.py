@@ -1,6 +1,9 @@
+import copy
 import datetime as dt
 import unittest
 from unittest import mock
+
+from easykube.rest.util import PropertyDict
 
 from azimuth_capi import status
 from azimuth_capi.models import v1alpha1 as api
@@ -14,6 +17,57 @@ def get_flux_test_object(condition, clustername="foo"):
 
 
 class TestStatus(unittest.TestCase):
+    def test_machine_updated_records_flavor_size(self):
+        flavor_id = "15f3a5b6-e88a-4ad5-95cb-458beec677e2"
+        cases = [
+            ("v1beta1", "m1.medium", "m1.medium"),
+            ("v1beta2", {"filter": {"name": "m1.medium"}}, "m1.medium"),
+            ("v1beta2", {"id": flavor_id}, flavor_id),
+            # Defensive input: CAPO only permits one selector, but prefer the
+            # display name if both fields are present.
+            (
+                "v1beta2",
+                {"id": flavor_id, "filter": {"name": "m1.medium"}},
+                "m1.medium",
+            ),
+        ]
+        for role in ("control-plane", "worker"):
+            for version, flavor, expected_size in cases:
+                with self.subTest(role=role, version=version, flavor=flavor):
+                    cluster = mock.Mock()
+                    cluster.status = api.ClusterStatus()
+                    infra_machine = PropertyDict(
+                        {
+                            "apiVersion": f"infrastructure.cluster.x-k8s.io/{version}",
+                            "kind": "OpenStackMachine",
+                            "spec": {"flavor": flavor},
+                        }
+                    )
+                    machine = {
+                        "metadata": {
+                            "name": "machine-0",
+                            "creationTimestamp": "2026-01-01T00:00:00Z",
+                            "labels": {"capi.stackhpc.com/component": role},
+                        },
+                        "spec": {"version": "v1.37.1"},
+                        "status": {
+                            "phase": "Running",
+                            "conditions": [{"type": "NodeHealthy", "status": "True"}],
+                        },
+                    }
+                    original_machine = copy.deepcopy(machine)
+                    original_infra_machine = copy.deepcopy(infra_machine)
+
+                    status.machine_updated(cluster, machine, infra_machine)
+
+                    node = cluster.status.nodes["machine-0"]
+                    self.assertEqual(node.size, expected_size)
+                    self.assertEqual(node.role, api.NodeRole(role))
+                    self.assertEqual(node.phase, api.NodePhase.READY)
+                    self.assertEqual(node.kubelet_version, "1.37.1")
+                    self.assertEqual(machine, original_machine)
+                    self.assertEqual(infra_machine, original_infra_machine)
+
     def test_machine_updated_records_certificate_expiry_date(self):
         cluster = mock.Mock()
         cluster.status.nodes = {}
@@ -25,7 +79,7 @@ class TestStatus(unittest.TestCase):
                 "creationTimestamp": "2026-01-01T00:00:00Z",
                 "labels": {"capi.stackhpc.com/component": "control-plane"},
             },
-            "spec": {"version": "v1.32.1"},
+            "spec": {"version": "v1.37.1"},
             "status": {
                 "phase": "Running",
                 "conditions": [{"type": "NodeHealthy", "status": "True"}],
@@ -52,7 +106,7 @@ class TestStatus(unittest.TestCase):
                 "creationTimestamp": "2026-01-01T00:00:00Z",
                 "labels": {"capi.stackhpc.com/component": "worker"},
             },
-            "spec": {"version": "v1.32.1"},
+            "spec": {"version": "v1.37.1"},
             "status": {
                 "phase": "Running",
                 "conditions": [{"type": "NodeHealthy", "status": "True"}],
@@ -72,11 +126,11 @@ class TestStatus(unittest.TestCase):
         cluster = mock.Mock()
         control_plane = {
             "spec": {
-                "version": "v1.32.1",
+                "version": "v1.37.1",
                 "rolloutBefore": {"certificatesExpiryDays": 21},
             },
             "status": {
-                "version": "v1.32.1",
+                "version": "v1.37.1",
                 "conditions": [
                     {"type": "Ready", "status": "True"},
                     {
@@ -98,9 +152,9 @@ class TestStatus(unittest.TestCase):
         cluster = mock.Mock()
         cluster.status.control_plane_certificate_rotation_days = 21
         control_plane = {
-            "spec": {"version": "v1.32.1"},
+            "spec": {"version": "v1.37.1"},
             "status": {
-                "version": "v1.32.1",
+                "version": "v1.37.1",
                 "conditions": [
                     {"type": "Ready", "status": "True"},
                     {
