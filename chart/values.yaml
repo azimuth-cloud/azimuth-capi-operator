@@ -18,6 +18,7 @@ config:
     #       verbs: ["*"]
     #     - nonResourceURLs: ["*"]
     #       verbs: ["*"]
+  loggingLevel: info
 
 # A bundle of trusted CAs to use instead of the defaults
 trustBundle:
