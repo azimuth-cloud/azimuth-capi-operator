@@ -1,15 +1,7 @@
-# Exclude the dockerfile itself
-Dockerfile
-
-# Exclude Python caches
-**/__pycache__
-*.egg-info
-
-# Ignore all other elements that aren't actually part of the build
-.dockerignore
-.github
-.gitignore
-.python-version
-chart
-CODEOWNERS
-tilt-component.yaml
+*
+!azimuth_capi_operator/**
+!.python-version
+!pyproject.toml
+!tox.ini
+!uv.lock
+!README.md

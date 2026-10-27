@@ -5,8 +5,8 @@ from unittest import mock
 
 from easykube.rest.util import PropertyDict
 
-from azimuth_capi import status
-from azimuth_capi.models import v1alpha1 as api
+from azimuth_capi_operator import status
+from azimuth_capi_operator.models import v1alpha1 as api
 
 
 def get_flux_test_object(condition, clustername="foo"):
