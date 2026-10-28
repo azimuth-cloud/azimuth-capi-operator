@@ -1,6 +1,10 @@
 import functools
 
 
+def bar():
+    pass
+
+
 def mergeconcat(defaults, *overrides):
     """
     Returns a new dictionary obtained by deep-merging multiple sets of overrides
