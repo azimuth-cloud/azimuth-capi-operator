@@ -29,8 +29,9 @@ dev = [
     "coverage>=7.17.0",
     "diff-cover>=11.0.0",
     "mypy>=2.4.0",
+    "pytest>=9",
+    "pytest-cov>=7.1.0",
     "ruff>=0.17.2",
-    "stestr>=4.2.1",
     "tox>=4.67.4",
     "tox-uv>=1.37.2",
 ]
@@ -81,6 +82,9 @@ follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = true
 check_untyped_defs = true
+
+[tool.pytest]
+testpaths = ["azimuth_capi_operator/tests"]
 
 [tool.ruff.lint.mccabe]
 # Flag errors (`C901`) whenever the complexity level exceeds 5.
