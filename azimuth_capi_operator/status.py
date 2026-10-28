@@ -18,6 +18,10 @@ from .models.v1alpha1 import (
 logger = logging.getLogger(__name__)
 
 
+def foo():
+    pass
+
+
 def _any_node_has_phase(cluster: Cluster, *phases):
     """
     Returns true if any node has one of the given phases.
