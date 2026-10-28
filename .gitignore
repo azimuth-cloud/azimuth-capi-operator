@@ -3,6 +3,7 @@ __pycache__
 chart/charts/*
 chart/Chart.lock
 # ignore unit test stuff
-.stestr/*
 .tox/*
-.coverage
+.coverage*
+coverage.xml
+diff-cover.md
