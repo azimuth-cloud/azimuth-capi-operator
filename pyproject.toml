@@ -73,7 +73,6 @@ select = [
     "N",
 ]
 ignore = [
-    "UP017", # remove and fix once 3.10 not tested in CI
 ]
 
 [tool.mypy]
