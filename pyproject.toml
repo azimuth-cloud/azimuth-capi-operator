@@ -27,6 +27,7 @@ dependencies = [
 dev = [
     "codespell>=2.4.3",
     "coverage>=7.17.0",
+    "diff-cover>=11.0.0",
     "mypy>=2.4.0",
     "ruff>=0.17.2",
     "stestr>=4.2.1",
