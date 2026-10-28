@@ -1,0 +1,20 @@
+name: Basic CI
+
+on:
+  # We use pull_request_target so that dependabot-created workflows can run
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  helm_lint:
+    uses: ./.github/workflows/helm-lint.yaml
+    with:
+       ref: ${{ github.event.pull_request.head.sha }}
+
+  python-check:
+    uses: ./.github/workflows/tox.yaml
+    with:
+       ref: ${{ github.event.pull_request.head.sha }}

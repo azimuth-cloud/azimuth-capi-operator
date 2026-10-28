@@ -1,8 +1,6 @@
 name: Tox unit tests
 
 on:
-  push:
-  pull_request:
   workflow_call:
     inputs:
       ref:
