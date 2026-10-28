@@ -1,9 +1,10 @@
 # ubuntu 24.04
 FROM ubuntu@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac AS helm
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends --no-install-suggests -y ca-certificates wget && \
-    rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+      apt-get update && \
+      apt-get install --no-install-recommends --no-install-suggests -y ca-certificates wget
 
 ARG HELM_VERSION=v4.3.1
 RUN set -ex; \
@@ -44,9 +45,7 @@ RUN helm pull ${ZENITH_APISERVER_CHART_NAME} \
       --untardir /charts && \
     rm -rf /charts/*.tgz
 
-FROM ubuntu@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac AS python-builder
-
-COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /uvx /bin/
+FROM ghcr.io/astral-sh/uv:trixie AS python-builder
 
 # These env vars setup UV for a docker installation as opposed to
 # the defaults which are optimised for local development.
@@ -123,9 +122,10 @@ RUN groupadd --gid $APP_GID $APP_GROUP && \
       --uid $APP_UID \
       $APP_USER
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends --no-install-suggests -y ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+      apt-get update && \
+      apt-get install --no-install-recommends --no-install-suggests -y ca-certificates
 
 COPY --from=helm /usr/bin/helm /usr/bin/helm
 COPY --from=helm /charts /charts
