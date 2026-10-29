@@ -5,8 +5,8 @@ from unittest import mock
 
 from easykube.rest.util import PropertyDict
 
-from azimuth_capi import status
-from azimuth_capi.models import v1alpha1 as api
+from azimuth_capi_operator import status
+from azimuth_capi_operator.models import v1alpha1 as api
 
 
 def get_flux_test_object(condition, clustername="foo"):
@@ -92,7 +92,7 @@ class TestStatus(unittest.TestCase):
         node = cluster.status.nodes["control-plane-0"]
         self.assertEqual(
             node.certificates_expiry_date,
-            dt.datetime(2027, 1, 1, 12, tzinfo=dt.timezone.utc),
+            dt.datetime(2027, 1, 1, 12, tzinfo=dt.UTC),
         )
 
     def test_machine_updated_records_no_certificate_expiry_date_for_worker(self):
@@ -198,11 +198,11 @@ class TestStatus(unittest.TestCase):
 
         self.assertEqual(
             cluster.status.control_plane_certificate_expiry_date,
-            dt.datetime(2027, 3, 20, 12, tzinfo=dt.timezone.utc),
+            dt.datetime(2027, 3, 20, 12, tzinfo=dt.UTC),
         )
         self.assertEqual(
             cluster.status.control_plane_certificate_rotation_date,
-            dt.datetime(2027, 2, 27, 12, tzinfo=dt.timezone.utc),
+            dt.datetime(2027, 2, 27, 12, tzinfo=dt.UTC),
         )
 
     def test_control_plane_certificate_status_ignores_unexpected_worker_expiry(self):
@@ -227,7 +227,7 @@ class TestStatus(unittest.TestCase):
 
         self.assertEqual(
             cluster.status.control_plane_certificate_expiry_date,
-            dt.datetime(2027, 3, 20, 12, tzinfo=dt.timezone.utc),
+            dt.datetime(2027, 3, 20, 12, tzinfo=dt.UTC),
         )
 
     def test_control_plane_certificate_status_clears_unknown_values(self):

@@ -172,7 +172,7 @@ def _reconcile_cluster_phase(cluster: Cluster):  # noqa: C901
     else:
         # if not a terminal state, ensure timestamp has been set
         if cluster.status.last_updated is None:
-            now = dt.datetime.now(dt.timezone.utc)
+            now = dt.datetime.now(dt.UTC)
             cluster.status.last_updated = now
 
     # timeout pending states if we are stuck there too long
@@ -181,7 +181,7 @@ def _reconcile_cluster_phase(cluster: Cluster):  # noqa: C901
         ClusterPhase.RECONCILING,
         ClusterPhase.UPGRADING,
     }:
-        now = dt.datetime.now(dt.timezone.utc)
+        now = dt.datetime.now(dt.UTC)
         timeout_after = cluster.status.last_updated + dt.timedelta(
             seconds=settings.cluster_timeout_seconds
         )

@@ -1,7 +1,7 @@
 import unittest
 
-from azimuth_capi import operator
-from azimuth_capi.models import v1alpha1 as api
+from azimuth_capi_operator import operator
+from azimuth_capi_operator.models import v1alpha1 as api
 
 
 class TestOperator(unittest.IsolatedAsyncioTestCase):

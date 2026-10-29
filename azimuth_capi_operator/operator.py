@@ -741,7 +741,7 @@ async def on_cluster_create(logger, instance, name, namespace, patch, **kwargs):
     # We might have been stuck in an error loop that has just been
     # fixed by the operator, so in this case we reset the last_updated
     # now we are letting the async poll loops take over
-    instance.status.last_updated = dt.datetime.now(dt.timezone.utc)
+    instance.status.last_updated = dt.datetime.now(dt.UTC)
     await save_cluster_status(instance)
 
 
@@ -1391,7 +1391,7 @@ async def reconcile_app_template(instance, param, **kwargs):
     is resumed or periodically.
     """
     # First, we need to decide whether to do anything
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     sync_delta = dt.timedelta(seconds=instance.spec.sync_frequency)
     # We can exit here is there is nothing to do
     if not (
@@ -1485,7 +1485,7 @@ async def reconcile_app_template(instance, param, **kwargs):
     instance.status.logo = instance.spec.logo or next_logo
     instance.status.description = instance.spec.description or next_description
     instance.status.versions = next_versions
-    instance.status.last_sync = dt.datetime.now(dt.timezone.utc)
+    instance.status.last_sync = dt.datetime.now(dt.UTC)
     ekresource = await ekresource_for_model(api.AppTemplate, "status")
     _ = await ekresource.replace(
         instance.metadata.name,
