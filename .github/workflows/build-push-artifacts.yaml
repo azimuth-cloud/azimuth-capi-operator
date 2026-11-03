@@ -72,8 +72,8 @@ jobs:
     name: Build and push Helm chart
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: none
+      contents: read
+      id-token: write
       packages: none
       security-events: none
     # Only build and push the chart if the images built successfully
@@ -94,8 +94,22 @@ jobs:
         uses: azimuth-cloud/github-actions/semver@master
 
       - name: Publish Helm charts
-        uses: azimuth-cloud/github-actions/helm-publish@master
+        uses: azimuth-cloud/github-actions/helm-publish-oci@master
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          directory: chart
+          username: ${{ secrets.QUAY_IO_USER }}
+          token: ${{ secrets.QUAY_IO_TOKEN }}
+          registry: quay.io
+          repository: azimuth/azimuth-capi-operator-charts
           version: ${{ steps.semver.outputs.version }}
           app-version: ${{ steps.semver.outputs.short-sha }}
+
+      - name: Publish artifact metadata
+        uses: azimuth-cloud/github-actions/artifacthub-metadata@master
+        with:
+          directory: chart
+          registry: quay.io
+          repository: azimuth/azimuth-capi-operator-charts
+          username: ${{ secrets.QUAY_IO_USER }}
+          token: ${{ secrets.QUAY_IO_TOKEN }}
+
