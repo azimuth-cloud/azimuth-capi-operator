@@ -34,7 +34,7 @@ jobs:
           # Use the version of the chart that we just built
           # We run the Kubernetes tests and the Kubernetes app tests, but not the CaaS tests
           extra-vars: |
-            azimuth_capi_operator_chart_repo: https://azimuth-cloud.github.io/azimuth-capi-operator
+            azimuth_capi_operator_chart_ref: oci://quay.io/azimuth/azimuth-capi-operator-charts/azimuth-capi-operator
             azimuth_capi_operator_chart_version: ${{ needs.publish_artifacts.outputs.chart-version }}
             generate_tests_caas_suite_enabled: false
         # GitHub terminates jobs after 6 hours
