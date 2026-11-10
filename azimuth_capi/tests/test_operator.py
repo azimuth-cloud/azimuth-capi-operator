@@ -260,6 +260,49 @@ class TestOperator(unittest.IsolatedAsyncioTestCase):
                 "healthCheck": {"enabled": True},
                 "machineFlavor": "vm.small",
                 "machineCount": 1,
-                "etcd": {"blockDevice": {"size": 20}},
             },
+        )
+        self.assertEqual(result["etcd"], {"blockDevice": {"size": 20}})
+
+    def test_generate_helm_values_with_etcd_volume_size(self):
+        cluster = self.get_fake_cluster()
+        cluster.spec.control_plane_machine_count = 3
+        cluster.spec.control_plane_etcd_volume_size = 40
+        template = self.get_fake_cluster_template()
+        template.spec.values.etcd = {
+            "extraArgs": {"listen-metrics-urls": "http://0.0.0.0:2381"},
+            "blockDevice": {"size": 80, "volumeType": "fast"},
+        }
+
+        result = operator.generate_helm_values_for_release(
+            template, cluster, None, None, None, None
+        )
+
+        self.assertEqual(result["controlPlane"]["machineCount"], 3)
+        self.assertNotIn("etcd", result["controlPlane"])
+        self.assertEqual(
+            result["etcd"],
+            {
+                "extraArgs": {"listen-metrics-urls": "http://0.0.0.0:2381"},
+                "blockDevice": {"size": 40, "volumeType": "fast"},
+            },
+        )
+
+    def test_generate_helm_values_preserves_etcd_without_control_plane_count(self):
+        cluster = self.get_fake_cluster()
+        cluster.spec.control_plane_etcd_volume_size = 40
+        template = self.get_fake_cluster_template()
+        template.spec.values.etcd = {
+            "blockDevice": {"size": 80, "volumeType": "fast"},
+        }
+
+        result = operator.generate_helm_values_for_release(
+            template, cluster, None, None, None, None
+        )
+
+        self.assertNotIn("machineCount", result["controlPlane"])
+        self.assertNotIn("etcd", result["controlPlane"])
+        self.assertEqual(
+            result["etcd"],
+            {"blockDevice": {"size": 80, "volumeType": "fast"}},
         )
