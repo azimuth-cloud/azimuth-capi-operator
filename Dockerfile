@@ -6,7 +6,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       apt-get update && \
       apt-get install --no-install-recommends --no-install-suggests -y ca-certificates wget
 
-ARG HELM_VERSION=v4.3.1
+ARG HELM_VERSION=v4.3.2
 RUN set -ex; \
     OS_ARCH="$(uname -m)"; \
     case "$OS_ARCH" in \
