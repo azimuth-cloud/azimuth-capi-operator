@@ -15,6 +15,7 @@ import kopf
 import pydantic
 import yaml
 from easykube import ApiError, Configuration
+from easykube.rest.util import PropertyDict
 from kube_custom_resource import CustomResourceRegistry
 from pydantic.json import pydantic_encoder
 from pyhelm3 import Client as HelmClient
@@ -844,6 +845,98 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     await save_cluster_status(instance)
 
 
+async def list_cluster_objects(
+    instance: api.Cluster, api_version: str, resource: str, optional: bool = False
+) -> list[PropertyDict]:
+    """
+    List the objects of the given resource that belong to the cluster.
+
+    If the resource is optional and its API is not installed, return no objects.
+    """
+    try:
+        ekresource = await ekclient.api(api_version).resource(resource)
+    except ApiError as exc:
+        if optional and exc.status_code == 404:
+            return []
+        raise
+    objects = ekresource.list(
+        labels={"capi.stackhpc.com/cluster": instance.metadata.name},
+        namespace=instance.metadata.namespace,
+    )
+    result = []
+    async for obj in objects:
+        result.append(obj)
+    return result
+
+
+async def refresh_cluster_status(instance: api.Cluster) -> None:
+    """Rebuild the status of the cluster from the state of its related objects."""
+    namespace = instance.metadata.namespace
+
+    # Lease -> lease phase
+    if instance.spec.lease_name:
+        ekleases = await ekclient.api(AZIMUTH_SCHEDULING_VERSION).resource("leases")
+        try:
+            lease = await ekleases.fetch(instance.spec.lease_name, namespace=namespace)
+        except ApiError as exc:
+            if exc.status_code != 404:
+                raise
+            status.lease_deleted(instance, None)
+        else:
+            status.lease_updated(instance, lease)
+
+    # CAPI cluster -> networking phase
+    clusters = await list_cluster_objects(instance, CLUSTER_API_VERSION, "clusters")
+    if clusters:
+        status.cluster_updated(instance, clusters[0])
+    else:
+        status.cluster_absent(instance)
+
+    # Control plane -> control plane phase and Kubernetes version
+    control_planes = await list_cluster_objects(
+        instance, CLUSTER_API_CONTROLPLANE_VERSION, "kubeadmcontrolplanes"
+    )
+    if control_planes:
+        status.control_plane_updated(instance, control_planes[0])
+    else:
+        status.control_plane_absent(instance)
+
+    # Machines (+ infra machines for the flavor) -> nodes
+    machines = await list_cluster_objects(instance, CLUSTER_API_VERSION, "machines")
+    for machine in machines:
+        infra_ref = machine["spec"]["infrastructureRef"]
+        infra_resource = await ekclient.api(infra_ref["apiVersion"]).resource(
+            infra_ref["kind"]
+        )
+        try:
+            infra_machine = await infra_resource.fetch(
+                infra_ref["name"], namespace=infra_ref["namespace"]
+            )
+        except ApiError as exc:
+            # The machine is being deleted; its events will tidy up the status
+            if exc.status_code == 404:
+                continue
+            raise
+        status.machine_updated(instance, machine, infra_machine)
+    status.remove_unknown_nodes(instance, machines)
+
+    # Addons
+    helmreleases = await list_cluster_objects(
+        instance, "addons.stackhpc.com/v1alpha1", "helmreleases"
+    )
+    manifests = await list_cluster_objects(
+        instance, "addons.stackhpc.com/v1alpha1", "manifests"
+    )
+    kustomizations = await list_cluster_objects(
+        instance, "kustomize.toolkit.fluxcd.io/v1", "kustomizations", optional=True
+    )
+    for addon in helmreleases + manifests:
+        status.addon_updated(instance, addon)
+    for addon in kustomizations:
+        status.flux_updated(instance, addon)
+    status.remove_unknown_addons(instance, helmreleases + manifests + kustomizations)
+
+
 @model_handler(
     api.Cluster,
     kopf.timer,
@@ -851,6 +944,9 @@ async def on_cluster_resume(instance, name, namespace, **kwargs):
     interval=settings.timer_interval,
 )
 async def check_cluster_timeout(logger, instance, patch, **kwargs):
+    """
+    Periodically refresh the status of clusters that are not in a stable state.
+    """
     if instance.spec.paused:
         logger.info("reconciliation is paused - no action taken")
         return
@@ -864,6 +960,8 @@ async def check_cluster_timeout(logger, instance, patch, **kwargs):
         api.ClusterPhase.UNHEALTHY,
         api.ClusterPhase.UNKNOWN,
     }:
+        # Rebuild the status object incase it has been lost.
+        await refresh_cluster_status(instance)
         await save_cluster_status(instance)
 
 
