@@ -7,21 +7,20 @@ Please check for relevant issues and PRs before opening a new one of your own.
 
 ### Running tests
 
-The unit tests and linters are run using [tox](https://tox.wiki/) via
-[uv](https://docs.astral.sh/uv/):
+The tests use [pytest](https://docs.pytest.org) and are run with
+[tox](https://tox.wiki/) via [uv](https://docs.astral.sh/uv/):
 
 ```
-uv run tox
+uv run --locked tox                           # lint, tests, mypy and coverage
+uv run --locked tox -e 3.12 -- -k test_status # run selected tests only
+uv run --locked tox -e autofix                # apply ruff and codespell fixes
 ```
 
-This runs the linters, the tests (with pytest) and a coverage report. To run a
-single environment, or pass arguments through to pytest, use for example:
+The `coverage` environment prints a coverage report and the coverage of lines
+changed since `origin/main`.
 
-```
-uv run tox -e 3.12 -- -k test_status
-```
-
-To fix lint issues automatically, run `uv run tox -e autofix`.
+Tests live in `azimuth_capi_operator/tests/`.
+Please add tests alongside your changes.
 
 ### Helm template snapshots
 
