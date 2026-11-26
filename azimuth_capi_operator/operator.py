@@ -960,7 +960,7 @@ async def check_cluster_timeout(logger, instance, patch, **kwargs):
         api.ClusterPhase.UNHEALTHY,
         api.ClusterPhase.UNKNOWN,
     }:
-        # Rebuild the status object incase it has been lost.
+        # Rebuild the status object in case it has been lost.
         await refresh_cluster_status(instance)
         await save_cluster_status(instance)
 
