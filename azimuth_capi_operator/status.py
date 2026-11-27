@@ -216,7 +216,7 @@ def cluster_updated(cluster: Cluster, obj):
     # Update cluster generation and conditions
     cluster.status.v1beta_phase = obj_status.get("phase", "Unknown")
     cluster.status.v2beta2_conditions = obj_status.get("v1beta2", {}).get(
-        "conditions", {}
+        "conditions", []
     )
 
 

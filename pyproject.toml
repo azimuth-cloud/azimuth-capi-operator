@@ -2,7 +2,7 @@
 name = "azimuth-capi-operator"
 dynamic = ["version"]
 requires-python = ">=3.12"
-description = "Kubernetes operator for opinionated Cluster API clusters"  
+description = "Kubernetes operator for opinionated Cluster API clusters"
 authors = [
 	{name = "Matt Pryor"}
 ]
@@ -79,13 +79,41 @@ ignore = [
 ]
 
 [tool.mypy]
+plugins = ["pydantic.mypy"]
 follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = true
 check_untyped_defs = true
 
+[[tool.mypy.overrides]]
+module = ["azimuth_capi_operator.tests.*"]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "azimuth_capi_operator.__main__",
+    "azimuth_capi_operator.config",
+    "azimuth_capi_operator.metrics",
+    "azimuth_capi_operator.models.v1alpha1.app_template",
+    "azimuth_capi_operator.models.v1alpha1.cluster",
+    "azimuth_capi_operator.models.v1alpha1.cluster_template",
+    "azimuth_capi_operator.operator",
+    "azimuth_capi_operator.status",
+    "azimuth_capi_operator.template",
+    "azimuth_capi_operator.tests.test_operator",
+    "azimuth_capi_operator.tests.test_status",
+    "azimuth_capi_operator.utils",
+    "azimuth_capi_operator.zenith",
+]
+ignore_errors = true
+
+# Generated coverage reports quote source lines
+[tool.codespell]
+skip = "coverage.xml,diff-cover.md"
+
 [tool.pytest]
 testpaths = ["azimuth_capi_operator/tests"]
+strict = true
 
 [tool.ruff.lint.mccabe]
 # Flag errors (`C901`) whenever the complexity level exceeds 5.
