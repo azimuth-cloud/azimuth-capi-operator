@@ -5610,7 +5610,7 @@ templated manifests should match snapshot:
       template:
         metadata:
           annotations:
-            azimuth.stackhpc.com/config-hash: e00d6ac405419fe1efdde055a73eab4bea2215fa6d87eb0b35dc30cc3eb04389
+            azimuth.stackhpc.com/config-hash: 7c7c51f8be36917354a959b969b9ec3e4ea6084066e701722350600a861252d2
           labels:
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/name: azimuth-capi-operator
@@ -5734,6 +5734,25 @@ templated manifests should match snapshot:
       capi-operator.yaml: |
         !include "/etc/azimuth/webhook.yaml,/etc/azimuth/user-config.yaml"
       user-config.yaml: |
+        capiHelm:
+          defaultValues:
+            controlPlane:
+              kubeadmConfigSpec:
+                initConfiguration:
+                  nodeRegistration:
+                    kubeletExtraArgs:
+                      provider-id: openstack:///{{ instance_id }}
+                joinConfiguration:
+                  nodeRegistration:
+                    kubeletExtraArgs:
+                      provider-id: openstack:///{{ instance_id }}
+            kubeletCloudProvider: ""
+            nodeGroupDefaults:
+              kubeadmConfigSpec:
+                joinConfiguration:
+                  nodeRegistration:
+                    kubeletExtraArgs:
+                      provider-id: openstack:///{{ instance_id }}
         identity:
           defaultUserClusterRole:
             rules:
