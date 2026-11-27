@@ -5,6 +5,9 @@ import datetime as dt
 import logging
 from typing import Any
 
+import pytest
+from easykube import ApiError
+
 from azimuth_capi_operator import operator
 from azimuth_capi_operator.config import settings
 from azimuth_capi_operator.models import v1alpha1 as api
@@ -54,6 +57,14 @@ def worker_machine(name: str) -> dict[str, Any]:
             "phase": "Running",
             "conditions": [{"type": "NodeHealthy", "status": "True"}],
         },
+    }
+
+
+def addon(component: str, status: dict[str, Any]) -> dict[str, Any]:
+    """Return an addon object for the given component."""
+    return {
+        "metadata": {"labels": {"capi.stackhpc.com/component": component}},
+        "status": status,
     }
 
 
@@ -186,3 +197,41 @@ def test_timer_times_out_stuck_cluster(fake_ekclient: FakeClient) -> None:
     saved_status = run_timer(cluster, fake_ekclient)
 
     assert saved_status.phase == api.ClusterPhase.UNHEALTHY
+
+
+def test_timer_rebuilds_addons(fake_ekclient: FakeClient) -> None:
+    """Check that the timer rebuilds the addons from the cluster's addon objects."""
+    fake_ekclient.objects = {
+        **healthy_capi_objects(),
+        ("addons.stackhpc.com/v1alpha1", "helmreleases"): [
+            addon("cni", {"phase": "Deployed", "revision": 1}),
+        ],
+        ("addons.stackhpc.com/v1alpha1", "manifests"): [
+            addon("extra", {"phase": "Deployed", "revision": 1}),
+        ],
+        ("kustomize.toolkit.fluxcd.io/v1", "kustomizations"): [
+            addon("flux", {"conditions": [{"type": "Ready", "status": "True"}]}),
+        ],
+    }
+    cluster = pending_cluster()
+    cluster.status.addons["gone"] = api.AddonStatus(
+        phase=api.AddonPhase.DEPLOYED, revision=1
+    )
+
+    saved_status = run_timer(cluster, fake_ekclient)
+
+    assert set(saved_status.addons) == {"cni", "extra", "flux"}
+
+
+def test_timer_keeps_status_without_required_api(fake_ekclient: FakeClient) -> None:
+    """Check that the timer leaves the status alone when a required API is missing.
+
+    Treating it as having no objects would wipe the nodes and addons from the status.
+    """
+    fake_ekclient.objects = healthy_capi_objects()
+    fake_ekclient.missing_apis = {operator.CLUSTER_API_VERSION}
+
+    with pytest.raises(ApiError):
+        run_timer(pending_cluster(), fake_ekclient)
+
+    assert fake_ekclient.replaced == []
