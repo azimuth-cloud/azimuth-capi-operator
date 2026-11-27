@@ -5610,13 +5610,16 @@ templated manifests should match snapshot:
       template:
         metadata:
           annotations:
-            azimuth.stackhpc.com/config-hash: e00d6ac405419fe1efdde055a73eab4bea2215fa6d87eb0b35dc30cc3eb04389
+            azimuth.stackhpc.com/config-hash: 3f021acfa2b05d9415387fd498c1a015f912d908c94b7e724be43b58113986ff
           labels:
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/name: azimuth-capi-operator
         spec:
           containers:
-            - image: ghcr.io/azimuth-cloud/azimuth-capi-operator:main
+            - env:
+                - name: LOG_LEVEL
+                  value: info
+              image: ghcr.io/azimuth-cloud/azimuth-capi-operator:main
               imagePullPolicy: IfNotPresent
               name: operator
               ports:
@@ -5747,6 +5750,7 @@ templated manifests should match snapshot:
               - '*'
               verbs:
               - '*'
+        loggingLevel: info
       webhook.yaml: |
         webhook:
           managed: false
